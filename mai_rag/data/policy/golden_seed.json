@@ -1,0 +1,92 @@
+[
+  {
+    "id": "q1-simple-mfa",
+    "question": "Is multi-factor authentication required for VPN access at Northwind?",
+    "expected_answer": "Yes, MFA is mandatory for all VPN access. The approved methods are TOTP via authenticator app (preferred), hardware security keys, or SMS as fallback.",
+    "supporting_doc_ids": ["remote-access-vpn-guide", "identity-access-management-policy"],
+    "tier": "base",
+    "failure_mode": "simple-lookup",
+    "criteria": ["mentions MFA is mandatory for VPN", "lists approved MFA methods"]
+  },
+  {
+    "id": "q2-multi-hop-travel-data",
+    "question": "What security controls are required when traveling with a laptop that contains customer data?",
+    "expected_answer": "When traveling with Confidential data, the device must be encrypted (BitLocker or FileVault). When accessing corporate systems from a hotel or external network, you must use VPN. If you lose a device containing customer data, you must immediately notify security and IT teams, and this escalates as a Sev-2 or Sev-3 incident per the Incident Response Runbook.",
+    "supporting_doc_ids": ["expense-travel-policy", "data-classification-retention-policy", "remote-access-vpn-guide", "incident-response-runbook"],
+    "tier": "blueprint",
+    "failure_mode": "multi-hop",
+    "criteria": ["mentions device encryption requirement", "mentions VPN requirement for remote access", "mentions incident escalation path for lost devices"]
+  },
+  {
+    "id": "q3-distractor-access-policies",
+    "question": "According to Northwind's access control policy, what is the correct process for requesting administrative access to cloud platforms?",
+    "expected_answer": "Administrative access (such as AWS or Azure console access) requires explicit approval from IT Security. The access request must include documented business justification. Privileged Access Management (PAM) requires session recording and audit logging, with 6-month re-certification. Users must also enable MFA on the account.",
+    "supporting_doc_ids": ["identity-access-management-policy", "information-security-policy"],
+    "tier": "base",
+    "failure_mode": "distractor",
+    "criteria": ["mentions explicit approval from IT Security", "mentions business justification requirement", "mentions MFA requirement", "distinguishes from general access review process in section 4.1"]
+  },
+  {
+    "id": "q4-recency-conflict-password",
+    "question": "What is Northwind's current password rotation policy?",
+    "expected_answer": "As of 2026-05-01, Northwind does NOT enforce forced password rotation. Passwords must be changed only if compromised. The minimum password length is 12 characters. This supersedes the legacy policy (effective until 2026-04-30) which required rotation every 90 days with 8-character minimum. The change was made to align with current NIST guidance.",
+    "supporting_doc_ids": ["identity-access-management-policy", "identity-access-management-policy-legacy"],
+    "tier": "blueprint",
+    "failure_mode": "recency-conflict",
+    "criteria": ["states no forced rotation as current policy", "mentions 12-character minimum", "acknowledges legacy 90-day rotation is superseded", "explains NIST rationale"]
+  },
+  {
+    "id": "q5-paraphrase-incident-severity",
+    "question": "If a customer reports that 50 user records may have been accessed by an unauthorized account, what incident severity would this be classified as, and how quickly must affected customers be notified?",
+    "expected_answer": "This would be classified as Sev-2 (High). The RTO is 8 hours and customers must be notified within 48 hours. A Sev-2 incident requires notification to the VP Security and affected department head within 2 hours, and the executive team should be informed.",
+    "supporting_doc_ids": ["incident-response-runbook"],
+    "tier": "base",
+    "failure_mode": "paraphrase",
+    "criteria": ["identifies Sev-2 classification", "states 8-hour RTO", "states 48-hour customer notification timeline", "mentions 2-hour executive notification"]
+  },
+  {
+    "id": "q6-acronym-pii-handling",
+    "question": "How must Northwind classify and handle Personally Identifiable Information (PII) such as employee SSNs and driver's license numbers?",
+    "expected_answer": "PII must be classified as either Confidential or Restricted. Any data that can identify an individual (such as SSN, government ID, home address) requires encryption at rest using AES-256 and TLS 1.3 in transit. Handling is subject to GDPR, CCPA, and state privacy laws. Data must be deleted within the retention period (per data classification level) and destroyed to NIST 800-88 standard.",
+    "supporting_doc_ids": ["data-classification-retention-policy", "information-security-policy"],
+    "tier": "base",
+    "failure_mode": "acronym",
+    "criteria": ["expands PII correctly", "mentions AES-256 encryption", "mentions GDPR and CCPA", "specifies Confidential or Restricted classification"]
+  },
+  {
+    "id": "q7-multi-hop-onboarding-security",
+    "question": "What security training and MFA setup must be completed during the first day of employment at Northwind, and how does this relate to VPN access?",
+    "expected_answer": "On Day 1, new employees must complete 3 hours of mandatory security training: Information Security Awareness (1 hour, 80% passing required), Acceptable Use and Harassment Prevention (1.5 hours), and Getting Started with Okta and MFA Setup (0.5 hours). During MFA setup, employees generate a TOTP in an authenticator app and test VPN login. MFA (specifically TOTP, not SMS) is required for all VPN access per the Remote Access & VPN Guide.",
+    "supporting_doc_ids": ["employee-onboarding-guide", "remote-access-vpn-guide", "identity-access-management-policy"],
+    "tier": "blueprint",
+    "failure_mode": "multi-hop",
+    "criteria": ["lists three training components from Day 1", "mentions TOTP generation", "mentions VPN test", "connects to VPN access requirement"]
+  },
+  {
+    "id": "q8-multi-hop-incident-data-breach",
+    "question": "If a Sev-1 data breach is discovered involving 10,000 customer records containing PII, what is the complete incident response timeline and who must be notified?",
+    "expected_answer": "A Sev-1 data breach has an RTO of 4 hours and RPO of 1 hour. The executive team (CEO, VP Security, VP Engineering, General Counsel, Chief Privacy Officer, Board Chair) must be notified within 30 minutes. Customers must be notified within 24 hours if PII is exposed. The Data Classification & Retention Policy mandates that PII exposure triggers GDPR notification (within 30 days) and CCPA notification (within 45 days if CA residents are affected). The breach must be reported in the Incident Tracking System, and a post-mortem is required.",
+    "supporting_doc_ids": ["incident-response-runbook", "data-classification-retention-policy", "information-security-policy"],
+    "tier": "blueprint",
+    "failure_mode": "multi-hop",
+    "criteria": ["identifies Sev-1 classification", "states 4-hour RTO", "lists executive notification in 30 minutes", "states 24-hour customer notification", "mentions GDPR/CCPA timelines", "mentions post-mortem requirement"]
+  },
+  {
+    "id": "q9-blueprint-pto-accrual",
+    "question": "An employee at Northwind accrues 1.5 days of PTO per month. If they joined on February 15 and want to take a one-week vacation in June, what is the maximum number of PTO days they can have accrued by June 1, and what is the approval process?",
+    "expected_answer": "The employee accrues 0.75 days in February (mid-month start), then full 1.5 days in March, April, and May, totaling 5.25 days by June 1. However, there is a maximum accrual cap of 5 days that can carry over between years, so they would have 5 days available (0.25 days are forfeited due to cap). To request June vacation, they must submit the request in Workday at least 14 days in advance. The manager must approve within 3 business days. June 10-12 is a blackout period (customer conference), so the request may need VP sign-off if vacation overlaps those dates.",
+    "supporting_doc_ids": ["leave-time-off-policy"],
+    "tier": "blueprint",
+    "failure_mode": "multi-hop",
+    "criteria": ["calculates pro-rated accrual for mid-month start", "accounts for monthly accrual", "applies 5-day carryover cap", "states 14-day request timing", "mentions manager approval within 3 business days", "identifies blackout period"]
+  },
+  {
+    "id": "q10-blueprint-deployment-rollback",
+    "question": "During a production deployment at 2 PM PT, a new feature causes the error rate to spike to 5% within 15 minutes of deployment completion. What is the required incident response and deployment procedure?",
+    "expected_answer": "The deployment lead should immediately assess severity. A 5% error rate affecting customers qualifies as Sev-2 (significant service degradation). Within 30 minutes, the RTO for Sev-2 requires remediation. Since the root cause is the new deployment, the team should execute an immediate rollback to the previous stable version. The rollback procedure involves running the deployment rollback command to restore the prior version, then re-running health checks to confirm error rates return to normal. The on-call engineer monitors the rollback. After rollback is confirmed successful, a blameless post-mortem must be scheduled within 24 hours, and the incident is documented in the change tracker. The team should not attempt a fix-forward in this scenario given the severity.",
+    "supporting_doc_ids": ["production-deployment-runbook", "incident-response-runbook", "on-call-escalation-policy"],
+    "tier": "blueprint",
+    "failure_mode": "multi-hop",
+    "criteria": ["identifies Sev-2 classification", "describes rollback execution", "mentions health check verification", "states post-mortem timeline", "references incident documentation"]
+  }
+]

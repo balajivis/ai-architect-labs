@@ -1,0 +1,106 @@
+[
+  {
+    "doc_id": "information-security-policy",
+    "title": "Information Security Policy",
+    "path": "corpus/policy/information-security-policy.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-03-14"
+  },
+  {
+    "doc_id": "acceptable-use-policy",
+    "title": "Acceptable Use Policy",
+    "path": "corpus/policy/acceptable-use-policy.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-02-01"
+  },
+  {
+    "doc_id": "data-classification-retention-policy",
+    "title": "Data Classification & Retention Policy",
+    "path": "corpus/policy/data-classification-retention-policy.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-01-20"
+  },
+  {
+    "doc_id": "identity-access-management-policy",
+    "title": "Identity & Access Management Policy",
+    "path": "corpus/policy/identity-access-management-policy.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-05-01"
+  },
+  {
+    "doc_id": "identity-access-management-policy-legacy",
+    "title": "Identity & Access Management Policy (Legacy)",
+    "path": "corpus/policy/identity-access-management-policy-legacy.md",
+    "status": "superseded",
+    "classification": "internal",
+    "last_updated": "2024-06-15"
+  },
+  {
+    "doc_id": "incident-response-runbook",
+    "title": "Incident Response Runbook",
+    "path": "corpus/policy/incident-response-runbook.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-03-14"
+  },
+  {
+    "doc_id": "remote-access-vpn-guide",
+    "title": "Remote Access & VPN Guide",
+    "path": "corpus/policy/remote-access-vpn-guide.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-02-20"
+  },
+  {
+    "doc_id": "employee-onboarding-guide",
+    "title": "Employee Onboarding Guide",
+    "path": "corpus/policy/employee-onboarding-guide.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-01-15"
+  },
+  {
+    "doc_id": "leave-time-off-policy",
+    "title": "Leave & Time-Off Policy",
+    "path": "corpus/policy/leave-time-off-policy.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-02-01"
+  },
+  {
+    "doc_id": "expense-travel-policy",
+    "title": "Expense & Travel Policy",
+    "path": "corpus/policy/expense-travel-policy.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-01-25"
+  },
+  {
+    "doc_id": "production-deployment-runbook",
+    "title": "Production Deployment Runbook",
+    "path": "corpus/policy/production-deployment-runbook.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-02-28"
+  },
+  {
+    "doc_id": "on-call-escalation-policy",
+    "title": "On-Call & Escalation Policy",
+    "path": "corpus/policy/on-call-escalation-policy.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-03-01"
+  },
+  {
+    "doc_id": "vendor-procurement-third-party-risk-policy",
+    "title": "Vendor Procurement & Third-Party Risk Policy",
+    "path": "corpus/policy/vendor-procurement-third-party-risk-policy.md",
+    "status": "active",
+    "classification": "internal",
+    "last_updated": "2026-01-30"
+  }
+]

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mai_rag"
+version = "0.1.0"
+description = "Modern AI Pro — AI Architect course lab kit. A glass-box facade over the RAG ecosystem with a ready-to-go SQL + vector data layer."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Modern AI Pro" }]
+dependencies = [
+    "numpy>=1.24",
+    "sqlite-vec>=0.1.6",
+    "sentence-transformers>=2.6",   # local, keyless embeddings (MiniLM)
+    "matplotlib>=3.7",
+    "openai>=1.30",                 # OpenAI-compatible: OpenAI, Azure, Groq (base_url)
+    "requests>=2.31",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+# Each module's notebook installs only what it needs — keeps Colab installs fast.
+evals  = ["ragas>=0.2", "datasets>=2.19"]
+gemini = ["google-generativeai>=0.7"]
+rerank = ["cohere>=5.5", "voyageai>=0.2"]
+graph  = ["neo4j>=5.20"]
+memory = ["mem0ai>=0.1"]
+viz    = ["umap-learn>=0.5", "scikit-learn>=1.4"]
+
+[tool.setuptools.packages.find]
+include = ["mai_rag*"]
+
+[tool.setuptools.package-data]
+mai_rag = ["data/policy/*.md", "data/policy/*.json"]
