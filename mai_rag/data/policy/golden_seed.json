@@ -1,92 +1,991 @@
 [
-  {
-    "id": "q1-simple-mfa",
-    "question": "Is multi-factor authentication required for VPN access at Northwind?",
-    "expected_answer": "Yes, MFA is mandatory for all VPN access. The approved methods are TOTP via authenticator app (preferred), hardware security keys, or SMS as fallback.",
-    "supporting_doc_ids": ["remote-access-vpn-guide", "identity-access-management-policy"],
-    "tier": "base",
-    "failure_mode": "simple-lookup",
-    "criteria": ["mentions MFA is mandatory for VPN", "lists approved MFA methods"]
-  },
-  {
-    "id": "q2-multi-hop-travel-data",
-    "question": "What security controls are required when traveling with a laptop that contains customer data?",
-    "expected_answer": "When traveling with Confidential data, the device must be encrypted (BitLocker or FileVault). When accessing corporate systems from a hotel or external network, you must use VPN. If you lose a device containing customer data, you must immediately notify security and IT teams, and this escalates as a Sev-2 or Sev-3 incident per the Incident Response Runbook.",
-    "supporting_doc_ids": ["expense-travel-policy", "data-classification-retention-policy", "remote-access-vpn-guide", "incident-response-runbook"],
-    "tier": "blueprint",
-    "failure_mode": "multi-hop",
-    "criteria": ["mentions device encryption requirement", "mentions VPN requirement for remote access", "mentions incident escalation path for lost devices"]
-  },
-  {
-    "id": "q3-distractor-access-policies",
-    "question": "According to Northwind's access control policy, what is the correct process for requesting administrative access to cloud platforms?",
-    "expected_answer": "Administrative access (such as AWS or Azure console access) requires explicit approval from IT Security. The access request must include documented business justification. Privileged Access Management (PAM) requires session recording and audit logging, with 6-month re-certification. Users must also enable MFA on the account.",
-    "supporting_doc_ids": ["identity-access-management-policy", "information-security-policy"],
-    "tier": "base",
-    "failure_mode": "distractor",
-    "criteria": ["mentions explicit approval from IT Security", "mentions business justification requirement", "mentions MFA requirement", "distinguishes from general access review process in section 4.1"]
-  },
-  {
-    "id": "q4-recency-conflict-password",
-    "question": "What is Northwind's current password rotation policy?",
-    "expected_answer": "As of 2026-05-01, Northwind does NOT enforce forced password rotation. Passwords must be changed only if compromised. The minimum password length is 12 characters. This supersedes the legacy policy (effective until 2026-04-30) which required rotation every 90 days with 8-character minimum. The change was made to align with current NIST guidance.",
-    "supporting_doc_ids": ["identity-access-management-policy", "identity-access-management-policy-legacy"],
-    "tier": "blueprint",
-    "failure_mode": "recency-conflict",
-    "criteria": ["states no forced rotation as current policy", "mentions 12-character minimum", "acknowledges legacy 90-day rotation is superseded", "explains NIST rationale"]
-  },
-  {
-    "id": "q5-paraphrase-incident-severity",
-    "question": "If a customer reports that 50 user records may have been accessed by an unauthorized account, what incident severity would this be classified as, and how quickly must affected customers be notified?",
-    "expected_answer": "This would be classified as Sev-2 (High). The RTO is 8 hours and customers must be notified within 48 hours. A Sev-2 incident requires notification to the VP Security and affected department head within 2 hours, and the executive team should be informed.",
-    "supporting_doc_ids": ["incident-response-runbook"],
-    "tier": "base",
-    "failure_mode": "paraphrase",
-    "criteria": ["identifies Sev-2 classification", "states 8-hour RTO", "states 48-hour customer notification timeline", "mentions 2-hour executive notification"]
-  },
-  {
-    "id": "q6-acronym-pii-handling",
-    "question": "How must Northwind classify and handle Personally Identifiable Information (PII) such as employee SSNs and driver's license numbers?",
-    "expected_answer": "PII must be classified as either Confidential or Restricted. Any data that can identify an individual (such as SSN, government ID, home address) requires encryption at rest using AES-256 and TLS 1.3 in transit. Handling is subject to GDPR, CCPA, and state privacy laws. Data must be deleted within the retention period (per data classification level) and destroyed to NIST 800-88 standard.",
-    "supporting_doc_ids": ["data-classification-retention-policy", "information-security-policy"],
-    "tier": "base",
-    "failure_mode": "acronym",
-    "criteria": ["expands PII correctly", "mentions AES-256 encryption", "mentions GDPR and CCPA", "specifies Confidential or Restricted classification"]
-  },
-  {
-    "id": "q7-multi-hop-onboarding-security",
-    "question": "What security training and MFA setup must be completed during the first day of employment at Northwind, and how does this relate to VPN access?",
-    "expected_answer": "On Day 1, new employees must complete 3 hours of mandatory security training: Information Security Awareness (1 hour, 80% passing required), Acceptable Use and Harassment Prevention (1.5 hours), and Getting Started with Okta and MFA Setup (0.5 hours). During MFA setup, employees generate a TOTP in an authenticator app and test VPN login. MFA (specifically TOTP, not SMS) is required for all VPN access per the Remote Access & VPN Guide.",
-    "supporting_doc_ids": ["employee-onboarding-guide", "remote-access-vpn-guide", "identity-access-management-policy"],
-    "tier": "blueprint",
-    "failure_mode": "multi-hop",
-    "criteria": ["lists three training components from Day 1", "mentions TOTP generation", "mentions VPN test", "connects to VPN access requirement"]
-  },
-  {
-    "id": "q8-multi-hop-incident-data-breach",
-    "question": "If a Sev-1 data breach is discovered involving 10,000 customer records containing PII, what is the complete incident response timeline and who must be notified?",
-    "expected_answer": "A Sev-1 data breach has an RTO of 4 hours and RPO of 1 hour. The executive team (CEO, VP Security, VP Engineering, General Counsel, Chief Privacy Officer, Board Chair) must be notified within 30 minutes. Customers must be notified within 24 hours if PII is exposed. The Data Classification & Retention Policy mandates that PII exposure triggers GDPR notification (within 30 days) and CCPA notification (within 45 days if CA residents are affected). The breach must be reported in the Incident Tracking System, and a post-mortem is required.",
-    "supporting_doc_ids": ["incident-response-runbook", "data-classification-retention-policy", "information-security-policy"],
-    "tier": "blueprint",
-    "failure_mode": "multi-hop",
-    "criteria": ["identifies Sev-1 classification", "states 4-hour RTO", "lists executive notification in 30 minutes", "states 24-hour customer notification", "mentions GDPR/CCPA timelines", "mentions post-mortem requirement"]
-  },
-  {
-    "id": "q9-blueprint-pto-accrual",
-    "question": "An employee at Northwind accrues 1.5 days of PTO per month. If they joined on February 15 and want to take a one-week vacation in June, what is the maximum number of PTO days they can have accrued by June 1, and what is the approval process?",
-    "expected_answer": "The employee accrues 0.75 days in February (mid-month start), then full 1.5 days in March, April, and May, totaling 5.25 days by June 1. However, there is a maximum accrual cap of 5 days that can carry over between years, so they would have 5 days available (0.25 days are forfeited due to cap). To request June vacation, they must submit the request in Workday at least 14 days in advance. The manager must approve within 3 business days. June 10-12 is a blackout period (customer conference), so the request may need VP sign-off if vacation overlaps those dates.",
-    "supporting_doc_ids": ["leave-time-off-policy"],
-    "tier": "blueprint",
-    "failure_mode": "multi-hop",
-    "criteria": ["calculates pro-rated accrual for mid-month start", "accounts for monthly accrual", "applies 5-day carryover cap", "states 14-day request timing", "mentions manager approval within 3 business days", "identifies blackout period"]
-  },
-  {
-    "id": "q10-blueprint-deployment-rollback",
-    "question": "During a production deployment at 2 PM PT, a new feature causes the error rate to spike to 5% within 15 minutes of deployment completion. What is the required incident response and deployment procedure?",
-    "expected_answer": "The deployment lead should immediately assess severity. A 5% error rate affecting customers qualifies as Sev-2 (significant service degradation). Within 30 minutes, the RTO for Sev-2 requires remediation. Since the root cause is the new deployment, the team should execute an immediate rollback to the previous stable version. The rollback procedure involves running the deployment rollback command to restore the prior version, then re-running health checks to confirm error rates return to normal. The on-call engineer monitors the rollback. After rollback is confirmed successful, a blameless post-mortem must be scheduled within 24 hours, and the incident is documented in the change tracker. The team should not attempt a fix-forward in this scenario given the severity.",
-    "supporting_doc_ids": ["production-deployment-runbook", "incident-response-runbook", "on-call-escalation-policy"],
-    "tier": "blueprint",
-    "failure_mode": "multi-hop",
-    "criteria": ["identifies Sev-2 classification", "describes rollback execution", "mentions health check verification", "states post-mortem timeline", "references incident documentation"]
-  }
+ {
+  "id": "q1-simple-mfa",
+  "question": "Is multi-factor authentication required for VPN access at Northwind?",
+  "expected_answer": "Yes, MFA is mandatory for all VPN access. The approved methods are TOTP via authenticator app (preferred), hardware security keys, or SMS as fallback.",
+  "supporting_doc_ids": [
+   "remote-access-vpn-guide",
+   "identity-access-management-policy"
+  ],
+  "tier": "base",
+  "failure_mode": "simple-lookup",
+  "criteria": [
+   "mentions MFA is mandatory for VPN",
+   "lists approved MFA methods"
+  ]
+ },
+ {
+  "id": "q2-multi-hop-travel-data",
+  "question": "What security controls are required when traveling with a laptop that contains customer data?",
+  "expected_answer": "When traveling with Confidential data, the device must be encrypted (BitLocker or FileVault). When accessing corporate systems from a hotel or external network, you must use VPN. If you lose a device containing customer data, you must immediately notify security and IT teams, and this escalates as a Sev-2 or Sev-3 incident per the Incident Response Runbook.",
+  "supporting_doc_ids": [
+   "expense-travel-policy",
+   "data-classification-retention-policy",
+   "remote-access-vpn-guide",
+   "incident-response-runbook"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "mentions device encryption requirement",
+   "mentions VPN requirement for remote access",
+   "mentions incident escalation path for lost devices"
+  ]
+ },
+ {
+  "id": "q3-distractor-access-policies",
+  "question": "According to Northwind's access control policy, what is the correct process for requesting administrative access to cloud platforms?",
+  "expected_answer": "Administrative access (such as AWS or Azure console access) requires explicit approval from IT Security. The access request must include documented business justification. Privileged Access Management (PAM) requires session recording and audit logging, with 6-month re-certification. Users must also enable MFA on the account.",
+  "supporting_doc_ids": [
+   "identity-access-management-policy",
+   "information-security-policy"
+  ],
+  "tier": "base",
+  "failure_mode": "distractor",
+  "criteria": [
+   "mentions explicit approval from IT Security",
+   "mentions business justification requirement",
+   "mentions MFA requirement",
+   "distinguishes from general access review process in section 4.1"
+  ]
+ },
+ {
+  "id": "q4-recency-conflict-password",
+  "question": "What is Northwind's current password rotation policy?",
+  "expected_answer": "As of 2026-05-01, Northwind does NOT enforce forced password rotation. Passwords must be changed only if compromised. The minimum password length is 12 characters. This supersedes the legacy policy (effective until 2026-04-30) which required rotation every 90 days with 8-character minimum. The change was made to align with current NIST guidance.",
+  "supporting_doc_ids": [
+   "identity-access-management-policy",
+   "identity-access-management-policy-legacy"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "recency-conflict",
+  "criteria": [
+   "states no forced rotation as current policy",
+   "mentions 12-character minimum",
+   "acknowledges legacy 90-day rotation is superseded",
+   "explains NIST rationale"
+  ]
+ },
+ {
+  "id": "q5-paraphrase-incident-severity",
+  "question": "If a customer reports that 50 user records may have been accessed by an unauthorized account, what incident severity would this be classified as, and how quickly must affected customers be notified?",
+  "expected_answer": "This would be classified as Sev-2 (High). The RTO is 8 hours and customers must be notified within 48 hours. A Sev-2 incident requires notification to the VP Security and affected department head within 2 hours, and the executive team should be informed.",
+  "supporting_doc_ids": [
+   "incident-response-runbook"
+  ],
+  "tier": "base",
+  "failure_mode": "paraphrase",
+  "criteria": [
+   "identifies Sev-2 classification",
+   "states 8-hour RTO",
+   "states 48-hour customer notification timeline",
+   "mentions 2-hour executive notification"
+  ]
+ },
+ {
+  "id": "q6-acronym-pii-handling",
+  "question": "How must Northwind classify and handle Personally Identifiable Information (PII) such as employee SSNs and driver's license numbers?",
+  "expected_answer": "PII must be classified as either Confidential or Restricted. Any data that can identify an individual (such as SSN, government ID, home address) requires encryption at rest using AES-256 and TLS 1.3 in transit. Handling is subject to GDPR, CCPA, and state privacy laws. Data must be deleted within the retention period (per data classification level) and destroyed to NIST 800-88 standard.",
+  "supporting_doc_ids": [
+   "data-classification-retention-policy",
+   "information-security-policy"
+  ],
+  "tier": "base",
+  "failure_mode": "acronym",
+  "criteria": [
+   "expands PII correctly",
+   "mentions AES-256 encryption",
+   "mentions GDPR and CCPA",
+   "specifies Confidential or Restricted classification"
+  ]
+ },
+ {
+  "id": "q7-multi-hop-onboarding-security",
+  "question": "What security training and MFA setup must be completed during the first day of employment at Northwind, and how does this relate to VPN access?",
+  "expected_answer": "On Day 1, new employees must complete 3 hours of mandatory security training: Information Security Awareness (1 hour, 80% passing required), Acceptable Use and Harassment Prevention (1.5 hours), and Getting Started with Okta and MFA Setup (0.5 hours). During MFA setup, employees generate a TOTP in an authenticator app and test VPN login. MFA (specifically TOTP, not SMS) is required for all VPN access per the Remote Access & VPN Guide.",
+  "supporting_doc_ids": [
+   "employee-onboarding-guide",
+   "remote-access-vpn-guide",
+   "identity-access-management-policy"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "lists three training components from Day 1",
+   "mentions TOTP generation",
+   "mentions VPN test",
+   "connects to VPN access requirement"
+  ]
+ },
+ {
+  "id": "q8-multi-hop-incident-data-breach",
+  "question": "If a Sev-1 data breach is discovered involving 10,000 customer records containing PII, what is the complete incident response timeline and who must be notified?",
+  "expected_answer": "A Sev-1 data breach has an RTO of 4 hours and RPO of 1 hour. The executive team (CEO, VP Security, VP Engineering, General Counsel, Chief Privacy Officer, Board Chair) must be notified within 30 minutes. Customers must be notified within 24 hours if PII is exposed. The Data Classification & Retention Policy mandates that PII exposure triggers GDPR notification (within 30 days) and CCPA notification (within 45 days if CA residents are affected). The breach must be reported in the Incident Tracking System, and a post-mortem is required.",
+  "supporting_doc_ids": [
+   "incident-response-runbook",
+   "data-classification-retention-policy",
+   "information-security-policy"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "identifies Sev-1 classification",
+   "states 4-hour RTO",
+   "lists executive notification in 30 minutes",
+   "states 24-hour customer notification",
+   "mentions GDPR/CCPA timelines",
+   "mentions post-mortem requirement"
+  ]
+ },
+ {
+  "id": "q9-blueprint-pto-accrual",
+  "question": "An employee at Northwind accrues 1.5 days of PTO per month. If they joined on February 15 and want to take a one-week vacation in June, what is the maximum number of PTO days they can have accrued by June 1, and what is the approval process?",
+  "expected_answer": "The employee accrues 0.75 days in February (mid-month start), then full 1.5 days in March, April, and May, totaling 5.25 days by June 1. However, there is a maximum accrual cap of 5 days that can carry over between years, so they would have 5 days available (0.25 days are forfeited due to cap). To request June vacation, they must submit the request in Workday at least 14 days in advance. The manager must approve within 3 business days. June 10-12 is a blackout period (customer conference), so the request may need VP sign-off if vacation overlaps those dates.",
+  "supporting_doc_ids": [
+   "leave-time-off-policy"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "calculates pro-rated accrual for mid-month start",
+   "accounts for monthly accrual",
+   "applies 5-day carryover cap",
+   "states 14-day request timing",
+   "mentions manager approval within 3 business days",
+   "identifies blackout period"
+  ]
+ },
+ {
+  "id": "q10-blueprint-deployment-rollback",
+  "question": "During a production deployment at 2 PM PT, a new feature causes the error rate to spike to 5% within 15 minutes of deployment completion. What is the required incident response and deployment procedure?",
+  "expected_answer": "The deployment lead should immediately assess severity. A 5% error rate affecting customers qualifies as Sev-2 (significant service degradation). Within 30 minutes, the RTO for Sev-2 requires remediation. Since the root cause is the new deployment, the team should execute an immediate rollback to the previous stable version. The rollback procedure involves running the deployment rollback command to restore the prior version, then re-running health checks to confirm error rates return to normal. The on-call engineer monitors the rollback. After rollback is confirmed successful, a blameless post-mortem must be scheduled within 24 hours, and the incident is documented in the change tracker. The team should not attempt a fix-forward in this scenario given the severity.",
+  "supporting_doc_ids": [
+   "production-deployment-runbook",
+   "incident-response-runbook",
+   "on-call-escalation-policy"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "identifies Sev-2 classification",
+   "describes rollback execution",
+   "mentions health check verification",
+   "states post-mortem timeline",
+   "references incident documentation"
+  ]
+ },
+ {
+  "id": "gold-001",
+  "question": "A sales rep wants to offer a 20% discount to a mid-market customer during negotiation. According to Northwind Cloud policy, what approval is required and who must sign off?",
+  "expected_answer": "A 20% discount exceeds the 15% self-service threshold and requires Deal Desk approval plus CFO sign-off. According to the Pricing & Discount Policy (section 3.2), discretionary discounts in the 16\u201325% range require approval from Deal Desk and CFO, with business justification required (e.g., competitive pressure or strategic value).",
+  "supporting_doc_ids": [
+   "cs-pricing-discount-policy",
+   "cs-deal-desk-approval"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Must cite both the Pricing & Discount Policy threshold table AND the Deal Desk approval workflow; simple lookup alone insufficient."
+ },
+ {
+  "id": "gold-002",
+  "question": "What is the maximum response time for a Sev-2 issue when a customer has Level 2 (Priority) support, and how does this tie to the Support Escalation Runbook?",
+  "expected_answer": "According to Support SLA & Tiers (section 2), Level 2 support has a 2-hour initial response for business hours and 2 hours overall for Sev-2. The Support Escalation Runbook (section 3.3) specifies that Level 2 customers with Sev-2 receive 2-hour response with VP Engineering engaged within 4 hours unless critical. If escalation occurs, VP Support assigns and notifies the customer within the response window.",
+  "supporting_doc_ids": [
+   "cs-support-sla-tiers",
+   "cs-support-escalation-runbook"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Requires understanding both SLA windows AND escalation responsibilities; mismatching tiers or response times is a failure."
+ },
+ {
+  "id": "gold-003",
+  "question": "An Enterprise customer experiences a major data loss incident. Walk through the refund eligibility, approval path, and what compensation they might receive.",
+  "expected_answer": "Per RMA & Refund Policy (section 3.1), data loss is eligible for refund. The approval path (section 3.2) requires VP Support + VP Engineering + CFO concurrence. Section 7 specifies: if Northwind is 100% at fault, the customer receives full month refund + 3 months service credit. A post-mortem investigation occurs (24\u201348 hours), and the refund decision is made within 5 business days. The customer is then notified (Customer Incident Communication Policy, section 4).",
+  "supporting_doc_ids": [
+   "cs-rma-refund-policy",
+   "cs-incident-communication"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Must trace refund criteria \u2192 approval workflow \u2192 amount calculation \u2192 incident communication flow; missing any step is incomplete."
+ },
+ {
+  "id": "gold-004",
+  "question": "A customer requests a refund 45 days after contract signature, citing unsuitability. Are they eligible for the 30-day satisfaction guarantee, and what alternative options are available?",
+  "expected_answer": "No, they are not eligible for the 30-day satisfaction guarantee (RMA & Refund Policy, section 2.1) because their request is 45 days after signature, outside the 30-day window. Post-30-day refunds (section 3.1) categorize this as 'product fit (poor adoption)' and state refunds are not eligible post-30-day window. Instead, CSM escalates to VP Customer Success to offer an expansion plan, additional training, or a temporary discount per the churn prevention strategy (section 9). If customer persists, escalate to retention playbook (Churn & Renewal Process, section 5).",
+  "supporting_doc_ids": [
+   "cs-rma-refund-policy",
+   "cs-churn-renewal"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Must distinguish 30-day vs. post-30-day refund criteria AND know the alternative resolution path (CSM escalation, not blanket refund)."
+ },
+ {
+  "id": "gold-005",
+  "question": "What are the four support tiers at Northwind Cloud, and which tier guarantees a 1-hour initial response for Sev-1 incidents?",
+  "expected_answer": "The four support tiers are: Level 4 (Email, included), Level 3 (Standard, +$500/mo), Level 2 (Priority, +$2K/mo), and Level 1 (Premium, +$5K/mo). Only Level 1 (Premium) guarantees a 1-hour initial response for all Sev-1 incidents (Support SLA & Tiers, section 2). Level 1 also provides 24/7/365 availability and a dedicated escalation hotline.",
+  "supporting_doc_ids": [
+   "cs-support-sla-tiers"
+  ],
+  "tier": "basic",
+  "failure_mode": "simple-lookup",
+  "criteria": "Direct table lookup; answer in Support SLA & Tiers section 2 clearly lists all four tiers and response times."
+ },
+ {
+  "id": "gold-006",
+  "question": "If a customer's NPS score drops from 8 (Passive) to 6 (Detractor) in consecutive quarters, what actions should the CSM take according to Northwind policy?",
+  "expected_answer": "Per NPS & Customer Feedback Process (section 4.1), when a Detractor (0\u20136 score) responds, VP Customer Success routes the survey response to CSM immediately. The CSM must schedule a call within 48 hours to understand the root cause. The CSM documents an action plan addressing the root cause (support SLA miss, feature gap, integration issue, pricing concern, or competitive threat) and escalates to VP Customer Success within 30 days if the account remains at-risk. VP Customer Success then assesses churn probability (Churn & Renewal Process, section 5) and develops retention strategy if high risk.",
+  "supporting_doc_ids": [
+   "cs-nps-feedback",
+   "cs-churn-renewal"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Must know Detractor escalation timeline (48h call) AND integration with churn assessment; process is bidirectional."
+ },
+ {
+  "id": "gold-007",
+  "question": "Is the Knowledge Base Standards document focused on support ticket resolution, product documentation, or both? Which team owns content for 'Troubleshooting' articles?",
+  "expected_answer": "The Knowledge Base Standards (doc_id: cs-knowledge-base-standards) covers both support and product documentation\u2014it's a unified platform where customer self-service articles reside. Troubleshooting articles are owned by the Support Manager (section 4.1, table: Ownership by Topic). The Knowledge Base serves as a bridge: support agents use KB to resolve tickets faster, and customers use KB for self-service. For any issue not covered by KB, support escalates to CSM or Engineering.",
+  "supporting_doc_ids": [
+   "cs-knowledge-base-standards"
+  ],
+  "tier": "basic",
+  "failure_mode": "paraphrase",
+  "criteria": "Requires understanding the dual role of KB (customer-facing + agent-facing) and identifying the correct owner role."
+ },
+ {
+  "id": "gold-008",
+  "question": "A prospect asks about status page transparency and incident communication timelines. Per policy, when is a Sev-2 incident posted to the status page, and what's the notification sequence for the customer?",
+  "expected_answer": "Per Status Page Policy (section 3.1), a Sev-2 incident is posted to the status page within 2 hours of diagnosis (severity triage takes up to 30 minutes). The notification sequence (per Customer Incident Communication Policy, section 2 and Status Page Policy, section 4) is: (1) status page update posted, (2) email sent to affected customers within 2 hours, (3) in-app banner displayed, (4) status updates every 30\u201360 minutes. The Support Manager is responsible for status page updates for Sev-2 (Status Page Policy, section 3.1, Responsibility table). Once the incident resolves, a final email is sent (Customer Incident Communication Policy, section 3.3).",
+  "supporting_doc_ids": [
+   "cs-status-page-policy",
+   "cs-incident-communication",
+   "cs-support-escalation-runbook"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Requires combining: Sev-2 definition \u2192 escalation timing \u2192 status page posting \u2192 customer notification channels \u2192 resolution closure. Missing any integration point is incomplete."
+ },
+ {
+  "id": "g-eng-001",
+  "question": "What are the six core microservices running in Northwind's production environment, and which cloud provider hosts the audit-service?",
+  "expected_answer": "The six core services are: api-gateway, data-connector, transformation-engine, insight-service, notification-service, and audit-service. The audit-service is deployed to Azure AKS cluster northwind-prod-audit, while the other five services run on AWS EKS cluster northwind-prod-east.",
+  "supporting_doc_ids": [
+   "eng-microservices-architecture-overview",
+   "eng-service-catalog"
+  ],
+  "tier": "intermediate",
+  "failure_mode": "multi-hop",
+  "criteria": "Answer must identify all six services and correctly specify Azure for audit-service with cluster name"
+ },
+ {
+  "id": "g-eng-002",
+  "question": "If a customer reports data loss in their PostgreSQL database and you suspect ransomware, what is the RTO target and what is the first action you must take according to the disaster recovery runbook?",
+  "expected_answer": "The RTO target is 2 hours (for complete database recovery from a 24-hour-old backup). The first action is to declare a Sev-1 incident and notify the executive team (CEO, VP Security, VP Engineering, CTO, General Counsel) immediately, then isolate the database by revoking all credentials and disconnecting application servers from the network to prevent spread.",
+  "supporting_doc_ids": [
+   "eng-disaster-recovery-backup-runbook",
+   "incident-response-runbook"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Must cite 2-hour RTO and identify isolation/notification as first steps; referencing incident-response-runbook for escalation shows understanding of incident severity"
+ },
+ {
+  "id": "g-eng-003",
+  "question": "Describe the complete code-to-production deployment workflow, including the staging validation window, and explain what blocks a merge to main during the pull request phase.",
+  "expected_answer": "The workflow is: (1) Feature branch created and pushed; (2) PR opened against main; (3) PR pipeline runs tests, linting, security scan; (4) 2 approvals required from Code Review Standards; (5) Merge to main; (6) Build and push Docker image to ECR; (7) Auto-deploy to staging (1-hour delay); (8) 8-hour staging validation window; (9) Manual deploy to production via GitHub Actions. A merge to main is blocked if: any CI check fails (tests, linting, security scan), fewer than 2 approvals received, or security vulnerabilities are HIGH/CRITICAL.",
+  "supporting_doc_ids": [
+   "eng-github-actions-ci-cd-pipeline",
+   "eng-code-review-standards",
+   "production-deployment-runbook"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Must describe full pipeline with staging window, blocking criteria, and reference both CI/CD and code review requirements"
+ },
+ {
+  "id": "g-eng-004",
+  "question": "What is the error budget for the api-gateway service in a 30-day month, and what actions must be taken if the error budget drops below 10%?",
+  "expected_answer": "The api-gateway has a 99.9% SLO, which means the monthly error budget is (1 - 0.999) \u00d7 43,200 minutes = 43.2 minutes. When the error budget drops below 10% (remaining < 4.32 minutes), the following actions must be taken: (1) Feature freeze activated (only critical hotfixes deployed), (2) Mandatory incident review within 4 hours, (3) Escalate to VP Engineering, (4) On-call team in standby, (5) Increase monitoring and alert sensitivity (no alert suppression), (6) Consider rollback of risky deployments from past 24 hours.",
+  "supporting_doc_ids": [
+   "eng-sre-error-budget-policy",
+   "eng-observability-monitoring-standards"
+  ],
+  "tier": "intermediate",
+  "failure_mode": "multi-hop",
+  "criteria": "Must correctly calculate error budget (43.2 minutes) and identify all red-zone actions including feature freeze and incident review"
+ },
+ {
+  "id": "g-eng-005",
+  "question": "What is the difference between a 'hotfix' branch deployment and a standard feature deployment in terms of code review approval requirements?",
+  "expected_answer": "A standard feature deployment requires 2 code review approvals before merging to main and deploying to staging. A hotfix deployment for Sev-1 or Sev-2 incidents allows 1 approval in a 15-minute expedited review window and can skip standard staging validation (see Git Branching & Release Strategy hotfix exception). However, a full code review must be completed within 24 hours after the hotfix is deployed to production. Hotfixes are tagged as a patch version (e.g., v1.4.2-hotfix or v1.4.3).",
+  "supporting_doc_ids": [
+   "eng-git-branching-release-strategy",
+   "eng-code-review-standards"
+  ],
+  "tier": "intermediate",
+  "failure_mode": "distractor",
+  "criteria": "Must distinguish expedited (1 approval, 15 min) from standard (2 approvals) and mention post-incident full review requirement"
+ },
+ {
+  "id": "g-eng-006",
+  "question": "You are performing a database migration adding a new nullable column to the customers table. According to the database change management policy, is this a zero-downtime change, and what validation steps are required in staging?",
+  "expected_answer": "Yes, adding a nullable column is classified as a zero-downtime change (low complexity). It can be applied during regular deployment. Staging validation required: (1) DBA verifies schema is correct using psql (\\d+ customers), (2) Verify indexes present if added, (3) Verify constraints are working, (4) Application team runs integration tests against new schema, (5) Query performance acceptable compared to before, (6) DBA sign-off in PR or Jira. The application must handle both old and new schema during rollout (graceful degradation if new column not provided).",
+  "supporting_doc_ids": [
+   "eng-database-change-management",
+   "production-deployment-runbook"
+  ],
+  "tier": "intermediate",
+  "failure_mode": "multi-hop",
+  "criteria": "Must confirm zero-downtime, identify DBA validation steps, and explain backward-compatibility requirement"
+ },
+ {
+  "id": "g-eng-007",
+  "question": "What encryption and security mechanisms are used for Kubernetes secrets in production, and how are they rotated annually according to the Secrets Management Standard?",
+  "expected_answer": "Kubernetes secrets are encrypted using Sealed Secrets (bitnami.com/v1alpha1 SealedSecret). In git, secrets are stored as encrypted YAML (AgBv...ENCRYPTED_VALUE...). At runtime, the SealedSecret controller decrypts them for pod mounting as environment variables. Additionally, AWS Secrets Manager and Azure Key Vault provide separate encryption with KMS keys. Annual rotation follows this procedure: (1) Generate new secret from provider, (2) Update Kubernetes Secret or sealed secret, (3) Trigger pod restart via 'kubectl rollout restart', (4) Pods pick up new secret automatically, (5) Archive old secret in password manager, (6) Never in logs. Post-rotation, connectivity must be verified.",
+  "supporting_doc_ids": [
+   "eng-secrets-management-standard",
+   "eng-container-kubernetes-standards"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Must mention Sealed Secrets, KMS encryption, and describe the rotation procedure with pod restart mechanism"
+ },
+ {
+  "id": "g-eng-008",
+  "question": "What is an ADR, when should one be written, and what is the approval process before an ADR can be merged into the infrastructure repository?",
+  "expected_answer": "An ADR (Architecture Decision Record) documents significant architectural or technical decisions using the Nygard template. An ADR should be written for decisions that affect multiple services, system behavior/performance, long-term maintenance, security/compliance, or development velocity. The approval process is: (1) Author drafts ADR; (2) If uncertain, conduct brief technical investigation; (3) Share in #engineering Slack for informal review and feedback; (4) Open PR against adr/ folder in infrastructure repo; (5) VP Engineering approval required before merge; (6) Team implements and references ADR in related PRs; (7) Follow-up updates if implementation reveals new information. An ADR tracks status (Proposed, Accepted, Superseded, Deprecated, Rejected) and includes Context, Decision, Rationale, Consequences, Alternatives, Implementation Plan, and Related ADRs.",
+  "supporting_doc_ids": [
+   "eng-adr-architecture-decision-record-process"
+  ],
+  "tier": "intermediate",
+  "failure_mode": "simple-lookup",
+  "criteria": "Must define ADR, provide examples of when to write, and detail the complete approval workflow including VP Engineering sign-off"
+ },
+ {
+  "id": "fin-gold-001",
+  "question": "What is the itemized receipt requirement for meal expenses over $75?",
+  "expected_answer": "Expenses over $75 require an itemized receipt that shows individual line items (e.g., meal items or component costs). A credit card statement alone is insufficient for expenses over $75.",
+  "supporting_doc_ids": [
+   "fin-expense-reimbursement-policy",
+   "fin-per-diem-meals-policy"
+  ],
+  "tier": "retrieval",
+  "failure_mode": "simple-lookup",
+  "criteria": "Must state $75 threshold and define 'itemized' (individual line items, not just total)"
+ },
+ {
+  "id": "fin-gold-002",
+  "question": "A manager wants to approve a $50,000 software purchase for the engineering department. What approval chain is required, and are competitive quotes needed?",
+  "expected_answer": "According to the Purchase Approval Matrix, a $50,000 purchase requires VP (Department) approval plus CFO approval. According to Procurement Thresholds & Competitive Bidding, purchases in the $25,000-$99,999 range require 3 competitive quotes.",
+  "supporting_doc_ids": [
+   "fin-purchase-approval-matrix",
+   "fin-procurement-thresholds-competitive-bidding"
+  ],
+  "tier": "multi-hop",
+  "failure_mode": "multi-hop",
+  "criteria": "Must identify both approval chain (VP + CFO) AND quote requirement (3 quotes) from two separate docs"
+ },
+ {
+  "id": "fin-gold-003",
+  "question": "What is the difference between an employee and an independent contractor for tax and benefits purposes?",
+  "expected_answer": "Employees receive company benefits (health insurance, PTO, 401k), paid taxes are withheld by company, and have indefinite employment. Contractors are self-employed, pay self-employment taxes, receive no benefits, and work on project basis. The key distinction is control: company controls how an employee works; contractor controls their own work methods.",
+  "supporting_doc_ids": [
+   "fin-contractor-consultant-payment"
+  ],
+  "tier": "retrieval",
+  "failure_mode": "simple-lookup",
+  "criteria": "Must explain benefits difference, tax difference, and control distinction"
+ },
+ {
+  "id": "fin-gold-004",
+  "question": "If a contractor invoices $600 in January, $400 in February, and $300 in March of the same year, does Northwind need to issue a 1099-NEC form?",
+  "expected_answer": "No, 1099-NEC is required only if the contractor is paid \u2265$600 in a calendar year. This contractor has a total of $1,300 for the year (all three months combined), so a 1099-NEC is required. However, the specific scenario asked requires monitoring the full calendar year; if no additional invoices beyond March, the annual total is $1,300, which meets the $600 threshold and requires 1099 reporting.",
+  "supporting_doc_ids": [
+   "fin-contractor-consultant-payment"
+  ],
+  "tier": "retrieval",
+  "failure_mode": "paraphrase",
+  "criteria": "Must state $600 annual threshold and clarify that all months in calendar year are summed"
+ },
+ {
+  "id": "fin-gold-005",
+  "question": "A department head requests $300,000 for a new data center infrastructure project. Walk through the complete approval and procurement process required by Northwind policy.",
+  "expected_answer": "According to the Purchase Approval Matrix, purchases over $250,000 require Board of Directors approval. According to Capital Expenditure Policy, this qualifies as CapEx (long-lived asset, >$5,000). The process includes: (1) Submit CapEx proposal with business justification, cost estimate, vendor analysis (per Procurement Thresholds), and ROI analysis; (2) Finance reviews capitalization and useful life; (3) Approvals proceed to CFO, CEO, then Board; (4) According to Procurement Thresholds, a formal RFP with 3+ quotes is required; (5) Vendor evaluation, negotiation, and Board approval; (6) Asset registration and depreciation tracking per Capital Expenditure Policy.",
+  "supporting_doc_ids": [
+   "fin-purchase-approval-matrix",
+   "fin-capital-expenditure-policy",
+   "fin-procurement-thresholds-competitive-bidding"
+  ],
+  "tier": "multi-hop",
+  "failure_mode": "multi-hop",
+  "criteria": "Must trace approval chain through three docs, mention CapEx classification, RFP requirement, and asset registration"
+ },
+ {
+  "id": "fin-gold-006",
+  "question": "What are the approval requirements for a corporate credit card, and what is the monthly limit for a VP?",
+  "expected_answer": "According to Corporate Card Policy section 2.1, applicants need manager approval, Finance approves after background check (CFO or Finance Manager), and card is issued within 7-10 days. Section 2.2 specifies that VPs have a monthly limit of $15,000 and a single transaction maximum of $7,500.",
+  "supporting_doc_ids": [
+   "fin-corporate-card-policy"
+  ],
+  "tier": "retrieval",
+  "failure_mode": "simple-lookup",
+  "criteria": "Must state approval process (manager + Finance/CFO) and specific VP limits ($15,000 monthly, $7,500 per transaction)"
+ },
+ {
+  "id": "fin-gold-007",
+  "question": "A traveling employee submits a meal expense for $120 (breakfast $15, lunch $28, dinner $77) from a business trip. Are itemized receipts required for all meals, and is the total reimbursable under the daily cap?",
+  "expected_answer": "According to Per Diem & Meals Policy, the daily meal cap is $85 across all meals. The dinner ($77) is under the individual limit of $50, but when combined with breakfast and lunch, the daily total is $120, which exceeds the $85 daily cap. The employee can only claim up to $85. For itemized receipts: dinner is $77 (under $75 threshold, no receipt strictly required but preferred); breakfast and lunch are under $75 each. However, the total trip meal expense exceeds cap, so reimbursement is limited to $85.",
+  "supporting_doc_ids": [
+   "fin-per-diem-meals-policy"
+  ],
+  "tier": "retrieval",
+  "failure_mode": "paraphrase",
+  "criteria": "Must identify $85 daily cap, confirm reimbursement limited to $85, and address receipt requirement accuracy"
+ },
+ {
+  "id": "fin-gold-008",
+  "question": "Explain the segregation of duties (SoD) principle using the purchasing cycle example, and identify why having the AP clerk both process payments and reconcile the bank statement is a control violation.",
+  "expected_answer": "Segregation of duties requires that no single person initiates, approves, executes, and records a transaction. In the purchasing cycle, the department manager initiates the request, a VP/manager approves it, the procurement team executes (issues PO), Finance verifies the invoice (records), and AP clerk processes payment. Having the AP clerk both process payments and reconcile the bank statement violates SoD because the clerk could hide unauthorized payments, duplicate payments, or errors in their own reconciliation. The bank reconciliation must be performed by someone independent of payment processing (e.g., Controller or Senior Accountant who does not approve payments). This independent verification detects errors or fraud by the payment processor.",
+  "supporting_doc_ids": [
+   "fin-financial-controls-segregation-of-duties",
+   "fin-invoice-processing-accounts-payable"
+  ],
+  "tier": "multi-hop",
+  "failure_mode": "multi-hop",
+  "criteria": "Must explain SoD principle, apply to purchasing cycle, identify the violation (AP clerk + reconciliation), and explain why independent reconciliation is required"
+ },
+ {
+  "id": "hr-golden-001",
+  "question": "If an employee is placed on a Performance Improvement Plan, what documents should they review to understand their rights during the process, including escalation options if they believe the process is unfair?",
+  "expected_answer": "An employee on a PIP should review: (1) Performance Review & Feedback Process, section 5, which describes the PIP process, timeline, and criteria; (2) Grievance Procedure & Dispute Resolution, which outlines how to challenge a PIP or request appeal if process is unfair; (3) Anti-Harassment & Non-Discrimination Policy if discrimination is suspected. The Grievance Procedure specifically allows appeals within 10 business days if new evidence is discovered or process is materially unfair.",
+  "supporting_doc_ids": [
+   "hr-performance-review-process",
+   "hr-grievance-procedure",
+   "hr-anti-harassment-non-discrimination"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Must identify at least 3 docs and explain how PIP, grievance, and anti-discrimination policies work together"
+ },
+ {
+  "id": "hr-golden-002",
+  "question": "What is the current paid parental leave duration at Northwind, and what was it before May 2026?",
+  "expected_answer": "Current policy (active as of May 1, 2026): 16 weeks paid parental leave. Prior policy (superseded, effective June 2024\u2013April 2026): 8 weeks paid parental leave. The Parental Leave Policy (Active) section 2.2 and the comparative table (section 10) explicitly note this change.",
+  "supporting_doc_ids": [
+   "hr-parental-leave-active",
+   "hr-parental-leave-superseded"
+  ],
+  "tier": "advanced",
+  "failure_mode": "recency-conflict",
+  "criteria": "Must state current (16 weeks) vs. prior (8 weeks) and identify effective dates; confusion between policies fails the case"
+ },
+ {
+  "id": "hr-golden-003",
+  "question": "An engineering employee wants to attend an AWS conference ($1,500) and pursue a CPA certification bootcamp ($3,500). From which budgets will these be covered, and what is the total amount the company will fund?",
+  "expected_answer": "AWS conference ($1,500) is covered from the Learning & Development annual budget ($2,500 for Engineering). CPA certification is a professional certification and the exam fee is covered from L&D budget (Tuition Reimbursement has a separate $5,000/year cap for degree programs; CPA is a certification, not a degree). If the bootcamp cost ($3,500) exceeds the remaining L&D budget, the employee may need to cover the difference or use PTO time to offset. Total company-funded: up to $2,500 from L&D budget (or the full $5,000 if CPA is treated as professional certification covered fully + conference comes from remaining L&D). See Learning & Development Policy sections 2, 3, and 4 for budget allocation and certification priorities.",
+  "supporting_doc_ids": [
+   "hr-learning-development-policy"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Must correctly identify both budget sources, annual caps, and explain how conference and certification budgets interact (or are separate)"
+ },
+ {
+  "id": "hr-golden-004",
+  "question": "If an employee experiences harassment in the workplace, what are the formal reporting channels, and what is the expected investigation timeline?",
+  "expected_answer": "Reporting channels: Direct manager (low confidentiality), People Operations (people@northwind.tech, medium), General Counsel (legal@northwind.tech, medium-high), or Ethics Hotline (third-party, high/anonymous option). Investigation timeline: Investigation is initiated within 5 business days of report, interviews are completed within 5\u20137 business days, findings are delivered within 15 business days of grievance filing. See Anti-Harassment & Non-Discrimination Policy, section 4, and Grievance Procedure, section 4.",
+  "supporting_doc_ids": [
+   "hr-anti-harassment-non-discrimination",
+   "hr-grievance-procedure"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Must identify all reporting channels with confidentiality levels and the investigation timeline; incomplete list fails"
+ },
+ {
+  "id": "hr-golden-005",
+  "question": "What does MFA stand for, and which authentication methods are approved for VPN access at Northwind?",
+  "expected_answer": "MFA stands for Multi-Factor Authentication. Approved methods for VPN access are: (1) TOTP authenticator app (preferred), (2) hardware security key, (3) SMS (fallback only). This is stated in the COMPANY_BIBLE.md as an anchor fact: 'MFA is mandatory for all VPN access.' The Onboarding Day-1 mandatory training includes MFA enrollment, which gates VPN access.",
+  "supporting_doc_ids": [
+   "hr-code-of-conduct"
+  ],
+  "tier": "basic",
+  "failure_mode": "acronym",
+  "criteria": "Must define MFA and list all three approved methods in the correct priority order (TOTP preferred)"
+ },
+ {
+  "id": "hr-golden-006",
+  "question": "An employee is terminated without cause due to a reduction in force. What severance package does an employee with 4 years of tenure receive?",
+  "expected_answer": "An employee with 4 years of tenure falls in the '3\u20135 years' category and receives: 8 weeks base severance, 50% of target bonus, and 3 months of COBRA benefits continuation plus placement services. See Termination & Offboarding Procedure, section 4, table.",
+  "supporting_doc_ids": [
+   "hr-termination-offboarding-procedure"
+  ],
+  "tier": "basic",
+  "failure_mode": "simple-lookup",
+  "criteria": "Must correctly identify the 3\u20135 years tenure bracket and list all three components (severance weeks, bonus %, COBRA months)"
+ },
+ {
+  "id": "hr-golden-007",
+  "question": "An employee reports discrimination based on gender during the hiring process. What documents outline their rights during investigation, and what is the difference between 'Substantiated' and 'Unsubstantiated' findings?",
+  "expected_answer": "Rights during investigation: Anti-Harassment & Non-Discrimination Policy (section 4, investigation process) and Grievance Procedure (sections 3\u20135, formal escalation and investigation). Key difference: 'Substantiated' means alleged conduct did occur and violates policy, leading to remedies (respondent discipline, adjustment, counseling); 'Unsubstantiated' means insufficient evidence, no action against respondent but grievant may be offered support (counseling, mediation, team transfer). See Grievance Procedure, section 5.1.",
+  "supporting_doc_ids": [
+   "hr-anti-harassment-non-discrimination",
+   "hr-grievance-procedure"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Must identify both docs, explain investigation rights, and correctly distinguish substantiated vs. unsubstantiated outcomes"
+ },
+ {
+  "id": "hr-golden-008",
+  "question": "What is the difference between a 'Lateral move' and a 'Promotion' in terms of salary treatment at Northwind?",
+  "expected_answer": "A Promotion is evaluated during annual review or ad-hoc; new salary band and specific offer are determined by hiring manager and HR, typically including a 10\u201320% salary increase. A Lateral move (same level, different function) does not automatically trigger salary increases; changes are evaluated case-by-case. See Compensation Philosophy, section 4.",
+  "supporting_doc_ids": [
+   "hr-compensation-philosophy"
+  ],
+  "tier": "basic",
+  "failure_mode": "paraphrase",
+  "criteria": "Must correctly distinguish lateral moves (no automatic raise) from promotions (typical 10\u201320% increase); reversed logic fails"
+ },
+ {
+  "id": "q1-endpoint-encryption-travel",
+  "question": "An employee traveling to a customer site with a laptop containing customer data (classified as Confidential) needs to access the corporate network from a hotel. What security controls are mandatory?",
+  "expected_answer": "The device must have full disk encryption enabled (BitLocker for Windows or FileVault for macOS). When accessing corporate systems from a hotel network, the employee must use VPN with mandatory MFA (TOTP preferred, SMS fallback only). The VPN must use full-tunnel mode (no split tunneling) to ensure all traffic is encrypted through the corporate gateway. MFA methods: TOTP via authenticator app, hardware security key, or SMS as last resort. See Endpoint Security Standard section 6.1, Remote Access & VPN Guide, and VPN Client Standard section 3.",
+  "supporting_doc_ids": [
+   "itsec-endpoint-security-standard",
+   "remote-access-vpn-guide",
+   "itsec-vpn-client-standard"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "mentions device encryption (BitLocker/FileVault)",
+   "requires VPN from non-corporate network",
+   "mentions full-tunnel mode required",
+   "lists MFA methods with TOTP preferred"
+  ]
+ },
+ {
+  "id": "q2-vpn-recency-split-tunneling",
+  "question": "Under Northwind's current VPN policy (as of June 2026), is split tunneling permitted?",
+  "expected_answer": "No. As of 2026-05-01, split tunneling is NOT permitted. All VPN traffic must route through the Northwind tunnel in full-tunnel mode. This is a mandatory change from the legacy policy (in effect until 2026-04-30) which allowed split tunneling. Under the legacy policy, users could route personal internet traffic directly through their local ISP while routing corporate traffic through the VPN. The new policy requires all traffic\u2014corporate and personal\u2014to route through the corporate VPN gateway. This change was made for compliance reasons: NIST 800-46, PCI DSS 4.1, and GDPR Article 32 require encryption of all data in transit. See VPN Client Standard section 3.1 and VPN Client Standard (Legacy) section 2.2 for the policy history.",
+  "supporting_doc_ids": [
+   "itsec-vpn-client-standard",
+   "itsec-vpn-client-standard-legacy"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "recency-conflict",
+  "criteria": [
+   "identifies full-tunnel as current mandatory policy",
+   "distinguishes new policy from legacy split-tunnel allowance",
+   "mentions 2026-05-01 effective date",
+   "explains compliance rationale for change"
+  ]
+ },
+ {
+  "id": "q3-mdm-byod-compliance",
+  "question": "A developer wants to use their personal laptop for work, accessing Slack, email, and occasionally browsing code repositories. What MDM enrollment and compliance checks are required?",
+  "expected_answer": "The device must be enrolled in Mobile Device Management (MDM). For personal devices (BYOD), the employee must download and install the MDM agent (Jamf Pro for macOS/iOS, Intune for Windows, Google Workspace MDM for Android). The device must pass mandatory posture checks: firewall enabled, antivirus engine active with current signatures, full disk encryption enabled (BitLocker or FileVault), and OS patched within 14 days. No overrides are permitted\u2014if a posture check fails, VPN access is denied until remediation completed (see Endpoint Security Standard section 5.3, Mobile Device Management section 5.1). The employee signs a BYOD agreement acknowledging that corporate data can be remotely wiped if the device is lost and that IT will manage device settings (but not personal data). After enrollment, the device is granted access to corporate apps via Okta SSO.",
+  "supporting_doc_ids": [
+   "itsec-mobile-device-management",
+   "itsec-endpoint-security-standard"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "names MDM solution",
+   "lists all mandatory posture checks",
+   "states no overrides permitted",
+   "mentions BYOD agreement and data wipe consent"
+  ]
+ },
+ {
+  "id": "q4-phishing-simulation-failure-escalation",
+  "question": "An employee fails a phishing simulation by clicking a malicious link in a simulated phishing email. This is their second failure within 12 months. What actions are required?",
+  "expected_answer": "On the first failure, the employee is immediately redirected to a 15-minute anti-phishing training module and must retake the phishing awareness test with a minimum 80% passing score (per Security Awareness Program section 4.3.3). On a second failure within 12 months, the incident is escalated to HR. The employee must complete an additional 30-minute training session with their manager present and is placed on a performance plan. If a third failure occurs within 12 months (rare), disciplinary action escalates per the Information Security Policy enforcement section: written warning, access suspension, or termination. The goal is remedial education, not punishment, but repeated security lapses indicate a training gap that must be addressed.",
+  "supporting_doc_ids": [
+   "itsec-security-awareness-program",
+   "information-security-policy"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "mentions immediate 15-minute training on first failure",
+   "lists 30-minute manager session on second failure",
+   "references escalation to disciplinary action",
+   "connects to Information Security Policy enforcement"
+  ]
+ },
+ {
+  "id": "q5-distractor-mdm-vs-posture",
+  "question": "What is the difference between Mobile Device Management (MDM) and device posture checking at Northwind?",
+  "expected_answer": "MDM (Mobile Device Management) is a platform (Jamf, Intune) that manages device enrollment, configuration, and remote wipe capabilities. It tracks device inventory (serial numbers, OS versions, owner), deploys security settings (WiFi profiles, VPN configurations), and enables remote actions (lock, wipe, force password reset). Posture checking is a specific security control within MDM that verifies devices meet compliance requirements BEFORE granting access. Posture checks include: firewall enabled, antivirus active, OS patches current, disk encryption enabled. If a device fails posture check, it is denied VPN/network access until remediation. MDM is the broader management platform; posture checking is one enforced control within that platform. See Mobile Device Management and Endpoint Security Standard sections 5 for details. (Note: This contrasts with Virtual Private Network (VPN) client configuration, which is a separate tool for encrypted remote access tunneling.)",
+  "supporting_doc_ids": [
+   "itsec-mobile-device-management",
+   "itsec-endpoint-security-standard"
+  ],
+  "tier": "base",
+  "failure_mode": "distractor",
+  "criteria": [
+   "distinguishes MDM platform from posture checking",
+   "explains MDM inventory/config/remote-wipe functions",
+   "explains posture check (verify before access)",
+   "clarifies they are related but distinct concepts"
+  ]
+ },
+ {
+  "id": "q6-acronym-itsec-full-definitions",
+  "question": "What do the acronyms SIEM, DLP, and RTO stand for at Northwind, and what are their roles in security monitoring and incident response?",
+  "expected_answer": "SIEM stands for Security Information and Event Management. Northwind uses Splunk as the primary SIEM (with Datadog as secondary for real-time alerts). SIEM aggregates logs from all sources (VPN, firewalls, DNS, endpoints, applications) into a centralized system where security analysts search for threats and incidents. DLP stands for Data Loss Prevention. Northwind deploys DLP at the endpoint and network level to monitor and block exfiltration of Confidential and Restricted data (e.g., prevent uploading customer data to Dropbox; block credit card numbers in email). RTO stands for Recovery Time Objective. It is the target time to restore a system after an incident. For Sev-1 incidents, RTO is 4 hours; for Sev-2, RTO is 8 hours (per Incident Response Runbook). All three (SIEM, DLP, RTO) are critical components of Northwind's security monitoring and incident response strategy (see Security Logging & SIEM, Email & Phishing Defense, and Incident Response Runbook).",
+  "supporting_doc_ids": [
+   "itsec-security-logging-siem",
+   "itsec-email-phishing-defense",
+   "incident-response-runbook"
+  ],
+  "tier": "base",
+  "failure_mode": "acronym",
+  "criteria": [
+   "expands SIEM correctly",
+   "names Splunk as primary SIEM",
+   "expands DLP correctly",
+   "expands RTO correctly",
+   "explains roles in monitoring and incident response"
+  ]
+ },
+ {
+  "id": "q7-patch-deployment-vulnerability-chain",
+  "question": "A critical vulnerability (CVSS 9.5) is discovered in a widely deployed library used by Northwind's production systems. Walk through the complete process from vulnerability discovery through deployment of the patch, including testing and rollback plans.",
+  "expected_answer": "Step 1 \u2013 Detection: Vulnerability discovered via Snyk (dependency scanner) or Qualys (infrastructure scanner) and assigned CVSS 9.5 (Critical). Step 2 \u2013 Assessment: Vulnerability Management team assesses impact (which systems affected) and determines patch availability. Step 3 \u2013 SLA: Critical patches have 24-hour SLA for server deployment (per Patch Management Policy section 2.1). Step 4 \u2013 Testing: Patch tested in dev environment (smoke tests pass), then in staging environment (full regression testing, no performance degradation, 24+ hours baseline). Step 5 \u2013 Change Request: Change request submitted with rollback plan (how to revert if patch fails). Step 6 \u2013 CAB Approval: For critical patches, VP Security may approve without full CAB review (emergency override per Firewall Change Management). Step 7 \u2013 Deployment: Deployed during standard change window (2nd Tuesday 10 PM\u20132 AM PT) or outside window if emergency. Step 8 \u2013 Monitoring: Error rate and system health monitored for 4 hours post-deployment. Step 9 \u2013 Rollback (if needed): If error rate increases >2% within 30 minutes, rollback automatically or manually executed (per Patch Management Policy section 6). Step 10 \u2013 Post-deployment: If issue found, root cause analysis conducted; patch redeployed after fix. All steps logged in change management system with audit trail.",
+  "supporting_doc_ids": [
+   "itsec-vulnerability-management",
+   "itsec-patch-management-policy",
+   "itsec-firewall-change-management"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "identifies CVSS 9.5 as Critical with 24-hour SLA",
+   "describes dev/staging testing sequence",
+   "mentions change request with rollback plan",
+   "describes emergency approval and monitoring procedures",
+   "includes rollback trigger and post-incident analysis"
+  ]
+ },
+ {
+  "id": "q8-encryption-key-rotation-compliance",
+  "question": "Explain Northwind's encryption key rotation policy for database encryption keys (DEKs) and why these rotations are critical for GDPR and SOC 2 compliance.",
+  "expected_answer": "Database Encryption Keys (DEKs) are rotated annually (scheduled in January per Encryption Standard section 4.2). The master key is held in a Hardware Security Module (HSM) and is never exposed to applications. When a key is rotated, the application uses the new key for all newly encrypted data, while the old key is retained for decryption of existing data. If a key is compromised (suspected breach), rotation happens immediately within 2 hours to prevent further data exposure. Key rotation is critical for GDPR (Article 32 requires encryption and key management controls) and SOC 2 (auditors verify key lifecycle and rotation practices). The HSM access is controlled by 3 people with MFA (smart card + PIN), and all access is logged for 7 years (per Encryption Standard sections 4.2\u20134.3). Backup keys are split into 3 shares via Shamir secret sharing (requires all 3 to reconstruct). This design ensures that no single person can compromise keys and meets regulatory requirements for encryption key security. Additionally, encryption strength is validated annually via penetration testing against NIST SP 800-175B standards (per Encryption Standard section 8.1).",
+  "supporting_doc_ids": [
+   "itsec-encryption-standard",
+   "information-security-policy"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "states annual key rotation in January",
+   "distinguishes DEK from master key",
+   "explains HSM custody with 3-person access control",
+   "connects to GDPR Article 32 and SOC 2 compliance",
+   "mentions emergency rotation procedures",
+   "explains Shamir secret sharing for backup keys"
+  ]
+ },
+ {
+  "id": "legal-golden-001",
+  "question": "What are the three main categories of liability limits for different contract scenarios at Northwind, and which scenarios have uncapped liability?",
+  "expected_answer": "The three categories are: (1) Capped liability for service failures and uptime SLA breaches, limited to 12-month fees or $100K (whichever is greater); (2) Uncapped liability for data breaches and unauthorized access, where the vendor indemnifies Northwind; and (3) Uncapped liability for IP infringement (vendor code), where the vendor assumes full defense. Data breaches and IP infringement claims have no liability caps due to their severity and potential for significant harm.",
+  "supporting_doc_ids": [
+   "legal-msa-standard",
+   "legal-contract-approval-policy"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Answer must correctly identify the three categories and explain which have uncapped liability with rationale."
+ },
+ {
+  "id": "legal-golden-002",
+  "question": "What is the key difference between Northwind's current GPL policy and its legacy policy, and when did this change take effect?",
+  "expected_answer": "The legacy policy (2024-03-01) permitted GPL and AGPL libraries to be used in distributed Northwind Cloud products with minimal restriction. The current policy (effective 2026-06-09) prohibits GPL v2/v3 integration into distributed customer-facing code without explicit architectural isolation. GPL remains acceptable for internal tools, development dependencies, and isolated containerized services. This represents a stricter copyleft compliance approach to avoid GPL propagation risks.",
+  "supporting_doc_ids": [
+   "legal-open-source-software-use-policy-current",
+   "legal-open-source-software-use-policy-legacy"
+  ],
+  "tier": "advanced",
+  "failure_mode": "recency-conflict",
+  "criteria": "Answer must cite both policies, highlight the architectural isolation requirement as the key change, and provide the correct effective dates."
+ },
+ {
+  "id": "legal-golden-003",
+  "question": "If an employee is involved in a vendor selection process and discovers their brother owns the vendor company, what are the three steps they should take according to Northwind policy?",
+  "expected_answer": "The three steps are: (1) Disclose the financial interest in the vendor to Procurement and General Counsel; (2) Recuse themselves from RFP evaluation, vendor selection, and approval decisions; and (3) Allow a different manager to coordinate the vendor selection without their involvement. If the vendor is selected despite the conflict, the related-party transaction must be noted and requires Board approval if the annual value exceeds $100K.",
+  "supporting_doc_ids": [
+   "legal-conflict-of-interest-policy",
+   "legal-contract-approval-policy"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Answer must identify all three steps (disclosure, recusal, escalation) and mention the Board approval threshold for related-party transactions."
+ },
+ {
+  "id": "legal-golden-004",
+  "question": "What immediate actions must IT Security take when a litigation hold notice is issued, and what is the compliance deadline?",
+  "expected_answer": "IT Security must: (1) suspend email auto-deletion policies for affected custodians; (2) disable cloud storage lifecycle policies (S3 expiration, OneDrive auto-purge); (3) document the hold with backup system administrators; and (4) confirm all backups are preserved and not overwritten. IT must provide a list of all systems affected to Legal for audit. The compliance deadline is within 3 business days of the hold notice.",
+  "supporting_doc_ids": [
+   "legal-litigation-hold-procedure"
+  ],
+  "tier": "intermediate",
+  "failure_mode": "simple-lookup",
+  "criteria": "Answer must list all four IT actions and cite the 3 business day deadline."
+ },
+ {
+  "id": "legal-golden-005",
+  "question": "Under Northwind's NDA policy, what are the five primary exceptions to confidentiality obligations, and which exception requires advance notice to the disclosing party?",
+  "expected_answer": "The five exceptions are: (1) Legally required disclosure (with 10-day advance notice to seek protective order); (2) Disclosure to employees with need-to-know under written confidentiality obligations; (3) Disclosure to contractors and advisors under written obligations; (4) Publicly available information through no breach of the NDA; and (5) Information independently developed without reference to Confidential Information. The legally required disclosure exception is the only one requiring 10-day advance notice to allow the disclosing party to seek a protective order.",
+  "supporting_doc_ids": [
+   "legal-nda-policy"
+  ],
+  "tier": "intermediate",
+  "failure_mode": "simple-lookup",
+  "criteria": "Answer must list all five exceptions and correctly identify which requires advance notice."
+ },
+ {
+  "id": "legal-golden-006",
+  "question": "What is the annual timeline for Northwind's compliance audits across GDPR, CCPA/CPRA, SOC 2, and wage & hour audits, and which audit has the highest frequency?",
+  "expected_answer": "GDPR audit occurs annually (last: 2025-11-15, next: 2026-11-15); CCPA/CPRA audit occurs annually (last: 2025-09-30, next: 2026-09-30); SOC 2 Type II is one-time with annual attestation thereafter (target completion: 2026-09-30); and wage & hour compliance is biennial (last: 2025-10-01, next: 2026-10-01). GDPR and CCPA/CPRA have the highest frequency at annual audits. Additionally, vendor risk audits occur on a rolling 5-year cycle with approximately 10 vendors audited per year.",
+  "supporting_doc_ids": [
+   "legal-regulatory-compliance-register"
+  ],
+  "tier": "intermediate",
+  "failure_mode": "simple-lookup",
+  "criteria": "Answer must provide accurate audit dates for all four compliance frameworks and identify GDPR/CCPA as having the highest frequency (annual)."
+ },
+ {
+  "id": "legal-golden-007",
+  "question": "What are the consequences for an employee who fails to disclose a material conflict of interest, and what is the process for escalating such violations to Board oversight?",
+  "expected_answer": "Consequences for failure to disclose a conflict include: disciplinary action ranging from documented warning (minor, non-intentional) to suspension with legal review (intentional or repeated violations) to immediate termination (material or criminal violations). For violations involving officers or material conflicts, escalation occurs to the CEO (for employee-level conflicts), Board Compensation Committee (for officer-level conflicts), or full Board (for Board member conflicts). The Board receives quarterly reports of material conflicts, and related-party transactions over $100K require Board approval. Additionally, annual Board Audit Committee review confirms officer-level conflict disclosures.",
+  "supporting_doc_ids": [
+   "legal-conflict-of-interest-policy",
+   "legal-regulatory-compliance-register"
+  ],
+  "tier": "advanced",
+  "failure_mode": "multi-hop",
+  "criteria": "Answer must describe both disciplinary consequences and the escalation pathway to Board oversight, including the $100K transaction threshold."
+ },
+ {
+  "id": "ops-golden-001",
+  "question": "If a Sev-1 incident occurs affecting customer data, what is the RTO and who must be notified immediately?",
+  "expected_answer": "RTO is 4 hours. The CEO, VP Security, VP Engineering, General Counsel, Chief Privacy Officer, and Board of Directors must be notified immediately (within 30 minutes).",
+  "supporting_doc_ids": [
+   "ops-business-continuity-plan",
+   "ops-crisis-management-plan"
+  ],
+  "tier": "multi-hop",
+  "failure_mode": "multi-hop",
+  "criteria": "Requires combining BCP (Tier-1 RTO/RPO) with Crisis Management Plan (Core Team notification). Simple lookup alone misses one dimension."
+ },
+ {
+  "id": "ops-golden-002",
+  "question": "What are the differences between a Business Continuity Plan and an Emergency Response Plan, and when would you use each?",
+  "expected_answer": "BCP focuses on business function recovery with RTO/RPO targets and infrastructure redundancy (cloud failover, backups). ERP focuses on immediate physical safety at facilities (evacuation, medical emergencies, lockdown). BCP is for business continuity (IT/infrastructure focus); ERP is for facility-level emergencies (safety focus). Both complement Crisis Management Plan for governance.",
+  "supporting_doc_ids": [
+   "ops-business-continuity-plan",
+   "ops-emergency-response-plan",
+   "ops-crisis-management-plan"
+  ],
+  "tier": "multi-hop",
+  "failure_mode": "distractor",
+  "criteria": "Distinguishes three overlapping crisis-response docs. Naive retriever may confuse BCP with ERP. Requires understanding nuanced scope differences."
+ },
+ {
+  "id": "ops-golden-003",
+  "question": "An employee discovers a data breach affecting 100 customer records. Describe the escalation path and timeline for notification.",
+  "expected_answer": "Employee reports to VP Security or Security hotline immediately. VP Security assesses severity (likely Sev-2). Crisis Management Team convenes within 30 min. General Counsel assesses GDPR timeline (typically 72 hours from discovery). Customer notification occurs within 2 hours to affected customers. CEO briefs Board within 2 hours. Customer Success coordinates customer comms; General Counsel reviews language for regulatory compliance.",
+  "supporting_doc_ids": [
+   "ops-crisis-management-plan",
+   "incident-response-runbook",
+   "data-priv-gdpr-compliance-policy"
+  ],
+  "tier": "multi-hop",
+  "failure_mode": "multi-hop",
+  "criteria": "Requires combining Crisis Management (escalation + team assembly), Incident Response (severity classification), and GDPR Policy (notification timeline). Interconnected across three docs."
+ },
+ {
+  "id": "ops-golden-004",
+  "question": "What encryption methods are required for employee-owned laptops traveling internationally with Confidential customer data, and which policy governs this?",
+  "expected_answer": "Full-disk encryption (BitLocker or FileVault) is mandatory. This is governed by the Travel Safety & Duty of Care Policy (Section 6.1: International Travel with Confidential Data). Additionally, VPN + MFA required for all work access; device not left unattended. Aligns with Remote Access/VPN Guide for MFA enforcement.",
+  "supporting_doc_ids": [
+   "ops-travel-safety-duty-of-care-policy",
+   "remote-access-vpn-guide",
+   "data-classification-retention-policy"
+  ],
+  "tier": "multi-hop",
+  "failure_mode": "multi-hop",
+  "criteria": "Combines travel policy (encryption + international context), VPN/Remote Access (MFA + device security), and data classification (what qualifies as Confidential). Three-way cross-reference."
+ },
+ {
+  "id": "ops-golden-005",
+  "question": "A contractor with a temporary badge is discovered accessing restricted areas (engineering lab) after hours. What policy violations occurred and what is the remedy?",
+  "expected_answer": "Violations: (1) Office Access & Visitor Policy \u2014 badge access level exceeded (temp badge should not have Level 2/3 access; engineering lab restricted). (2) Facilities audit failed to enforce after-hours escort requirement. Remedy: Immediately deactivate contractor's badge; investigate if confidential information accessed; report to VP Security; remove contractor if security breach suspected. Facilities reviews access control procedures; implement additional after-hours monitoring.",
+  "supporting_doc_ids": [
+   "ops-office-access-visitor-policy",
+   "ops-health-safety-policy"
+  ],
+  "tier": "multi-hop",
+  "failure_mode": "multi-hop",
+  "criteria": "Requires understanding badge tiers (Level 1-3), contractor obligations, and escalation to VP Security. Combines policy (access control) with incident response (investigation, remediation)."
+ },
+ {
+  "id": "ops-golden-006",
+  "question": "What is the annual carbon reduction target by 2027, and which two operational changes contribute most significantly to achieving it?",
+  "expected_answer": "Target is 25% reduction in Scope 1 & 2 emissions by 2027 (baseline 2024). Two major contributors: (1) Remote-work policy targeting 60% remote workforce (reduces employee commute emissions). (2) 100% renewable energy for AWS and Azure (already achieved for Austin HQ via Green Mountain Energy; expand to satellite offices). Additional measures include LED retrofit, EV charging, and mandatory carbon offsets for travel >500 miles.",
+  "supporting_doc_ids": [
+   "ops-sustainability-policy"
+  ],
+  "tier": "simple-lookup",
+  "failure_mode": "simple-lookup",
+  "criteria": "Single-document lookup; straightforward extraction from targets and initiatives table."
+ },
+ {
+  "id": "ops-golden-007",
+  "question": "During a litigation hold, an employee is instructed by their manager to delete old email to 'clean up storage.' What should the employee do and what are the consequences if they comply?",
+  "expected_answer": "Employee should REFUSE and immediately contact General Counsel or HR. Deleting documents under litigation hold violates the hold notice and constitutes potential evidence tampering (federal crime; civil sanctions). Consequences of compliance: company may face sanctions from court; destroyed evidence may result in adverse inference (court assumes deleted evidence was unfavorable); employee may face personal criminal liability (obstruction of justice). Correct action: Employee reports this instruction as potential misconduct to General Counsel or via whistleblower hotline.",
+  "supporting_doc_ids": [
+   "ops-records-document-control-policy",
+   "ops-whistleblower-policy"
+  ],
+  "tier": "multi-hop",
+  "failure_mode": "multi-hop",
+  "criteria": "Combines Records & Document Control (litigation hold, prohibited destruction) with Whistleblower (reporting misconduct, retaliation protection). Requires understanding legal jeopardy and proper escalation."
+ },
+ {
+  "id": "q1-simple-pdlc-phases",
+  "question": "What are the six phases of the Product Development Lifecycle at Northwind?",
+  "expected_answer": "The six phases are: 1) Discovery Phase (validate problem), 2) Strategy & Specification Phase (create PRD), 3) Design Phase (create mockups), 4) Engineering Phase (develop feature), 5) Launch Phase (gradual rollout), and 6) Post-Launch Monitoring & Iteration (track metrics and gather feedback).",
+  "supporting_doc_ids": [
+   "prod-product-development-lifecycle"
+  ],
+  "tier": "base",
+  "failure_mode": "simple-lookup",
+  "criteria": [
+   "lists all six phases in order",
+   "each phase includes 1+ key activity"
+  ]
+ },
+ {
+  "id": "q2-multi-hop-prd-to-release",
+  "question": "A feature has completed design and is entering the Engineering phase. What PRD sections must be finalized before engineering begins, and how do those sections inform the Product Release Management process?",
+  "expected_answer": "Before engineering starts, the PRD must have finalized: 1) Problem Statement and Success Metrics (Section 2.2), 2) Solution & Design with mockups (Section 2.4), 3) Technical Considerations including performance budgets (Section 2.6), and 4) Acceptance Criteria (Section 2.5). These sections directly inform release management: the success metrics become KPIs tracked during launch phases (per Product Release Management Section 4.3), acceptance criteria define the 'Definition of Ready' before deployment, and technical considerations feed into the deployment checklist (e.g., database migrations, performance validation).",
+  "supporting_doc_ids": [
+   "prod-prd-standard",
+   "prod-product-release-management"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "identifies specific PRD sections",
+   "connects each section to release management process",
+   "explains how PRD metrics become launch KPIs"
+  ]
+ },
+ {
+  "id": "q3-distractor-feature-flag-vs-experiment",
+  "question": "What is the purpose of feature flags in the context of A/B testing experiments, and how do they differ from using feature flags for safe code deployment?",
+  "expected_answer": "Feature flags serve two distinct purposes: 1) Safe Code Deployment: enables deploying code to production with feature OFF by default, then gradually enabling it (10% \u2192 50% \u2192 100%) per the Feature Flagging Standard Phase 5 rollout strategy. 2) A/B Testing: feature flags enable splitting user traffic between control (old behavior) and treatment (new behavior) to measure impact on metrics per Experimentation & A/B Testing Policy Section 2.3. Key difference: deployment flags have feature OFF \u2192 ON progression; experiment flags have control:treatment 50:50 split throughout. Flags can serve both purposes (deployment + experiment) by enabling treatment group after initial deployment soak period.",
+  "supporting_doc_ids": [
+   "prod-feature-flagging",
+   "prod-experimentation-ab-testing"
+  ],
+  "tier": "base",
+  "failure_mode": "distractor",
+  "criteria": [
+   "distinguishes safe deployment use from experiment use",
+   "explains OFF\u2192ON vs control:treatment split",
+   "notes flags can serve both purposes"
+  ]
+ },
+ {
+  "id": "q4-multi-hop-prd-to-beta-to-launch",
+  "question": "If a new feature is deemed high-complexity in the PRD (per Product Requirements Doc Standard Section 2.4 'Out of Scope' assessment), what Beta program track should be used before general launch, and what success criteria must be met before moving to public release?",
+  "expected_answer": "For high-complexity features, a Closed Beta (2\u20134 weeks, 5\u201315 hand-picked customers) should be used per Beta & Early Access Program Section 2.1. During Closed Beta, success criteria per Section 4.4 are: \u226570% positive feedback, zero P0 issues, <5 P1 issues with workarounds, and performance metrics stable (error rate <0.5%, latency within 10% of baseline). Once these criteria are met, the feature moves to Product Release Management Phase 3.2 (Execution Phase), where it is deployed with a feature flag in Phase 0 (10% internal) \u2192 Phase 1 (50% general) \u2192 Phase 2 (100%), with go/no-go decisions at each stage based on metrics dashboards and support ticket volume.",
+  "supporting_doc_ids": [
+   "prod-prd-standard",
+   "prod-beta-early-access",
+   "prod-product-release-management"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "identifies Closed Beta track",
+   "lists go/no-go success criteria from beta",
+   "connects to release management phases and go/no-go decisions"
+  ]
+ },
+ {
+  "id": "q5-acronym-wcag-standard",
+  "question": "What does WCAG 2.1 AA stand for, and what is Northwind's minimum accessibility standard for all customer-facing features?",
+  "expected_answer": "WCAG stands for Web Content Accessibility Guidelines, version 2.1, Level AA. This is Northwind's mandatory minimum standard per Accessibility Standard (WCAG 2.1 AA) Section 1. All customer-facing products must meet WCAG 2.1 Level AA, which includes: 1.4.3 Contrast Minimum (4.5:1 for body text), 2.1.1 Keyboard accessibility, 2.4.7 Focus Visible, 3.3.1 Error Identification, and 4.1.2 Name/Role/Value for interactive components. Level AA is a legal requirement under ADA, Section 508, and EU Accessibility Directive (EAA).",
+  "supporting_doc_ids": [
+   "prod-accessibility-wcag"
+  ],
+  "tier": "base",
+  "failure_mode": "acronym",
+  "criteria": [
+   "expands WCAG correctly",
+   "identifies Level AA as the standard",
+   "lists 2+ specific WCAG criteria"
+  ]
+ },
+ {
+  "id": "q6-multi-hop-experimentation-to-analytics",
+  "question": "If an A/B test shows a statistically significant winner (p < 0.05) after 2 weeks, what is the process for rolling it out to all users, and how do Product Analytics events automatically support measuring the rollout's success?",
+  "expected_answer": "After experiment win declared, the process per Experimentation & A/B Testing Policy Section 3.3 is: 1) Decision: declare winner, 2) Recommendation: implement globally, 3) Rollout: gradually increase feature flag to 100% per Feature Flagging Standard Section 5.1 (Phase 0: 10% internal \u2192 Phase 1: 50% \u2192 Phase 2: 100%), with monitoring at each phase. Product Analytics (per Product Analytics & Telemetry Standard Section 4.2) automatically logs feature flag toggle events (`feature_flag_toggled`) and experiment assignment events (`experiment_assigned` with `assigned_group: control|treatment`). This allows the analytics team to automatically segment post-launch metrics by rollout cohort, measuring whether the success observed in experiment holds during broader rollout. Success metrics tracked are adoption (% activating feature), engagement (% returning 2+ times), and business metrics (revenue, conversion).",
+  "supporting_doc_ids": [
+   "prod-experimentation-ab-testing",
+   "prod-feature-flagging",
+   "prod-analytics-telemetry"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "describes rollout phases per feature flagging",
+   "explains automatic experiment/flag event logging",
+   "connects events to post-launch success measurement"
+  ]
+ },
+ {
+  "id": "q7-paraphrase-localization-rtl",
+  "question": "Northwind is preparing to launch in Saudi Arabia (Arabic, right-to-left language). What CSS approach should be used to ensure the layout flips correctly, and what should the HTML markup include for text direction?",
+  "expected_answer": "For RTL support per Localization & Internationalization Standard Section 5.4: 1) CSS: use logical properties (e.g., `margin-inline-start` instead of `margin-left`), which auto-flip in RTL. Avoid absolute directions like `left` and `right`. Use flex and grid, which auto-flip direction in RTL. 2) HTML Markup: set `dir='rtl'` on the root `<html>` tag for Arabic pages (e.g., `<html dir=\"rtl\" lang=\"ar-SA\">`). For inline content mixing RTL and LTR, use `dir=\"auto\"`. 3) Icons: review all icons for cultural appropriateness before launch; icons meaningful in English may offend or confuse in Middle Eastern cultures. Example: thumbs-up is offensive in some cultures.",
+  "supporting_doc_ids": [
+   "prod-localization-i18n"
+  ],
+  "tier": "base",
+  "failure_mode": "paraphrase",
+  "criteria": [
+   "mentions logical CSS properties or start/end",
+   "specifies dir=\"rtl\" on html tag",
+   "mentions icon review for cultural sensitivity"
+  ]
+ },
+ {
+  "id": "q8-multi-hop-deprecation-to-release-communication",
+  "question": "A core feature (used by 30% of customers) will be retired in favor of a replacement. Walk through the complete deprecation timeline, including how Product Release Management coordinates the announcement and rollout.",
+  "expected_answer": "Per Feature Deprecation & Sunset Policy: Core features require 180+ days deprecation (Section 3.3). Timeline: 1) Announcement Phase (Day 1): Write Deprecation Notice; send email to all users; post in-app banner directing to migration guide; brief support team. 2) Support Phase (Days 2\u2013150): Product monitors replacement feature adoption; support assists migration; extend if only user objects. 3) Read-Only Phase (Days 151\u2013180): Feature turned off for new operations; one-click data export provided. 4) Removal Phase (Day 181+): Feature removed; code cleaned up. Product Release Management (Section 5: Breaking Changes) coordinates: 1) Announce in release notes 90+ days before removal (prominent warning). 2) Document migration path with step-by-step instructions and screenshots. 3) Create support playbook for common migration questions. 4) Email customers 72h before and 24h after replacement is 'ready to migrate'. 5) Track migration completion; proactively reach out to stragglers by Day 160 offering migration assistance. 6) Post-removal, monitor support for data recovery requests.",
+  "supporting_doc_ids": [
+   "prod-deprecation-sunset",
+   "prod-product-release-management"
+  ],
+  "tier": "blueprint",
+  "failure_mode": "multi-hop",
+  "criteria": [
+   "lists deprecation timeline phases",
+   "identifies 180-day requirement for core features",
+   "connects release management communication steps",
+   "mentions migration assistance and proactive outreach"
+  ]
+ }
 ]

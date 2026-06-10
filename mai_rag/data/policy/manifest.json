@@ -1,106 +1,1050 @@
 [
-  {
-    "doc_id": "information-security-policy",
-    "title": "Information Security Policy",
-    "path": "corpus/policy/information-security-policy.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-03-14"
-  },
-  {
-    "doc_id": "acceptable-use-policy",
-    "title": "Acceptable Use Policy",
-    "path": "corpus/policy/acceptable-use-policy.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-02-01"
-  },
-  {
-    "doc_id": "data-classification-retention-policy",
-    "title": "Data Classification & Retention Policy",
-    "path": "corpus/policy/data-classification-retention-policy.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-01-20"
-  },
-  {
-    "doc_id": "identity-access-management-policy",
-    "title": "Identity & Access Management Policy",
-    "path": "corpus/policy/identity-access-management-policy.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-05-01"
-  },
-  {
-    "doc_id": "identity-access-management-policy-legacy",
-    "title": "Identity & Access Management Policy (Legacy)",
-    "path": "corpus/policy/identity-access-management-policy-legacy.md",
-    "status": "superseded",
-    "classification": "internal",
-    "last_updated": "2024-06-15"
-  },
-  {
-    "doc_id": "incident-response-runbook",
-    "title": "Incident Response Runbook",
-    "path": "corpus/policy/incident-response-runbook.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-03-14"
-  },
-  {
-    "doc_id": "remote-access-vpn-guide",
-    "title": "Remote Access & VPN Guide",
-    "path": "corpus/policy/remote-access-vpn-guide.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-02-20"
-  },
-  {
-    "doc_id": "employee-onboarding-guide",
-    "title": "Employee Onboarding Guide",
-    "path": "corpus/policy/employee-onboarding-guide.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-01-15"
-  },
-  {
-    "doc_id": "leave-time-off-policy",
-    "title": "Leave & Time-Off Policy",
-    "path": "corpus/policy/leave-time-off-policy.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-02-01"
-  },
-  {
-    "doc_id": "expense-travel-policy",
-    "title": "Expense & Travel Policy",
-    "path": "corpus/policy/expense-travel-policy.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-01-25"
-  },
-  {
-    "doc_id": "production-deployment-runbook",
-    "title": "Production Deployment Runbook",
-    "path": "corpus/policy/production-deployment-runbook.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-02-28"
-  },
-  {
-    "doc_id": "on-call-escalation-policy",
-    "title": "On-Call & Escalation Policy",
-    "path": "corpus/policy/on-call-escalation-policy.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-03-01"
-  },
-  {
-    "doc_id": "vendor-procurement-third-party-risk-policy",
-    "title": "Vendor Procurement & Third-Party Risk Policy",
-    "path": "corpus/policy/vendor-procurement-third-party-risk-policy.md",
-    "status": "active",
-    "classification": "internal",
-    "last_updated": "2026-01-30"
-  }
+ {
+  "doc_id": "acceptable-use-policy",
+  "title": "Acceptable Use Policy",
+  "path": "acceptable-use-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-02-01"
+ },
+ {
+  "doc_id": "cs-churn-renewal",
+  "title": "Churn & Renewal Process",
+  "path": "cs-churn-renewal.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-customer-onboarding",
+  "title": "Customer Onboarding Process",
+  "path": "cs-customer-onboarding.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-customer-success-plan",
+  "title": "Customer Success Plan",
+  "path": "cs-customer-success-plan.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-deal-desk-approval",
+  "title": "Deal Desk & Approval Process",
+  "path": "cs-deal-desk-approval.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-incident-communication",
+  "title": "Customer Incident Communication Policy",
+  "path": "cs-incident-communication.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-knowledge-base-standards",
+  "title": "Knowledge Base Standards",
+  "path": "cs-knowledge-base-standards.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-nps-feedback",
+  "title": "NPS & Customer Feedback Process",
+  "path": "cs-nps-feedback.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-pricing-discount-policy",
+  "title": "Pricing & Discount Policy",
+  "path": "cs-pricing-discount-policy.md",
+  "status": "active",
+  "classification": "confidential",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-rma-refund-policy",
+  "title": "RMA / Refund Policy",
+  "path": "cs-rma-refund-policy.md",
+  "status": "active",
+  "classification": "confidential",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-sales-playbook",
+  "title": "Sales Playbook",
+  "path": "cs-sales-playbook.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-status-page-policy",
+  "title": "Status Page Policy",
+  "path": "cs-status-page-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-support-escalation-runbook",
+  "title": "Support Escalation Runbook",
+  "path": "cs-support-escalation-runbook.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "cs-support-sla-tiers",
+  "title": "Support SLA & Tiers",
+  "path": "cs-support-sla-tiers.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "data-classification-retention-policy",
+  "title": "Data Classification & Retention Policy",
+  "path": "data-classification-retention-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-01-20"
+ },
+ {
+  "doc_id": "data-priv-analytics-telemetry-policy",
+  "title": "Analytics & Telemetry Policy",
+  "path": "data-priv-analytics-telemetry-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-17"
+ },
+ {
+  "doc_id": "data-priv-anonymization-pseudonymization-standard",
+  "title": "Anonymization & Pseudonymization Standard",
+  "path": "data-priv-anonymization-pseudonymization-standard.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-19"
+ },
+ {
+  "doc_id": "data-priv-breach-notification-procedure",
+  "title": "Data Breach Notification Procedure",
+  "path": "data-priv-breach-notification-procedure.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-20"
+ },
+ {
+  "doc_id": "data-priv-cookie-tracking-policy",
+  "title": "Cookie & Tracking Policy",
+  "path": "data-priv-cookie-tracking-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-15"
+ },
+ {
+  "doc_id": "data-priv-cross-border-transfer-policy",
+  "title": "Cross-Border Data Transfer Policy",
+  "path": "data-priv-cross-border-transfer-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-18"
+ },
+ {
+  "doc_id": "data-priv-data-quality-standard",
+  "title": "Data Quality Standard",
+  "path": "data-priv-data-quality-standard.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-19"
+ },
+ {
+  "doc_id": "data-priv-data-retention-schedule",
+  "title": "Detailed Data Retention Schedule",
+  "path": "data-priv-data-retention-schedule.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-20"
+ },
+ {
+  "doc_id": "data-priv-data-subject-rights-procedure",
+  "title": "Data Subject Rights Procedure",
+  "path": "data-priv-data-subject-rights-procedure.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-15"
+ },
+ {
+  "doc_id": "data-priv-dpa-standard",
+  "title": "Data Processing Agreement (DPA) Standard",
+  "path": "data-priv-dpa-standard.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-15"
+ },
+ {
+  "doc_id": "data-priv-gdpr-compliance-policy",
+  "title": "GDPR Compliance Policy",
+  "path": "data-priv-gdpr-compliance-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-15"
+ },
+ {
+  "doc_id": "data-priv-master-data-management",
+  "title": "Master Data Management",
+  "path": "data-priv-master-data-management.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-19"
+ },
+ {
+  "doc_id": "data-priv-privacy-impact-assessment-process",
+  "title": "Privacy Impact Assessment Process",
+  "path": "data-priv-privacy-impact-assessment-process.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-18"
+ },
+ {
+  "doc_id": "data-priv-records-management-policy",
+  "title": "Records Management Policy",
+  "path": "data-priv-records-management-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-20"
+ },
+ {
+  "doc_id": "employee-onboarding-guide",
+  "title": "Employee Onboarding Guide",
+  "path": "employee-onboarding-guide.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-01-15"
+ },
+ {
+  "doc_id": "eng-adr-architecture-decision-record-process",
+  "title": "ADR (Architecture Decision Record) Process",
+  "path": "eng-adr-architecture-decision-record-process.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-api-design-guidelines",
+  "title": "API Design Guidelines",
+  "path": "eng-api-design-guidelines.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-code-review-standards",
+  "title": "Code Review Standards",
+  "path": "eng-code-review-standards.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-container-kubernetes-standards",
+  "title": "Container & Kubernetes Standards",
+  "path": "eng-container-kubernetes-standards.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-database-change-management",
+  "title": "Database Change Management",
+  "path": "eng-database-change-management.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-disaster-recovery-backup-runbook",
+  "title": "Disaster Recovery & Backup Runbook",
+  "path": "eng-disaster-recovery-backup-runbook.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-git-branching-release-strategy",
+  "title": "Git Branching & Release Strategy",
+  "path": "eng-git-branching-release-strategy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-github-actions-ci-cd-pipeline",
+  "title": "CI/CD Pipeline Guide (GitHub Actions)",
+  "path": "eng-github-actions-ci-cd-pipeline.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-infrastructure-as-code-standards",
+  "title": "Infrastructure as Code Standards (Terraform)",
+  "path": "eng-infrastructure-as-code-standards.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-microservices-architecture-overview",
+  "title": "Microservices Architecture Overview",
+  "path": "eng-microservices-architecture-overview.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-observability-monitoring-standards",
+  "title": "Observability & Monitoring Standards (Datadog)",
+  "path": "eng-observability-monitoring-standards.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-secrets-management-standard",
+  "title": "Secrets Management Standard",
+  "path": "eng-secrets-management-standard.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-service-catalog",
+  "title": "Service Catalog",
+  "path": "eng-service-catalog.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "eng-sre-error-budget-policy",
+  "title": "SRE Error Budget Policy",
+  "path": "eng-sre-error-budget-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "expense-travel-policy",
+  "title": "Expense & Travel Policy",
+  "path": "expense-travel-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-01-25"
+ },
+ {
+  "doc_id": "fin-budget-planning-process",
+  "title": "Annual Budget Planning Process",
+  "path": "fin-budget-planning-process.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-capital-expenditure-policy",
+  "title": "Capital Expenditure Policy",
+  "path": "fin-capital-expenditure-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-contractor-consultant-payment",
+  "title": "Contractor & Consultant Payment Policy",
+  "path": "fin-contractor-consultant-payment.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-corporate-card-policy",
+  "title": "Corporate Card Policy",
+  "path": "fin-corporate-card-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-expense-reimbursement-policy",
+  "title": "Expense Reimbursement Policy (Detailed)",
+  "path": "fin-expense-reimbursement-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-financial-controls-segregation-of-duties",
+  "title": "Financial Controls & Segregation of Duties (SoD)",
+  "path": "fin-financial-controls-segregation-of-duties.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-invoice-processing-accounts-payable",
+  "title": "Invoice Processing & Accounts Payable",
+  "path": "fin-invoice-processing-accounts-payable.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-per-diem-meals-policy",
+  "title": "Per Diem & Meals Policy",
+  "path": "fin-per-diem-meals-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-procurement-thresholds-competitive-bidding",
+  "title": "Procurement Thresholds & Competitive Bidding",
+  "path": "fin-procurement-thresholds-competitive-bidding.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-purchase-approval-matrix",
+  "title": "Purchase Approval Matrix",
+  "path": "fin-purchase-approval-matrix.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-revenue-recognition",
+  "title": "Revenue Recognition Summary",
+  "path": "fin-revenue-recognition.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-travel-booking-policy",
+  "title": "Travel Booking Policy",
+  "path": "fin-travel-booking-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "fin-vendor-onboarding-finance",
+  "title": "Vendor Onboarding (Finance & Procurement)",
+  "path": "fin-vendor-onboarding-finance.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-01"
+ },
+ {
+  "doc_id": "hr-anti-harassment-non-discrimination",
+  "title": "Anti-Harassment & Non-Discrimination Policy",
+  "path": "hr-anti-harassment-non-discrimination.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-background-check-policy",
+  "title": "Background Check Policy",
+  "path": "hr-background-check-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-benefits-overview",
+  "title": "Benefits Overview",
+  "path": "hr-benefits-overview.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-code-of-conduct",
+  "title": "Code of Conduct & Professional Standards",
+  "path": "hr-code-of-conduct.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-compensation-philosophy",
+  "title": "Compensation Philosophy & Pay Equity",
+  "path": "hr-compensation-philosophy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-diversity-inclusion-policy",
+  "title": "Diversity, Equity & Inclusion Policy",
+  "path": "hr-diversity-inclusion-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-grievance-procedure",
+  "title": "Grievance Procedure & Dispute Resolution",
+  "path": "hr-grievance-procedure.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-hiring-interview-process",
+  "title": "Hiring & Interview Process",
+  "path": "hr-hiring-interview-process.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-learning-development-policy",
+  "title": "Learning & Development Policy",
+  "path": "hr-learning-development-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-parental-leave-active",
+  "title": "Parental Leave Policy",
+  "path": "hr-parental-leave-active.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-parental-leave-superseded",
+  "title": "Parental Leave Policy (Superseded)",
+  "path": "hr-parental-leave-superseded.md",
+  "status": "superseded",
+  "classification": "internal",
+  "last_updated": "2024-06-15"
+ },
+ {
+  "doc_id": "hr-performance-review-process",
+  "title": "Performance Review & Feedback Process",
+  "path": "hr-performance-review-process.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-remote-hybrid-work-policy",
+  "title": "Remote & Hybrid Work Policy",
+  "path": "hr-remote-hybrid-work-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "hr-termination-offboarding-procedure",
+  "title": "Termination & Offboarding Procedure",
+  "path": "hr-termination-offboarding-procedure.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-15"
+ },
+ {
+  "doc_id": "identity-access-management-policy-legacy",
+  "title": "Identity & Access Management Policy (Legacy)",
+  "path": "identity-access-management-policy-legacy.md",
+  "status": "superseded",
+  "classification": "internal",
+  "last_updated": "2024-06-15"
+ },
+ {
+  "doc_id": "identity-access-management-policy",
+  "title": "Identity & Access Management Policy",
+  "path": "identity-access-management-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-01"
+ },
+ {
+  "doc_id": "incident-response-runbook",
+  "title": "Incident Response Runbook",
+  "path": "incident-response-runbook.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-03-14"
+ },
+ {
+  "doc_id": "information-security-policy",
+  "title": "Information Security Policy",
+  "path": "information-security-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-03-14"
+ },
+ {
+  "doc_id": "itsec-email-phishing-defense",
+  "title": "Email & Phishing Defense",
+  "path": "itsec-email-phishing-defense.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-03-20"
+ },
+ {
+  "doc_id": "itsec-encryption-standard",
+  "title": "Encryption Standard",
+  "path": "itsec-encryption-standard.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-02"
+ },
+ {
+  "doc_id": "itsec-endpoint-security-standard",
+  "title": "Endpoint Security Standard",
+  "path": "itsec-endpoint-security-standard.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-10"
+ },
+ {
+  "doc_id": "itsec-firewall-change-management",
+  "title": "Firewall Change Management",
+  "path": "itsec-firewall-change-management.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-13"
+ },
+ {
+  "doc_id": "itsec-mobile-device-management",
+  "title": "Mobile Device Management (MDM)",
+  "path": "itsec-mobile-device-management.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-11"
+ },
+ {
+  "doc_id": "itsec-network-security-architecture",
+  "title": "Network Security Architecture",
+  "path": "itsec-network-security-architecture.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-15"
+ },
+ {
+  "doc_id": "itsec-patch-management-policy",
+  "title": "Patch Management Policy",
+  "path": "itsec-patch-management-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-10"
+ },
+ {
+  "doc_id": "itsec-physical-security-badge-access",
+  "title": "Physical Security & Badge Access",
+  "path": "itsec-physical-security-badge-access.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-09"
+ },
+ {
+  "doc_id": "itsec-saas-approval-process",
+  "title": "SaaS Application Approval Process",
+  "path": "itsec-saas-approval-process.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-05"
+ },
+ {
+  "doc_id": "itsec-security-awareness-program",
+  "title": "Security Awareness Program",
+  "path": "itsec-security-awareness-program.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-06"
+ },
+ {
+  "doc_id": "itsec-security-logging-siem",
+  "title": "Security Logging & SIEM",
+  "path": "itsec-security-logging-siem.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-12"
+ },
+ {
+  "doc_id": "itsec-vpn-client-standard-legacy",
+  "title": "VPN Client Standard (Legacy)",
+  "path": "itsec-vpn-client-standard-legacy.md",
+  "status": "superseded",
+  "classification": "internal",
+  "last_updated": "2026-04-30"
+ },
+ {
+  "doc_id": "itsec-vpn-client-standard",
+  "title": "VPN Client Standard",
+  "path": "itsec-vpn-client-standard.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-05-01"
+ },
+ {
+  "doc_id": "itsec-vulnerability-management",
+  "title": "Vulnerability Management",
+  "path": "itsec-vulnerability-management.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-04-08"
+ },
+ {
+  "doc_id": "leave-time-off-policy",
+  "title": "Leave & Time-Off Policy",
+  "path": "leave-time-off-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-02-01"
+ },
+ {
+  "doc_id": "legal-anti-bribery-corruption-policy",
+  "title": "Anti-Bribery & Corruption Policy",
+  "path": "legal-anti-bribery-corruption-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "legal-conflict-of-interest-policy",
+  "title": "Conflict of Interest Policy",
+  "path": "legal-conflict-of-interest-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "legal-contract-approval-policy",
+  "title": "Contract Approval Policy",
+  "path": "legal-contract-approval-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "legal-insurance-liability-overview",
+  "title": "Insurance & Liability Overview",
+  "path": "legal-insurance-liability-overview.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "legal-intellectual-property-policy",
+  "title": "Intellectual Property Policy",
+  "path": "legal-intellectual-property-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "legal-litigation-hold-procedure",
+  "title": "Litigation Hold Procedure",
+  "path": "legal-litigation-hold-procedure.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "legal-msa-standard",
+  "title": "Master Services Agreement (MSA) Standard",
+  "path": "legal-msa-standard.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "legal-nda-policy",
+  "title": "NDA Policy",
+  "path": "legal-nda-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "legal-open-source-software-use-policy-current",
+  "title": "Open Source Software Use Policy (Current)",
+  "path": "legal-open-source-software-use-policy-current.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "legal-open-source-software-use-policy-legacy",
+  "title": "Open Source Software Use Policy (Legacy)",
+  "path": "legal-open-source-software-use-policy-legacy.md",
+  "status": "superseded",
+  "classification": "internal",
+  "last_updated": "2024-03-01"
+ },
+ {
+  "doc_id": "legal-regulatory-compliance-register",
+  "title": "Regulatory Compliance Register",
+  "path": "legal-regulatory-compliance-register.md",
+  "status": "active",
+  "classification": "confidential",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "legal-trademark-brand-usage",
+  "title": "Trademark & Brand Usage Policy",
+  "path": "legal-trademark-brand-usage.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "on-call-escalation-policy",
+  "title": "On-Call & Escalation Policy",
+  "path": "on-call-escalation-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-03-01"
+ },
+ {
+  "doc_id": "ops-business-continuity-plan",
+  "title": "Business Continuity Plan (BCP)",
+  "path": "ops-business-continuity-plan.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "ops-company-values-strategy-overview",
+  "title": "Company Values & Strategy Overview",
+  "path": "ops-company-values-strategy-overview.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "ops-crisis-management-plan",
+  "title": "Crisis Management Plan",
+  "path": "ops-crisis-management-plan.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "ops-emergency-response-plan",
+  "title": "Emergency Response Plan",
+  "path": "ops-emergency-response-plan.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "ops-equipment-asset-management",
+  "title": "Equipment & Asset Management Policy",
+  "path": "ops-equipment-asset-management.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "ops-health-safety-policy",
+  "title": "Health & Safety Policy",
+  "path": "ops-health-safety-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "ops-internal-communications-policy",
+  "title": "Internal Communications Policy",
+  "path": "ops-internal-communications-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "ops-office-access-visitor-policy",
+  "title": "Office Access & Visitor Policy",
+  "path": "ops-office-access-visitor-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "ops-records-document-control-policy",
+  "title": "Records & Document Control Policy",
+  "path": "ops-records-document-control-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "ops-sustainability-policy",
+  "title": "Sustainability Policy",
+  "path": "ops-sustainability-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "ops-travel-safety-duty-of-care-policy",
+  "title": "Travel Safety & Duty of Care Policy",
+  "path": "ops-travel-safety-duty-of-care-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "ops-whistleblower-policy",
+  "title": "Whistleblower Policy",
+  "path": "ops-whistleblower-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-accessibility-wcag",
+  "title": "Accessibility Standard (WCAG 2.1 AA)",
+  "path": "prod-accessibility-wcag.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-analytics-telemetry",
+  "title": "Product Analytics & Telemetry Standard",
+  "path": "prod-analytics-telemetry.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-beta-early-access",
+  "title": "Beta & Early Access Program",
+  "path": "prod-beta-early-access.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-deprecation-sunset",
+  "title": "Feature Deprecation & Sunset Policy",
+  "path": "prod-deprecation-sunset.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-design-system-guidelines",
+  "title": "Design System Guidelines",
+  "path": "prod-design-system-guidelines.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-experimentation-ab-testing",
+  "title": "Experimentation & A/B Testing Policy",
+  "path": "prod-experimentation-ab-testing.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-feature-flagging",
+  "title": "Feature Flagging Standard",
+  "path": "prod-feature-flagging.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-localization-i18n",
+  "title": "Localization & Internationalization Standard",
+  "path": "prod-localization-i18n.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-prd-standard",
+  "title": "Product Requirements Doc Standard",
+  "path": "prod-prd-standard.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-product-development-lifecycle",
+  "title": "Product Development Lifecycle",
+  "path": "prod-product-development-lifecycle.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-product-release-management",
+  "title": "Product Release Management",
+  "path": "prod-product-release-management.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-roadmap-planning",
+  "title": "Roadmap Planning Process",
+  "path": "prod-roadmap-planning.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "prod-ux-research",
+  "title": "UX Research Process",
+  "path": "prod-ux-research.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-06-09"
+ },
+ {
+  "doc_id": "production-deployment-runbook",
+  "title": "Production Deployment Runbook",
+  "path": "production-deployment-runbook.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-02-28"
+ },
+ {
+  "doc_id": "remote-access-vpn-guide",
+  "title": "Remote Access & VPN Guide",
+  "path": "remote-access-vpn-guide.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-02-20"
+ },
+ {
+  "doc_id": "vendor-procurement-third-party-risk-policy",
+  "title": "Vendor Procurement & Third-Party Risk Policy",
+  "path": "vendor-procurement-third-party-risk-policy.md",
+  "status": "active",
+  "classification": "internal",
+  "last_updated": "2026-01-30"
+ }
 ]
