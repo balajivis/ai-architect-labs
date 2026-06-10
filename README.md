@@ -12,6 +12,17 @@ and visible; corpus loading, the baseline RAG, the database, and **all
 visualization** are one-liner imports you can still read (`mai_rag.evals.native`
 is meant to be opened).
 
+## The four pillars
+The full Architect Programme is four production layers + a capstone. Each has a
+spine you can read right after cloning — see [`pillars/`](./pillars/):
+
+| # | Pillar | Layer |
+|---|---|---|
+| I | [Advanced RAG](./pillars/01-advanced-rag/) | Input |
+| II | [Evals & Benchmarks](./pillars/02-evals-and-benchmarks/) | Quality |
+| III | [MCP Engineering](./pillars/03-mcp-engineering/) | Integration |
+| IV | [Trust & Production](./pillars/04-trust-and-production/) | Operations |
+
 ## Install (Colab)
 ```python
 !pip install -q "mai_rag[evals] @ git+https://github.com/balajivis/ai-architect-labs.git"
