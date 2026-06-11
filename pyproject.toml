@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mai_rag"
-version = "0.1.1"
+version = "0.1.2"
 description = "Modern AI Pro — AI Architect course lab kit. A glass-box facade over the RAG ecosystem with a ready-to-go SQL + vector data layer."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -33,4 +33,4 @@ viz    = ["umap-learn>=0.5", "scikit-learn>=1.4"]
 include = ["mai_rag*"]
 
 [tool.setuptools.package-data]
-mai_rag = ["data/policy/*.md", "data/policy/*.json"]
+mai_rag = ["data/policy/*.md", "data/policy/*.json", "data/policy.db"]

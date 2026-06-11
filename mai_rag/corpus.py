@@ -1,10 +1,10 @@
 """
 mai_rag.corpus — load the bundled enterprise-policy corpus into the data layer.
 
-`load_policy_corpus()` is the one call that makes the lab ready to go: it finds
-the shipped policy docs, chunks them, embeds them locally (MiniLM, keyless), and
-populates the SQL + vector tables. First call builds the DB (~seconds); pass a
-`db_path` to persist it.
+`load_policy_corpus()` is the one call that makes the lab ready to go. By
+default it copies a **pre-embedded `policy.db`** into place — first load is
+seconds, no embedding. `rebuild=True` embeds from the raw docs instead (chunk +
+MiniLM, keyless) so the lab can show the build once. Pass a `db_path` to persist.
 """
 from __future__ import annotations
 
@@ -37,6 +37,20 @@ def _find_corpus_dir() -> Path:
         "Could not find the policy corpus. Set MAI_CORPUS_DIR, or run from the "
         "ai-architect-labs repo, or reinstall mai_rag with its packaged data."
     )
+
+
+def _find_prebuilt_db() -> Path | None:
+    """Locate the shipped pre-embedded `policy.db` so first load skips the
+    ~1900-chunk embedding pass. Returns None if it isn't bundled (dev builds)."""
+    env = os.getenv("MAI_PREBUILT_DB")
+    if env and Path(env).exists():
+        return Path(env)
+    here = Path(__file__).resolve()
+    for c in (here.parent / "data" / "policy.db",            # mai_rag/data/policy.db (packaged)
+              here.parent.parent / "policy.db"):             # repo-root (dev)
+        if c.exists():
+            return c
+    return None
 
 
 def _parse_frontmatter(text: str) -> tuple[dict, str]:
@@ -79,13 +93,35 @@ def _chunk(body: str, target: int = CHUNK_TARGET_WORDS,
     return [c for c in chunks if c.strip()]
 
 
-def load_policy_corpus(db_path: str = ":memory:", rebuild: bool = False) -> Store:
+def load_policy_corpus(db_path: str = ":memory:", rebuild: bool = False,
+                       prebuilt: bool = True) -> Store:
     """Build (or open) the data layer seeded with the policy corpus.
-    Returns a ready-to-query `Store`."""
+    Returns a ready-to-query `Store`.
+
+    Fast path (default): if a pre-embedded `policy.db` ships, it's copied into
+    place (or restored into `:memory:`) so the first load is **seconds, not
+    minutes** — no re-embedding. Pass `rebuild=True` to embed from the raw docs
+    (the lab can show this once), or `prebuilt=False` to ignore the bundle.
+    """
+    pre = _find_prebuilt_db() if (prebuilt and not rebuild) else None
+
+    # Fast path A — persistent file: copy the prebuilt DB in if the target is new.
+    if pre is not None and db_path != ":memory:" and not Path(db_path).exists():
+        import shutil
+        shutil.copy(pre, db_path)
+
     conn = connect(db_path)
     store = Store(conn)
 
+    # Fast path B — :memory: db: restore the prebuilt file into the connection.
     already = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+    if pre is not None and db_path == ":memory:" and not already:
+        import sqlite3
+        src = sqlite3.connect(str(pre))
+        src.backup(conn)
+        src.close()
+        already = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+
     if already and not rebuild:
         return store
     if rebuild:

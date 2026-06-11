@@ -46,7 +46,7 @@ viz.scorecard(run["summary"])                      # the number every module mus
 One SQLite file holds the whole RAG state — `documents`, `chunks`, a `vec0`
 embedding table (via `sqlite-vec`), `golden_cases`, and every `eval_run` /
 `eval_result`. It deliberately mirrors the **pgvector** mental model so concepts
-port to production (Kapi's `ContentEmbedding`, real pgvector on Vercel). Because
+port to production (real pgvector on Azure Postgres Flexible Server). Because
 runs persist, Module 1's baseline lives in the DB and every later module just
 **appends a run** — `viz.compare_runs(store, "naive baseline", "hybrid+rerank")`
 is a query, not a re-run.

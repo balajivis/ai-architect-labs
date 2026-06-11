@@ -29,7 +29,7 @@
 
 ## Capstone
 
-A **trust-hardened multi-tenant app** integrating all four pillars: Adaptive RAG (I) + CI eval gates (II) + an OAuth-2.1 MCP server (III) + RLS ACLs · HITL queue · injection defense · Langfuse · EU AI Act checklist (IV). Deployed on Vercel + pgvector + Content Safety. This pillar's lab *is* the start of the capstone — don't duplicate the work.
+A **trust-hardened multi-tenant app** integrating all four pillars: Adaptive RAG (I) + CI eval gates (II) + an OAuth-2.1 MCP server (III) + RLS ACLs · HITL queue · injection defense · Langfuse · EU AI Act checklist (IV). Deployed as a Docker container on your own Azure (Container Apps / B1S VM) + Azure Postgres pgvector + Content Safety. This pillar's lab *is* the start of the capstone — don't duplicate the work.
 
 ## Lab setup
 
