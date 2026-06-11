@@ -178,10 +178,16 @@ class Store:
         import sqlite_vec
 
         qv = embed([query])[0]
+        # sqlite-vec KNN: use the `k = ?` constraint, NOT `LIMIT ?`. A bound
+        # LIMIT isn't seen by the vec0 query planner on some sqlite-vec/SQLite
+        # builds (e.g. Colab's), which then raises OperationalError. `k = ?`
+        # is the portable form. Over-fetch when tenant filtering so the
+        # post-join filter still has k survivors.
+        fetch_k = k if tenant_id is None else max(k * 4, k + 20)
         rows = self.conn.execute(
             "SELECT chunk_id, distance FROM vec_chunks "
-            "WHERE embedding MATCH ? ORDER BY distance LIMIT ?",
-            (sqlite_vec.serialize_float32(list(map(float, qv))), k),
+            "WHERE embedding MATCH ? AND k = ? ORDER BY distance",
+            (sqlite_vec.serialize_float32(list(map(float, qv))), fetch_k),
         ).fetchall()
 
         hits: list[Hit] = []
@@ -203,6 +209,8 @@ class Store:
                 document_id=int(c["document_id"]), source=c["source"],
                 title=c["title"], distance=dist, score=score,
             ))
+            if len(hits) >= k:
+                break
         return hits
 
     # ---- read: counts (handy in the notebook) -------------------------------
