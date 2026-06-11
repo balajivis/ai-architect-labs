@@ -30,7 +30,7 @@
 ## Lab setup
 
 ```bash
-pip install "mai_rag[evals] @ git+https://github.com/balajivis/ai-architect-labs.git@v0.1.3"
+pip install "mai_rag[evals] @ git+https://github.com/balajivis/ai-architect-labs.git"
 from mai_rag.evals import suite          # the 9 engines
 from mai_rag.evals import ragas_backend  # native | ragas — same schema
 ```

@@ -19,6 +19,6 @@ Every pillar runs on **one shared fixture** — the enterprise-policy corpus + t
 
 See the repo [README](../README.md) and the course setup instructions. TL;DR:
 ```bash
-pip install "git+https://github.com/balajivis/ai-architect-labs.git@v0.1.3"
+pip install "git+https://github.com/balajivis/ai-architect-labs.git"
 ```
 Retrieval runs keyless (local MiniLM); only generation + LLM-judge need one LLM key.

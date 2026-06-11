@@ -30,7 +30,7 @@ You already call an API and run basic retrieval. This pillar is the jump from a 
 ## Lab setup
 
 ```bash
-pip install "git+https://github.com/balajivis/ai-architect-labs.git@v0.1.3"
+pip install "git+https://github.com/balajivis/ai-architect-labs.git"
 # in a notebook:
 from mai_rag import corpus, evals, viz, baseline, golden
 ```
