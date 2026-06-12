@@ -19,4 +19,4 @@ from .baseline import naive_rag
 from .store import Store
 
 __all__ = ["corpus", "evals", "golden", "llm", "store", "viz", "naive_rag", "Store"]
-__version__ = "0.1.3"
+__version__ = "0.1.4"
