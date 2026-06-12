@@ -231,3 +231,69 @@ def load_golden_hard() -> list[dict]:
             data = json.loads(seed.read_text(encoding="utf-8"))
             return data["cases"] if isinstance(data, dict) and "cases" in data else data
     return []
+
+
+# ── Catalog corpus — the synthetic "Modern AI Pro" knowledge/site catalog (Lab 3) ──
+
+def _find_catalog_dir() -> Path:
+    """Locate the `catalog/` corpus dir: env override → packaged data → dev clone."""
+    env = os.getenv("MAI_CATALOG_DIR")
+    if env and Path(env).exists():
+        return Path(env)
+    here = Path(__file__).resolve()
+    for c in (here.parent / "data" / "catalog",
+              here.parent.parent / "corpus" / "catalog"):
+        if c.exists():
+            return c
+    raise FileNotFoundError(
+        "Could not find the catalog corpus (mai_rag/data/catalog). Set MAI_CATALOG_DIR "
+        "or reinstall mai_rag with its packaged data."
+    )
+
+
+def load_catalog_corpus(db_path: str = ":memory:", rebuild: bool = False) -> Store:
+    """Build the data layer seeded with the **catalog corpus** — ~136 synthetic,
+    deliberately *shallow* overview docs modelled on the Modern AI Pro platform
+    (AI topics + course/site catalog). The shallowness is the point: depth
+    questions can't be answered from the catalog, which is what motivates the
+    agentic web-search fallback in Lab 3. Embeds live with keyless MiniLM
+    (~15–25s). All prose is synthetic — no proprietary course content."""
+    conn = connect(db_path)
+    store = Store(conn)
+    already = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+    if already and not rebuild:
+        return store
+    if rebuild:
+        for t in ("documents", "chunks", "vec_chunks", "golden_cases"):
+            conn.execute(f"DELETE FROM {t}")
+
+    for p in sorted(_find_catalog_dir().glob("*.md")):
+        meta, body = _parse_frontmatter(p.read_text(encoding="utf-8"))
+        doc_id = store.add_document(
+            source=meta.get("doc_id", p.stem),
+            title=meta.get("title", p.stem),
+            metadata=meta,
+            created_at=meta.get("last_updated", ""),
+        )
+        chunks = _chunk(body)
+        if not chunks:
+            continue
+        vecs = embed(chunks)
+        for i, (text, vec) in enumerate(zip(chunks, vecs)):
+            store.add_chunk(doc_id, i, text, vec, metadata={"type": meta.get("type", "topic")})
+    store.commit()
+    return store
+
+
+def load_golden_catalog() -> list[dict]:
+    """The Lab 3 golden set over the catalog corpus (`q / expected / support / tag`).
+    Tags drive the agentic moves: `site`/`topic` (in-corpus), `multi-hop`
+    (decompose), `needs-web` (catalog too shallow → web fallback), `no-retrieval`
+    (router answers directly)."""
+    here = Path(__file__).resolve()
+    for seed in (here.parent / "data" / "golden_seed_catalog.json",
+                 here.parent.parent / "golden_seed_catalog.json"):
+        if seed.exists():
+            data = json.loads(seed.read_text(encoding="utf-8"))
+            return data["cases"] if isinstance(data, dict) and "cases" in data else data
+    return []
