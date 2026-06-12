@@ -1,0 +1,76 @@
+{
+  "cases": [
+    {
+      "q": "We're configuring a corporate laptop for remote access today. Which VPN client and version must we install, and what idle timeout applies?",
+      "expected": "Install Cisco Secure Client 5.1.4 (formerly Cisco AnyConnect), connecting to the Cisco Firepower 2130 concentrator. The Standard-tier inactivity cutoff is 30 minutes of no traffic before the tunnel is torn down.",
+      "support": "vpn-client-standard-active",
+      "tag": "recency"
+    },
+    {
+      "q": "What is the current paid entitlement for a primary caregiver under Northwind's parental leave policy, and how many separate blocks can it be split into?",
+      "expected": "The primary caregiver is entitled to 18 weeks of paid leave at 100% of base pay, and the entitlement may be taken in up to 3 separate blocks within 12 months of birth/placement (minimum one full week per block).",
+      "support": "hr-parental-leave-active",
+      "tag": "recency"
+    },
+    {
+      "q": "How long does Northwind retain customer PII after an account is closed under the current data retention standard?",
+      "expected": "24 months from the effective closure date, after which the data is rendered irreversibly unrecoverable via crypto-shredding. (The superseded standard's 36-month figure is no longer operative.)",
+      "support": "data-retention-active",
+      "tag": "recency"
+    },
+    {
+      "q": "Under the Standard VPN policy, what endpoint anti-malware/EDR agent and minimum version must be installed and healthy before the tunnel will carry traffic?",
+      "expected": "The CrowdStrike Falcon agent at version 7.x or later must be installed and reporting healthy. It is the endpoint anti-malware/threat-detection (EDR) layer that stands in for traditional antivirus on managed laptops; machines missing it or below 7.x are turned away until remediated.",
+      "support": "vpn-client-standard-active",
+      "tag": "contextual"
+    },
+    {
+      "q": "For the Silver support plan, what is the weekly span of serviced hours and the daily start/end time?",
+      "expected": "Silver delivers twelve hours a day, Monday through Friday (sixty serviced hours per ordinary week, excluding Northwind-observed holidays), with each serviced day running 7:00 a.m. to 7:00 p.m. in the customer's primary support time zone.",
+      "support": "support-tier-silver",
+      "tag": "contextual"
+    },
+    {
+      "q": "Which support plan provides Slack Connect as a support channel, and what is its P1 first-response target?",
+      "expected": "The Gold tier provides email, support portal, telephone, and Slack Connect channels, with a Priority 1 (P1) first-response target of 1 business hour.",
+      "support": "support-tier-gold",
+      "tag": "contextual"
+    },
+    {
+      "q": "An employee with exactly 4 years of tenure is taking primary-caregiver parental leave. At what PTO rate do they accrue during the standard paid leave, and how many weeks does that paid leave last?",
+      "expected": "PTO accrues at 20 days per year (the 3\u20135 year band) and continues at that rate during the standard paid leave; the standard primary-caregiver paid entitlement lasts 18 weeks. Both figures together: 20 days/year accrual for 18 weeks.",
+      "support": "hr-pto-accrual-active + hr-parental-leave-active",
+      "tag": "multi-hop"
+    },
+    {
+      "q": "A team wants to engage a brand-new SaaS vendor for a single $30,000 purchase that begins an ongoing $30,000/year relationship. What approval authority and what additional gate are required before the PO issues?",
+      "expected": "VP approval is required because $30,000 falls in the $25,000\u2013$99,999 VP band, AND a Security review is required because the new vendor's expected annual spend is at/above $25,000. Both must be satisfied, and the Security review must complete before approval. The Security review for a new \u2265$25,000-annual-spend vendor is mandated by vendor-onboarding-security.",
+      "support": "expense-approval-thresholds + vendor-onboarding-security",
+      "tag": "multi-hop"
+    },
+    {
+      "q": "When scoping a breach of closed-account customer data, how far back must incident responders assume retained PII may extend?",
+      "expected": "24 months \u2014 responders must apply the closed-account retention window from the active Data Retention Standard (24 months from closure), which the incident runbook deliberately does not restate. The runbook directs responders to pull the controlling retention period from data-retention-active.",
+      "support": "incident-response-runbook + data-retention-active",
+      "tag": "multi-hop"
+    },
+    {
+      "q": "Under the Expense Approval Authority Matrix, who must approve a single expense of exactly $5,000, and who must approve exactly $4,999?",
+      "expected": "$5,000 requires Director approval (Director band is $5,000\u2013$24,999); $4,999 requires only Manager approval (Manager band ends at $4,999). The $5,000 mark is the exact crossover with no rounding or grace zone.",
+      "support": "expense-approval-thresholds",
+      "tag": "precision"
+    },
+    {
+      "q": "Which Vendgistics Risk Assessment version must a PII-processing vendor complete during onboarding, and do older completed versions carry forward?",
+      "expected": "The Vendgistics Risk Assessment v3 is required; it is the only accepted revision, and earlier completed questionnaires (v1 or v2) do not carry forward. PII vendors must also sign the standard DPA.",
+      "support": "vendor-onboarding-security",
+      "tag": "keyword"
+    },
+    {
+      "q": "What is the fixed regulatory breach-notification deadline (in hours) that Northwind incident responders must use for any incident involving customer data?",
+      "expected": "There is no fixed deadline to quote. The incident-response runbook explicitly states Northwind does not maintain a single fixed notification deadline; timing is determined by Legal based on the data, jurisdictions, and applicable regulation for each specific incident. Responders must not assume or quote a deadline.",
+      "support": "(none \u2014 should decline)",
+      "tag": "unanswerable"
+    }
+  ]
+}

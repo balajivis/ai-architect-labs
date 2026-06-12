@@ -162,3 +162,72 @@ def load_golden_seed() -> list[dict]:
         if seed.exists():
             return json.loads(seed.read_text(encoding="utf-8"))
     return []
+
+
+# ── Hard Pack — the small, adversarial corpus (one corpus, the hard one) ────────
+
+def _find_hard_corpus_dir() -> Path:
+    """Locate the `hard/` corpus dir: env override → packaged data → dev clone."""
+    env = os.getenv("MAI_HARD_CORPUS_DIR")
+    if env and Path(env).exists():
+        return Path(env)
+    here = Path(__file__).resolve()
+    for c in (here.parent / "data" / "hard",            # mai_rag/data/hard (packaged)
+              here.parent.parent / "corpus" / "hard"):  # repo-root corpus/hard (dev)
+        if c.exists():
+            return c
+    raise FileNotFoundError(
+        "Could not find the hard corpus (mai_rag/data/hard). Set MAI_HARD_CORPUS_DIR "
+        "or reinstall mai_rag with its packaged data."
+    )
+
+
+def load_hard_corpus(db_path: str = ":memory:", rebuild: bool = False) -> Store:
+    """Build the data layer seeded with the **Hard Pack** — a small (~14-doc /
+    ~130-chunk) adversarial corpus engineered so retrieval failure modes are
+    *visible*: recency twins (active/superseded), a near-identical support-tier
+    sibling family (the contextual sweet spot), multi-hop cross-references, and
+    an unanswerable case.
+
+    Embeds **live** with keyless MiniLM in ~10–20s — small enough to re-embed in
+    class (the whole point of the Hard Pack), so there's no prebuilt DB. Pass
+    `db_path` to persist; `rebuild=True` to re-seed an existing connection.
+    """
+    conn = connect(db_path)
+    store = Store(conn)
+    already = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+    if already and not rebuild:
+        return store
+    if rebuild:
+        for t in ("documents", "chunks", "vec_chunks", "golden_cases"):
+            conn.execute(f"DELETE FROM {t}")
+
+    for p in sorted(_find_hard_corpus_dir().glob("*.md")):
+        meta, body = _parse_frontmatter(p.read_text(encoding="utf-8"))
+        doc_id = store.add_document(
+            source=meta.get("doc_id", p.stem),
+            title=meta.get("title", p.stem),
+            metadata=meta,
+            created_at=meta.get("last_updated", ""),
+        )
+        chunks = _chunk(body)
+        if not chunks:
+            continue
+        vecs = embed(chunks)
+        for i, (text, vec) in enumerate(zip(chunks, vecs)):
+            store.add_chunk(doc_id, i, text, vec, metadata={"status": meta.get("status", "active")})
+    store.commit()
+    return store
+
+
+def load_golden_hard() -> list[dict]:
+    """The 12-case Hard Pack golden set (`q / expected / support / tag`), the
+    through-line fixture for the Hard Pack — adversarially verified to break a
+    naive retriever on the recency / contextual / multi-hop / unanswerable cases."""
+    here = Path(__file__).resolve()
+    for seed in (here.parent / "data" / "golden_seed_hard.json",
+                 here.parent.parent / "golden_seed_hard.json"):
+        if seed.exists():
+            data = json.loads(seed.read_text(encoding="utf-8"))
+            return data["cases"] if isinstance(data, dict) and "cases" in data else data
+    return []
