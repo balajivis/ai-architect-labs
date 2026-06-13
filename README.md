@@ -31,6 +31,31 @@ Retrieval is **keyless** (embeddings run locally via MiniLM). Only generation an
 the LLM-judge evaluators need a key — set one of `GROQ_API_KEY` /
 `OPENAI_API_KEY` / `AZURE_OPENAI_API_KEY` / `GEMINI_API_KEY`.
 
+## Run locally (recommended — clone + editable install)
+The labs in [`labs/`](./labs/) are Python files you can run in VS Code (or plain
+`python`). Clone the repo and install it **editable**, so a later `git pull`
+updates **both** the labs and the `mai_rag` package at once:
+```bash
+git clone https://github.com/balajivis/ai-architect-labs.git
+cd ai-architect-labs
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[evals,viz]"
+cp .env.example .env        # then put your GROQ key in .env (Groq has a free tier)
+python labs/lab_1.py        # or step through it in VS Code's interactive window
+```
+
+## Getting updates
+We ship fixes and new labs over the course. To pull them:
+```bash
+git pull        # updates labs/ AND mai_rag (because you installed -e from the clone)
+```
+- Installed the **Colab git-URL** way instead of `-e`? `git pull` on a clone
+  updates only the lab files — run `pip install -U "mai_rag[...] @ git+...` to move
+  the package.
+- **Before you edit a lab, copy it** — `cp labs/lab_2.py my_lab_2.py` (or work on a
+  branch). Editing `labs/*.py` in place will cause a merge conflict on the next
+  `git pull`. Your `.env` is safe — it's git-ignored, so pulls never touch your key.
+
 ## Quickstart — baseline a naive RAG (Module 1)
 ```python
 from mai_rag import corpus, evals, viz, golden
