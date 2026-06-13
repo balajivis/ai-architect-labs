@@ -1,0 +1,20 @@
+{
+  "name": "lab8-policy-mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lab 8 — Streamable-HTTP MCP server over the mai_rag policy corpus (the Python->Node seam). The same @modelcontextprotocol/sdk version Kapi's production client pins.",
+  "scripts": {
+    "start": "node --experimental-strip-types server.ts",
+    "dev": "node --experimental-strip-types --watch server.ts",
+    "inspector": "npx @modelcontextprotocol/inspector"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.26.0",
+    "express": "^5.0.0",
+    "zod": "^3.23.8"
+  }
+}

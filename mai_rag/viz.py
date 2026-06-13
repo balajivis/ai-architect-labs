@@ -107,6 +107,50 @@ def per_case_heatmap(results: list[dict], title: str = "Read the distribution, n
     return ax
 
 
+def confusion_matrix(decisions, labels=None,
+                     title: str = "The gate: did it pause exactly the unsafe ones?"):
+    """Render a confusion matrix for a binary/multi-class gate (Lab 7 Move 7).
+
+    `decisions` is a list of `(true_label, predicted_label)` pairs — e.g. the
+    turn's ground-truth tag vs the gate's held/proceeded decision. `labels` fixes
+    the row/column order; if None it's inferred (sorted union of both axes). The
+    diagonal is correct calls; off-diagonal cells are where the gate over-blocked
+    (false positive → alert fatigue) or leaked an unsafe turn (false negative →
+    the action that shipped). Editorial palette, same as the rest of viz.
+
+    NEW helper, ships with Lab 7. If it ever slips, Move 7 falls back to
+    per_case_heatmap with tag rows."""
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LinearSegmentedColormap
+
+    pairs = [(str(t), str(p)) for t, p in decisions]
+    if labels is None:
+        labels = sorted({t for t, _ in pairs} | {p for _, p in pairs})
+    labels = [str(x) for x in labels]
+    idx = {l: i for i, l in enumerate(labels)}
+
+    M = np.zeros((len(labels), len(labels)), dtype=int)
+    for t, p in pairs:
+        if t in idx and p in idx:
+            M[idx[t], idx[p]] += 1
+
+    cmap = LinearSegmentedColormap.from_list("ed", ["#F4F2EC", ACCENT_SOFT, ACCENT])
+    fig, ax = _ax(figsize=(1.0 * len(labels) + 2.5, 0.9 * len(labels) + 2))
+    im = ax.imshow(M, cmap=cmap, aspect="auto")
+    ax.set_xticks(range(len(labels)), labels, rotation=30, ha="right")
+    ax.set_yticks(range(len(labels)), labels)
+    ax.set_xlabel("gate decision (predicted)", color=INK, fontsize=9)
+    ax.set_ylabel("ground-truth tag", color=INK, fontsize=9)
+    ax.set_title(title, fontsize=12, loc="left", style="italic")
+    thresh = M.max() / 2 if M.max() else 0.5
+    for i in range(len(labels)):
+        for j in range(len(labels)):
+            ax.text(j, i, str(M[i, j]), ha="center", va="center",
+                    color=(PAPER if M[i, j] > thresh else INK), fontsize=9)
+    plt.tight_layout()
+    return ax
+
+
 def compare_runs(store, label_a: str, label_b: str, **kw):
     """Read two persisted runs from the data layer (by label) and `compare()`
     them. This is why runs persist — Module 2's run is already in the DB."""

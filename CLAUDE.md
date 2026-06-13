@@ -76,12 +76,21 @@ These are **Python files exported from Colab** (`labs/lab_1.py … lab_5.py`), r
 | 3 | `labs/lab_3.py` | Query routing, HyDE, decomposition, a sufficiency loop + web-search (CRAG) fallback. |
 | 4 | `labs/lab_4.py` | Working / long-term memory, user-scoped retrieval, personalization. |
 | 5 | `labs/lab_5.py` | The RAGAS triad, a judge calibrated to human labels (Cohen's κ + bias probes), and the **eval gate**. |
+| 6 | `labs/lab_6.py` | **Guardrails & Security** (WIP) — a 4-gate gauntlet (PII→injection→off-policy→output) scored as evaluators, row-level tenant ACLs, EU AI Act mapping. |
+| 7 | `labs/lab_7.py` | **Human-in-the-Loop** (WIP) — risk-tag tools, pause/resume an action, the eval→HITL bridge, score the gate. |
+| 8 | `labs/lab_8.py` + `labs/mcp_server/` | **MCP — build a server** (WIP, **TypeScript/Node**). The Python→Node seam: build + harden (OAuth/audience, tool-poisoning guard, resilience). Needs Node 20+. |
+
+> **Labs 6–8 are work-in-progress** — shipped move-by-move with `# WIP:` stubs the student (and you) fill in as the class progresses via `git pull`. Lab 8 is the one **TypeScript** lab and needs Node 20+ (`nvm install 20`); the others are Python.
 
 > The labs have a small **repo shim** at the top: it loads your key from a `.env` and makes Colab-only names (`userdata`, `display`) work locally. The original `!pip install` cells are commented out — install once in your venv instead.
 
+## Bring your own corpus (the take-home)
+
+If the student wants to run the labs on **their own domain** instead of our shipped corpus, follow [`BUILD_YOUR_CORPUS.md`](./BUILD_YOUR_CORPUS.md). It walks you through **interviewing the student first** (do not skip — ask about their domain, entities, real user questions, what changed recently, and where their current system fails), then generating ~12–15 adversarial docs + a golden set in the exact eval-path schema, loading them with `corpus.load_corpus(dir)` / `corpus.load_golden(path)`, and proving the corpus is genuinely hard (naive recall@5 clearly < 1.0). Same hard rules apply — **no regex**, synthetic data only, small enough to re-embed live.
+
 ## How to run any lab — the recipe
 
-1. **Run Move 0 (setup) first.** Confirm it prints `mai_rag 0.1.5` and the corpus loads (~136 docs, ~15–25s). If the version is older, **restart the kernel** and re-run (a stale install is cached).
+1. **Run Move 0 (setup) first.** Confirm it prints `mai_rag 0.1.7` (or newer) and the corpus loads (~136 docs, ~15–25s). If the version is older, **restart the kernel** and re-run (a stale install is cached).
 2. **Go move by move.** Read the markdown header, run the code cell, look at the output _together_ before moving on. Most cells make several LLM calls — they take 30s–2min, that's normal.
 3. **Interpret, don't just run.** When a scorecard or heatmap prints, help the student read it: which metric moved, where a dark cell means the technique broke.
 
@@ -97,7 +106,7 @@ These are **Python files exported from Colab** (`labs/lab_1.py … lab_5.py`), r
 
 | Symptom | Fix |
 |---|---|
-| `no attribute 'load_catalog_corpus'` / wrong version | Stale install — **restart the kernel**, re-run Move 0, confirm `0.1.5`. |
+| `no attribute 'load_catalog_corpus'` / wrong version | Stale install — **restart the kernel**, re-run Move 0, confirm `0.1.7` (or newer). |
 | `ValueError: ... 384` from `embed` | `embed` takes a **list** and returns `(n, 384)`. Wrap a single string: `embed([text])[0]`. |
 | `from google.colab import userdata` fails locally | You're not on Colab — set the key via `os.environ` / `.env` instead (see Setup). |
 | RAGAS install is slow / conflicts | It's heavy. Use a clean venv; or run the `backend="native"` path, which needs no extra. |

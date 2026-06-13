@@ -102,6 +102,24 @@ CREATE TABLE IF NOT EXISTS feedback (
     verdict     TEXT,                          -- thumbs_down etc. → Tier-3 golden cases
     created_at  TEXT
 );
+
+-- HITL escalate/approval queue (Lab 7 · Pillar IV Module 3). Additive: a held
+-- action is a paused run + a queue row written together. A failed safety eval
+-- promotes into exactly one PENDING row carrying its golden_case_id + eval_run_id
+-- (the eval→HITL bridge). CREATE ... IF NOT EXISTS makes this safe for the
+-- prebuilt policy.db too — opening an old DB just adds the empty table.
+CREATE TABLE IF NOT EXISTS hitl_queue (
+    id                INTEGER PRIMARY KEY,
+    status            TEXT DEFAULT 'PENDING',  -- PENDING | APPROVED | REJECTED | RESOLVED
+    query             TEXT,
+    original_response TEXT,
+    reason            TEXT,
+    golden_case_id    TEXT,                    -- the case that failed the eval (bridge)
+    eval_run_id       TEXT,                    -- the run that produced the failure
+    tenant_id         TEXT DEFAULT 'default',  -- single-tenant for now; RLS lab enforces later
+    created_at        TEXT,
+    expires_at        TEXT                     -- 7-day expiry, mirrors Kapi hitl-bridge.ts
+);
 """
 
 VEC_SCHEMA = (
@@ -172,10 +190,27 @@ class Store:
         self.conn.commit()
 
     # ---- read: vector search ------------------------------------------------
-    def search(self, query: str, k: int = 5, tenant_id: str | None = None) -> list[Hit]:
+    def search(self, query: str, k: int = 5, tenant_id: str | None = None,
+               require_tenant: bool = False) -> list[Hit]:
         """KNN over the vector table, then join back for content. The two-step
-        shape keeps the SQL legible — KNN first, hydrate second."""
+        shape keeps the SQL legible — KNN first, hydrate second.
+
+        `require_tenant=True` makes the tenant scope MANDATORY: a call with no
+        tenant_id RAISES rather than returning rows. This is row-level security
+        enforced at the DATA layer, not a prompt instruction (Lab 6 · mirrors
+        Kapi lib/knowledge/vector-store.ts which throws tenantId-required). It is
+        a permanent PER-CALL opt-in defaulting False, so Labs 1–5's keyless
+        `store.search(q)` calls are untouched — there is no plan to flip the
+        default (that would retroactively break already-shipped labs)."""
         import sqlite_vec
+
+        if require_tenant and tenant_id is None:
+            raise ValueError(
+                "require_tenant=True but tenant_id is None — refusing to run an "
+                "unscoped query. Resolve the tenant from the auth layer first "
+                "(see mai_rag.acl.authed_search). RLS belongs in the retriever, "
+                "not the prompt."
+            )
 
         qv = embed([query])[0]
         # sqlite-vec KNN: use the `k = ?` constraint, NOT `LIMIT ?`. A bound

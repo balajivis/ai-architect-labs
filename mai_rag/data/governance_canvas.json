@@ -1,0 +1,16 @@
+{
+  "_note": "Lab 6 Move 7 — the governance canvas, shipped as a RUNNABLE fixture (not hand-waved 'walk the canvas'). The student answers these five governance questions in-notebook; an LLM-judge (mai_rag.evals.safety style, NO regex) maps the answers to an EU AI Act risk tier so the tier verdict is a PRINTED output like every other win in the lab. WIP: a 5-question canvas only — the full Annex-III high-risk questionnaire arrives with the Observability & Compliance module. The rubric is fed to the LLM judge as the placement guide; the canvas helper returns {tier, reasoning}.",
+  "questions": [
+    {"id": "deployment_context",
+     "prompt": "Deployment context: where and on whom does this system act? (e.g. internal tool, public-facing education assistant, hiring/credit/biometric use)"},
+    {"id": "autonomy",
+     "prompt": "Autonomy: can the system take consequential ACTIONS on its own (writes, money movement, irreversible changes), or only read/answer?"},
+    {"id": "affected_population",
+     "prompt": "Affected population: who is impacted, and are any of them in a vulnerable or protected group (minors, applicants, patients)?"},
+    {"id": "harm_severity",
+     "prompt": "Harm severity & reversibility: if the system is wrong, how bad is the worst realistic outcome, and can it be undone?"},
+    {"id": "human_in_loop",
+     "prompt": "Human-in-the-loop: is there a human approval/oversight gate on the high-stakes actions, and can a person halt the system?"}
+  ],
+  "rubric": "Place the system into ONE of four EU AI Act risk tiers using the answers. unacceptable = banned use (social scoring, manipulative or exploitative use of vulnerable groups, untargeted biometric scraping). high = the system materially affects access to education/employment/credit/essential services, or makes/strongly influences consequential decisions about people, OR takes irreversible autonomous actions on protected populations. limited = the system interacts with people and could mislead but the stakes are bounded and reversible and a human oversees consequential actions (most education assistants with a HITL gate land here). minimal = no meaningful risk to rights or safety (e.g. a spam filter). Weigh autonomy, harm severity/reversibility, the affected population, and whether a human-in-the-loop gate exists. An education-adjacent assistant that answers questions, escalates high-stakes/low-confidence turns to a human, and takes no irreversible autonomous action on a protected group is LIMITED (drifting toward HIGH if it gains unsupervised consequential writes). Return keys: tier (one of the four), reasoning (one or two sentences citing the answers)."
+}

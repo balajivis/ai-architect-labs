@@ -297,3 +297,128 @@ def load_golden_catalog() -> list[dict]:
             data = json.loads(seed.read_text(encoding="utf-8"))
             return data["cases"] if isinstance(data, dict) and "cases" in data else data
     return []
+
+
+# ── Adversarial + action golden sets (Labs 6 & 7) ───────────────────────────────
+
+def load_golden_attacks() -> list[dict]:
+    """The Lab 6 ADVERSARIAL golden set (`golden_attacks.json`) — the inverse of a
+    correctness golden: each case is an attack and PASS = the system REFUSED /
+    REDACTED / ESCALATED. Cases are plain dicts shaped
+    `{q, attack_class, expected_behavior, notContains}` with an optional
+    `injected_doc` for indirect (OWASP-LLM01) prompt-injection cases. Four classes
+    — jailbreak / prompt-injection / pii-leak / off-policy — mirror Kapi
+    lib/evals/golden/safety/*. All synthetic and IP-safe (reuses lab_5's invented
+    'Asha Menon / 4471 / 14 Oak Lane' PII fixture). Includes ≥1 off-policy-only
+    case so Move 4's gate-toggle can prove Gate 3 is load-bearing.
+
+    WIP: ships ~12 cases now; the adversarial-robustness class grows toward Kapi's
+    10-case parity by git pull."""
+    here = Path(__file__).resolve()
+    for seed in (here.parent / "data" / "golden_attacks.json",
+                 here.parent.parent / "golden_attacks.json"):
+        if seed.exists():
+            data = json.loads(seed.read_text(encoding="utf-8"))
+            return data["cases"] if isinstance(data, dict) and "cases" in data else data
+    return []
+
+
+def load_action_golden() -> list[dict]:
+    """The Lab 7 ACTION golden set (`golden_seed_action.json`) — synthetic agent
+    turns the HITL gate is graded against (distinct from the catalog golden, which
+    stays the retrieval substrate). Cases use the catalog key schema
+    `{q, expected, tag}` with `tag ∈ {needs-approval | needs-redact |
+    safe-autonomous | needs-escalate}` PLUS a structural `tool_risk ∈
+    {read | write | destructive}` enum (declared metadata, not a content
+    classification) and an optional `confidence` for the Move-3 trigger sweep.
+    All synthetic and IP-safe.
+
+    WIP: ships ~10 base cases; tier=production turns (promoted from queue rejects)
+    are empty until Move 7's promotion demo, then grow class-to-class."""
+    here = Path(__file__).resolve()
+    for seed in (here.parent / "data" / "golden_seed_action.json",
+                 here.parent.parent / "golden_seed_action.json"):
+        if seed.exists():
+            data = json.loads(seed.read_text(encoding="utf-8"))
+            return data["cases"] if isinstance(data, dict) and "cases" in data else data
+    return []
+
+
+# ── Bring-your-own corpus — generic loaders (see BUILD_YOUR_CORPUS.md) ──────────
+
+#
+# Unlike load_policy/hard/catalog_corpus, these take an EXPLICIT path (no env
+# var, no prebuilt DB, no manifest dance). They mirror load_hard_corpus exactly:
+# live keyless MiniLM embed, the same _parse_frontmatter + _chunk pipeline, and
+# the same per-chunk metadata shape. Use these for a student's own domain corpus.
+
+def load_corpus(corpus_dir: str, db_path: str = ":memory:", rebuild: bool = False,
+                chunk_meta_key: str = "status") -> Store:
+    """Build the data layer from ANY directory of frontmattered ``*.md`` docs.
+
+    The generic sibling of ``load_hard_corpus`` — same chunking, same live embed
+    (~10–20s for ~130 chunks, keyless MiniLM), same frontmatter parsing — but it
+    takes an explicit ``corpus_dir`` path instead of an env-var/dev-clone resolver
+    and ships no prebuilt DB, so the embed step always runs in-notebook.
+
+    Frontmatter read (naive ``key: value`` lines, ``---`` delimited): ``doc_id``
+    (→ ``documents.source``, falls back to filename stem), ``title`` (→
+    ``documents.title``, falls back to stem), ``last_updated`` (→
+    ``documents.created_at``). The FULL frontmatter dict is stored on the
+    ``documents`` row. Per CHUNK, one metadata key is written:
+
+      * ``chunk_meta_key="status"`` (default) → ``{"status": meta.get("status","active")}``
+        — matches the policy/hard loaders and drives the Lab 2 metadata filter
+        (``status=active``) for recency twins.
+      * ``chunk_meta_key="type"``  → ``{"type": meta.get("type","topic")}``
+        — matches the catalog loader.
+
+    Files are globbed in sorted order (no manifest). Empty/whitespace-only chunks
+    are dropped. Pass ``db_path`` to persist; ``rebuild=True`` to re-seed an
+    existing connection.
+    """
+    default = "active" if chunk_meta_key == "status" else "topic"
+    conn = connect(db_path)
+    store = Store(conn)
+    already = conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
+    if already and not rebuild:
+        return store
+    if rebuild:
+        for t in ("documents", "chunks", "vec_chunks", "golden_cases"):
+            conn.execute(f"DELETE FROM {t}")
+
+    for p in sorted(Path(corpus_dir).glob("*.md")):
+        meta, body = _parse_frontmatter(p.read_text(encoding="utf-8"))
+        doc_id = store.add_document(
+            source=meta.get("doc_id", p.stem),
+            title=meta.get("title", p.stem),
+            metadata=meta,
+            created_at=meta.get("last_updated", ""),
+        )
+        chunks = _chunk(body)
+        if not chunks:
+            continue
+        vecs = embed(chunks)
+        for i, (text, vec) in enumerate(zip(chunks, vecs)):
+            store.add_chunk(doc_id, i, text, vec,
+                            metadata={chunk_meta_key: meta.get(chunk_meta_key, default)})
+    store.commit()
+    return store
+
+
+def load_golden(path: str) -> list[dict]:
+    """Read a custom golden file in the **policy/eval-path shape** so
+    the eval path (``run_suite`` / ``EvalInput``) can consume it.
+
+    Expects either a bare JSON list of case dicts, or ``{"cases": [...]}``. Each
+    case should use the policy fields ``question`` (required) /
+    ``expected_answer`` / ``supporting_doc_ids`` / ``criteria`` / ``tier`` /
+    ``failure_mode`` — the ONLY shape ``GoldenSet.from_seed`` maps. (The
+    ``q``/``expected``/``support``/``tag`` Hard-Pack shape is NOT consumed here;
+    that one is read raw by the lab harnesses, not the evaluator suite.)
+
+    Returns the raw list of dicts; feed it into a GoldenSet (see the lab guide)
+    rather than relying on the dir-scanning ``load_golden_seed`` resolver.
+    """
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    return data["cases"] if isinstance(data, dict) and "cases" in data else data

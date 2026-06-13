@@ -1,0 +1,25 @@
+{
+  "_note": "Lab 6 Move 7 — EU AI Act evidence map. Compliance is not paperwork bolted on at the end; it is evidence PRODUCED BY the evals. This joins each applicable Article to the passing safety/HITL eval that discharges it, so every green metric from Moves 3-6 becomes a defensible compliance citation (mirrors Kapi lib/evals/criteria/compliance eu-ai-act-transparency / human-oversight). WIP: covers Art 13/14/50 only — GDPR/RTBF and the full Annex-III high-risk checklist are stubbed and arrive with the Observability & Compliance module. `backing_eval` names an in-notebook pass/fail key the compliance_report() helper looks up; an Article is marked discharged only if its backing eval passed.",
+  "system_tier": "limited-or-high",
+  "tiers": ["unacceptable", "high", "limited", "minimal"],
+  "articles": [
+    {"article": "Art 13",
+     "title": "Transparency & provision of information to deployers",
+     "obligation": "The system's output must be traceable and its limits disclosed — answers are grounded/cited and the output is safety-screened before it ships.",
+     "backing_eval": "output_safety",
+     "also_supported_by": ["pii_exposure", "faithfulness"],
+     "tier": "limited"},
+    {"article": "Art 14",
+     "title": "Human oversight",
+     "obligation": "A natural person can oversee, intervene in, and halt the system — high-stakes and low-confidence actions escalate into a human review queue.",
+     "backing_eval": "hitl_escalate",
+     "also_supported_by": ["acl_enforced"],
+     "tier": "high"},
+    {"article": "Art 50",
+     "title": "Transparency obligations (disclosure of AI interaction)",
+     "obligation": "Users are told they are interacting with an AI system and content is marked AI-generated — the disclosure guardrail.",
+     "backing_eval": "ai_disclosure",
+     "also_supported_by": ["output_safety"],
+     "tier": "limited"}
+  ]
+}

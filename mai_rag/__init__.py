@@ -19,4 +19,7 @@ from .baseline import naive_rag
 from .store import Store
 
 __all__ = ["corpus", "evals", "golden", "llm", "store", "viz", "naive_rag", "Store"]
-__version__ = "0.1.5"
+# 0.1.7 — Labs 6 (guardrails + RLS) & 7 (HITL) kit extensions: mai_rag.guardrails,
+# mai_rag.acl, mai_rag.hitl, the require_tenant search param, the hitl_queue table,
+# and the golden_attacks / action / governance fixtures.
+__version__ = "0.1.7"

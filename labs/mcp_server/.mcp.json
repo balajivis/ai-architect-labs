@@ -1,0 +1,19 @@
+{
+  "_comment": "Lab 8 — Claude Code / Cursor / Kapi .mcp.json registration for YOUR local server. Two profiles. The 'policy' block (no auth) is ACTIVE for Moves 3–4. At Move 5 auth flips on: delete/rename 'policy' and rename 'policy-authed' to 'policy' (or copy its headers block in) so requests carry MCP_DEV_TOKEN. The Authorization header reads ${MCP_DEV_TOKEN} from your environment — NEVER paste a real token here; .mcp.json is committed, .env is not.",
+
+  "mcpServers": {
+    "policy": {
+      "type": "http",
+      "url": "http://127.0.0.1:9000/mcp"
+    },
+
+    "_policy-authed_MOVE5": {
+      "_comment": "Move 5: rename this to 'policy' (and remove the no-auth one). Carries the dev bearer so the now-authed server doesn't 401. ${MCP_DEV_TOKEN} is resolved from your shell/.env, not stored here.",
+      "type": "http",
+      "url": "http://127.0.0.1:9000/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MCP_DEV_TOKEN}"
+      }
+    }
+  }
+}
