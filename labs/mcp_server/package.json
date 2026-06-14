@@ -7,10 +7,11 @@
   "scripts": {
     "start": "node --experimental-strip-types server.ts",
     "dev": "node --experimental-strip-types --watch server.ts",
+    "test": "node --experimental-strip-types harness.ts",
     "inspector": "npx @modelcontextprotocol/inspector"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.26.0",

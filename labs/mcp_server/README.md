@@ -1,102 +1,86 @@
-# Lab 8 · `mcp_server/` — your Streamable-HTTP MCP server (the Python→Node seam)
+# Lab 8 · MCP — Build a Server (then harden it)
 
-This is the **kit's only non-Python lab artifact**. Labs 1–7 stayed in Python.
-Here the policy-RAG capability you built leaves the notebook and becomes *a thing
-other agents can call* — an **MCP server**, in TypeScript, on the **same
-`@modelcontextprotocol/sdk` version (1.26.0)** Kapi's production client pins.
+**This is the one TypeScript/Node lab.** Labs 1–7 hardened a policy-RAG app *in
+process* (Python). Here that same capability becomes **a thing other agents can
+call** — an MCP server — and crosses a process/network boundary.
 
-The corpus, embeddings, and evals stay in **Python** behind a thin keyless HTTP
-bridge (`mai_rag.bridge.serve_corpus`). This Node server holds no corpus — it
-calls that one upstream. That split *is* the lesson: you stop *calling* tools and
-start *being* the thing that's called.
+> **Why the language switches to Node — and why that's the lesson.** The
+> guardrails, ACLs, and HITL gates you built in Labs 6–7 **do not travel across
+> the wire.** Once retrieval is exposed as a *tool* an arbitrary client invokes,
+> the server must **re-enforce** trust: authenticate the caller (OAuth), reject
+> wrong-audience tokens (RFC 8707), and refuse poisoned tool calls. The Node
+> switch isn't a tooling accident — it's where "I called my own function" becomes
+> "an untrusted client called my tool." Build accordingly.
 
-> **Spec label — read every move with this in mind.**
-> **CURRENT (2025-11-25):** Streamable HTTP on a single `/mcp`, `initialize`
-> handshake + sticky `Mcp-Session-Id` sessions. This is what you build.
-> **COMING (2026-07-28 RC, SEP-2575):** stateless-first — any instance serves any
-> request, capabilities per-request in `_meta`, a Tasks primitive for durability.
-> The RC ships **after this cohort**: you engineer stateful today, design
-> stateless. No stateless code path exists in this scaffold yet (documentation
-> only); a later `git pull` may add a `server.stateless.ts` variant.
+Spec note on every move: **current = 2025-11-25** (stateful, `Mcp-Session-Id`
+sessions, what you build here) vs **coming = 2026-07-28 RC / SEP-2575**
+(stateless-first; ships *after* this cohort — design forward, don't build on it).
 
 ---
 
-## Prerequisite: Node 20+ (NEW for this lab)
+## Prerequisites
 
-The Python labs only needed a venv + `.env`. **This lab also needs Node 20+ and
-npm.** If you're a Python-labs student with no Node, install it with nvm:
+- **Node 22+** (`nvm install 22`) — the scaffold runs `.ts` directly via
+  `node --experimental-strip-types`, no build step.
+- The **Python corpus bridge** — the server holds no corpus; it calls a tiny
+  keyless Python HTTP wrapper over the `mai_rag` store (the only Python you run).
+  Install the kit once (`pip install -e ".[evals,viz]"` from the repo root) so
+  `python -m mai_rag.bridge` works.
+- An **LLM key** in `.env` (Groq free tier is fine) — only Move 6's
+  tool-poisoning guard reaches a model; everything else is keyless.
+
+## Run it — three terminals
 
 ```bash
-nvm install 20        # or: brew install node@20  /  see nodejs.org
-node --version        # must print v20.x or newer
+# 1) the keyless corpus bridge (:8765)
+python -m mai_rag.bridge                 # add --corpus catalog if you prefer
+
+# 2) your MCP server (:9000)
+cd labs/mcp_server && npm install
+npm start                                # Moves 2–4 (auth off)
+AUTH_ENABLED=1 npm start                 # Moves 5+ (OAuth on)
+
+# 3) the test harness — your move-by-move to-do list
+npm test
 ```
 
-> **Local VS Code only — NOT Colab.** This lab runs three processes over
-> localhost at once (Node server + Python bridge + the notebook kernel). Colab
-> cannot host that in one session. **Colab fallback is read-only**: follow along
-> via the shipped screenshots + recorded harness output; the notebook's headless
-> structural checks run where reachable, but the live build is local.
+A failing harness line is the signal you still have that Move's TODO to finish —
+same idea as Lab 5's eval gate, but the gate here is a **protocol contract**, not
+a score.
 
 ---
 
-## Run steps
+## The arc — consume → build → harden → scale (7 moves)
 
-### 1. Install the Node deps (once, in a terminal — not a notebook cell)
+| Move | You do | The win | File |
+|---|---|---|---|
+| **1** | Start the bridge; `curl http://127.0.0.1:8765/search?q=parental+leave` | the corpus is reachable over HTTP — the Python→Node seam | `mai_rag/bridge.py` |
+| **2 ⭐** | Register `policy_get` (mirror the worked `policy_search`) with a JSON-Schema `inputSchema` | `tools/list` returns **2** tools; harness Move 4 goes green | `server.ts` (`// WIP: TODO`) |
+| **3** | Point Claude Code at it (`.mcp.json`) and inspect with `npx @modelcontextprotocol/inspector` | you call your own server's tools from a real client | `.mcp.json` |
+| **4** | `npm test` — one happy path + one schema violation per tool | a bad arg (`k:"four"`) is rejected `-32602`, not silently run | `harness.ts` |
+| **5 ⭐** | Finish the RFC 8707 `aud` comparison; run `AUTH_ENABLED=1 npm start` | no-token → **401 + PRM**; wrong-audience → **403** | `auth.ts` (`// WIP: TODO`) |
+| **6 ⭐** | Wire the server's tool handler to call `POST /guard` before executing | a poisoned tool description is **blocked** (LLM-judged, **no regex**) | `server.ts` + `mai_rag/mcp_guard.py` |
+| **7** | Add a timeout + retry-with-backoff + a `tools/list` cache to the client path | the client survives a transient failure and a tool-list refresh | guided exercise |
 
-```bash
-cd labs/mcp_server
-npm install            # pulls @modelcontextprotocol/sdk@1.26.0 + express + zod
-```
-
-### 2. Start the Python bridge (Move 1) — from the notebook
-
-The bridge is the **one** Python upstream this server calls. Start it as an
-explicit background process in the lab so you can *see* the second process:
-
-```python
-from mai_rag import bridge, corpus
-store = corpus.load_policy_corpus("policy.db")
-httpd = bridge.serve_corpus(store, port=8765)   # MCP_BRIDGE_PORT
-# ... when you're done: httpd.shutdown()
-```
-
-Confirm it: `curl "http://127.0.0.1:8765/search?q=parental+leave&k=3"`.
-
-### 3. Start the MCP server
-
-```bash
-cd labs/mcp_server
-npm start              # node --experimental-strip-types server.ts -> :9000/mcp
-```
-
-It reads ports from your environment (`MCP_BRIDGE_PORT=8765`,
-`MCP_SERVER_PORT=9000`). Auth is **off** for Moves 3–4 (`AUTH_ENABLED` unset); at
-Move 5 you start it with `AUTH_ENABLED=1` and switch the `.mcp.json` profile.
-
-### 4. Consume it (Move 3)
-
-- **Claude Code / Cursor:** the shipped `.mcp.json` points a host at
-  `http://127.0.0.1:9000/mcp` (no-auth profile active).
-- **MCP Inspector:** `npx @modelcontextprotocol/inspector` — no install. List
-  tools, hand-invoke `policy_search('VPN split tunneling')`, eyeball the content.
+**The teaching insight (Move 2):** a tool's `description` and `inputSchema` *are
+the prompt* — a precise schema steers the model to call the tool correctly; a
+vague one makes it misfire. Spend time on the descriptions.
 
 ---
 
-## What's LIVE vs what you finish (WIP map)
+## What ships LIVE vs WIP (you complete the WIP)
 
-| File | Live now | You complete |
-|------|----------|--------------|
-| `server.ts` | Streamable-HTTP transport + session wiring + **`policy_search` worked end-to-end** | **`policy_get`** tool — `// WIP: TODO` (Move 2) |
-| `auth.ts` | **401 + `WWW-Authenticate` PRM emitter** (RFC 9728) | **RFC 8707 `aud` comparison** — one-line `// WIP: TODO` (Move 5); wrong-audience assertion fails until done |
-| `.mcp.json` | no-auth `policy` profile | switch to the bearer profile at Move 5 |
-| `package.json`, `tsconfig.json` | pinned deps + TS config | — |
+| | Status |
+|---|---|
+| `policy_search` tool (calls the bridge) | **LIVE** worked example |
+| Streamable-HTTP transport + sessions | **LIVE** |
+| 401 + `WWW-Authenticate: …resource_metadata=` (PRM) emitter | **LIVE** (`auth.ts`) |
+| no-auth `.mcp.json` profile | **LIVE** |
+| `mai_rag.mcp_guard.guard` (tool-poisoning judge, fails closed) | **LIVE**, fail-safe |
+| `policy_get` tool | **WIP** — Move 2 TODO |
+| RFC 8707 `aud` comparison | **WIP** — Move 5 TODO (`audMismatch = false`) |
+| server-side guard enforcement + resilience | **WIP** — Moves 6–7 |
+| stateless-first RC (2026-07-28) | documentation-only by design |
 
-Credentials are **env-only**: `MCP_DEV_TOKEN` / expected `aud` come from `.env`
-(git-ignored). Nothing secret is written into a `.ts`/`.json`/`.md` file —
-`.mcp.json`'s `${MCP_DEV_TOKEN}` resolves from your shell, never a pasted token.
-
-> **Borrowed shape, not transport.** The tool-handler shape and error-code
-> vocabulary (`textBlock` helper, `-32601`/`-32000`/`-32602`) echo workshop-kit
-> `mcp/server.mjs`. That file is an OLDER-spec (2024-11-05), stdio, raw-JSON-RPC
-> example — its transport/handshake is **replaced** here by `McpServer` +
-> Streamable HTTP. Borrow the shape; don't treat it as a same-spec reference.
+This lab is **work-in-progress shipped via `git pull`** — completing the TODOs
+*is* the lab.

@@ -78,9 +78,9 @@ These are **Python files exported from Colab** (`labs/lab_1.py … lab_5.py`), r
 | 5 | `labs/lab_5.py` | The RAGAS triad, a judge calibrated to human labels (Cohen's κ + bias probes), and the **eval gate**. |
 | 6 | `labs/lab_6.py` | **Guardrails & Security** (WIP) — a 4-gate gauntlet (PII→injection→off-policy→output) scored as evaluators, row-level tenant ACLs, EU AI Act mapping. |
 | 7 | `labs/lab_7.py` | **Human-in-the-Loop** (WIP) — risk-tag tools, pause/resume an action, the eval→HITL bridge, score the gate. |
-| 8 | `labs/lab_8.py` + `labs/mcp_server/` | **MCP — build a server** (WIP, **TypeScript/Node**). The Python→Node seam: build + harden (OAuth/audience, tool-poisoning guard, resilience). Needs Node 20+. |
+| 8 | `labs/mcp_server/` | **MCP — build a server** (WIP, **TypeScript/Node**, the one non-Python lab). Build + harden over the wire (OAuth/audience, tool-poisoning guard, resilience). Self-contained: its own `README.md` + TS `harness.ts`; run `python -m mai_rag.bridge` to serve the corpus. Needs Node 22+. |
 
-> **Labs 6–8 are work-in-progress** — shipped move-by-move with `# WIP:` stubs the student (and you) fill in as the class progresses via `git pull`. Lab 8 is the one **TypeScript** lab and needs Node 20+ (`nvm install 20`); the others are Python.
+> **Labs 6–8 are work-in-progress** — shipped move-by-move with `# WIP:`/`// WIP:` stubs the student (and you) fill in as the class progresses via `git pull`. Lab 8 is the one **TypeScript** lab: it lives entirely in `labs/mcp_server/` (no `lab_8.py`), driven by `README.md` + `npm test`; needs Node 22+ (`nvm install 22`) and a one-time `python -m mai_rag.bridge` for the corpus. The other labs are Python.
 
 > The labs have a small **repo shim** at the top: it loads your key from a `.env` and makes Colab-only names (`userdata`, `display`) work locally. The original `!pip install` cells are commented out — install once in your venv instead.
 

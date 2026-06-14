@@ -14,3 +14,5 @@ dist/
 # Local secrets
 .env
 labs/__pycache__/
+node_modules/
+/labs/mcp_server/package-lock.json

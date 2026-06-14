@@ -132,7 +132,10 @@ def connect(path: str = ":memory:") -> sqlite3.Connection:
     """Open the DB, load sqlite-vec, ensure the schema exists."""
     import sqlite_vec
 
-    conn = sqlite3.connect(path)
+    # check_same_thread=False so the same store can be read from a worker thread
+    # (e.g. mai_rag.bridge's threaded HTTP server in Lab 8). The labs drive the
+    # connection single-threaded, so disabling the ownership guard is safe.
+    conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.enable_load_extension(True)
     sqlite_vec.load(conn)
