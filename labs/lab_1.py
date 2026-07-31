@@ -28,10 +28,11 @@ Goal: Build Evals and Golden test cases with a naive RAG application
 import os, pathlib
 
 # Load .env (KEY=VALUE lines) from the repo root / cwd into the environment.
-# Structural parse of a config file — no extra dependency needed.
-for _cand in (pathlib.Path(".env"),
-              pathlib.Path(__file__).resolve().parent.parent / ".env",
-              pathlib.Path(__file__).resolve().parent / ".env"):
+# Structural parse of a config file — no extra dependency needed. Works whether run as
+# `python labs/lab_1.py` (has __file__) OR cell-by-cell in a notebook / VS Code interactive
+# (no __file__) — guard it so the .env still loads there instead of crashing.
+_here = pathlib.Path(__file__).resolve().parent if "__file__" in globals() else pathlib.Path.cwd()
+for _cand in (pathlib.Path(".env"), _here.parent / ".env", _here / ".env"):
     if _cand.exists():
         for _line in _cand.read_text().splitlines():
             _line = _line.strip()
