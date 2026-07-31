@@ -32,7 +32,7 @@ import pandas as pd
 
 import mai_rag
 from mai_rag import corpus, llm
-from mai_rag.tutor import Tutor, Stage, Spinner, note, show_df, choice, dim, green
+from mai_rag.tutor import Tutor, Stage, Spinner, note, show_df, choice, dim, green, bold, yellow
 
 # ── shared state across stages (set lazily so any stage can be skipped) ──────
 store = None
@@ -244,11 +244,39 @@ def s2_baseline():
     note("MRR is the headline (rank-sensitive), recall is the floor (if the doc isn't in the top-k, "
          "no reranker can save it), hit@1 is the legible special case. This baseline is the number to beat.")
 
+# Hybrid's HOME TURF — queries whose handle is an exact token (a ticket ID, a version
+# floor). Dense embeddings blur these; BM25 nails them; fusion can rescue cases where
+# EACH side alone fails. Corpus-guarded: runs only where the support docs exist.
+SHOWCASE = [
+    ("Who approved change ticket CHG-20026-00412?", "itsec-firewall-change-management",
+     "an exact ticket ID — one doc contains it verbatim"),
+    ("What is the minimum AnyConnect version required?", "itsec-vpn-client-standard",
+     "a version floor — the active doc must beat its legacy twin AND legal boilerplate"),
+]
+
+def _rank_line(label, docs, want):
+    pos = next((i + 1 for i, d in enumerate(docs) if d == want), None)
+    mark = green(f"✓ #{pos}") if pos == 1 else (yellow(f"#{pos}") if pos else dim("miss"))
+    return f"    {label:7s} {mark:>14s}  {dim(' · '.join(d[:34] for d in docs))}"
+
 def s3_hybrid():
     ensure_bm25()
-    q = "Is the Juniper Pulse VPN client still supported?"
-    top = np.argsort(_bm25.get_scores(tok(q)))[::-1][:5]
-    print(f"  BM25 top docs for the Juniper query: {dedupe([_chunk_src[i] for i in top])[:3]}\n")
+    have = {s for (s,) in store.conn.execute("SELECT source FROM documents")}
+    cases = [c for c in SHOWCASE if c[1] in have]
+    if cases:
+        print(f"  {bold('hybrid’s home turf')} — exact-token queries, top-3 per retriever "
+              f"({green('✓')}=support ranked #1):\n")
+        for q, want, why in cases:
+            def d3(): return dedupe([h.source for h in store.search(q, k=12)])[:3]
+            def s3(): return dedupe([_chunk_src[i] for i in np.argsort(_bm25.get_scores(tok(q)))[::-1][:36]])[:3]
+            print(f"  Q: {q}   {dim('(' + why + ')')}")
+            print(_rank_line("dense", d3(), want))
+            print(_rank_line("bm25", s3(), want))
+            print(_rank_line("hybrid", [h.source for h in hybrid_search(q, k=3)], want))
+            print()
+        note("watch the AnyConnect row: dense misses top-3, BM25 alone misses too — but FUSION "
+             "puts the right doc at #1. That is hybrid's value: two weak rankings, one strong one.")
+        print()
     with Spinner("scoring naive vs hybrid on the golden set"):
         score(naive_search, "naive baseline", quiet=True)
         score(hybrid_search, "hybrid+rrf", quiet=True)
@@ -487,10 +515,12 @@ TUTOR = Tutor(
             failing case gets a verdict — RANKING (right doc retrieved, wrong order) vs
             EMBEDDING (not retrieved at all) — because the fix for each is different.""", s2_baseline, "0"),
         Stage("Hybrid + RRF — dense ∪ sparse, fused", """
-            Dense embeddings blur exact tokens — product names, versions, dollar amounts.
-            BM25 nails them. Run both, fuse by Reciprocal Rank Fusion (Σ 1/(K+rank), K=60 —
-            no score calibration, just rank orders). Honest expectation: lifts keyword and
-            multi-hop cases; does NOT fix the recency twins.""", s3_hybrid, "0"),
+            Dense embeddings blur exact tokens — ticket IDs, versions, dollar amounts. BM25
+            nails them. Two beats here: first hybrid's HOME TURF (exact-token queries where
+            dense fails and fusion wins — including one neither side wins alone), then the
+            honest scorecard on the golden set, where hybrid can even regress: BM25 loves
+            the legacy twins too, and every wrong vote costs a top-3 slot. Both beats are
+            true — that's why we measure.""", s3_hybrid, "0"),
         Stage("Metadata filtering — the free fix", """
             The recency landmine isn't a semantics problem, so no embedding trick fixes it.
             But ingestion captured a status field — so drop superseded docs with a WHERE
