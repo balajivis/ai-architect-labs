@@ -82,7 +82,7 @@ def retrieval_eval(search_fn, k=RETRIEVE_K):
         mrr = 1.0 / ranks[0] if ranks else 0.0
         hit1 = 1.0 if (got and got[0] in wanted) else 0.0
         verdict = "OK" if hit1 == 1.0 else (
-                  "RANKING (twin outranks)" if recall == 1.0 else "EMBEDDING (missed)")
+                  "RANKING (outranked)" if recall == 1.0 else "EMBEDDING (missed)")
         rows.append({"question": c["q"][:34], "tag": c["tag"], "mrr": round(mrr, 3),
                      "recall": recall, "hit@1": hit1, "verdict": verdict})
     return pd.DataFrame(rows)
