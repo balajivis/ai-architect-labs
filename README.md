@@ -33,6 +33,7 @@ Run in order; each builds on the prior scorecard. *(interactive = guided CLI tut
 | 1b | **RAG Foundations: The Dials** — chunking, size, overlap, embedding model, top-k, threshold, phrasing; live leaderboard + workbench | `labs/lab_1b.py` | **no — 100% keyless** · interactive |
 | 2 | **Retrieval, Measured** — hybrid+RRF, metadata (given & LLM-derived), cross-encoder rerank, contextual, UMAP, the answers finale | `labs/lab_2.py` | yes · interactive |
 | 3 | **Agentic RAG: The Five Decisions** — router, HyDE/multi-query, decomposition, sufficiency + CRAG web fallback, budget caps | `labs/lab_3.py` | yes · interactive |
+| 3b | **Route Smart, Not Slow: Adaptive RAG** — LLM complexity router (with its own eval), the direct/naive/agentic cost ladder, a live LLM-call meter, and the naive-vs-adaptive-vs-agentic showdown | `labs/lab_3b.py` | yes · interactive |
 | 4 | **Memory & Personalization** — rolling window, summarization, user profile, user-scoped retrieval, decay | `labs/lab_4.py` | yes |
 | 4b | **The Memory Stack** — the four layers on disk (short-term · working.yaml · episodic .md · durable profile.yaml), recall/isolation evals, memory × RAG | `labs/lab_4b.py` | yes · interactive |
 | 5 | **The Calibrated Judge & the Eval Gate** — RAGAS triad, judge vs human labels (Cohen's κ + bias probes), CI gate | `labs/lab_5.py` | yes |
