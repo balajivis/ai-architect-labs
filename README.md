@@ -32,6 +32,7 @@ Run in order; each builds on the prior scorecard. *(interactive = guided CLI tut
 | 1 | **Evaluation First** — golden cases, hand-rolled judges, the baseline to beat | `labs/lab_1.py` | yes · interactive |
 | 1b | **RAG Foundations: The Dials** — chunking, size, overlap, embedding model, top-k, threshold, phrasing; live leaderboard + workbench | `labs/lab_1b.py` | **no — 100% keyless** · interactive |
 | 2 | **Retrieval, Measured** — hybrid+RRF, metadata (given & LLM-derived), cross-encoder rerank, contextual, UMAP, the answers finale | `labs/lab_2.py` | yes · interactive |
+| 2c | **GraphRAG, Routed** — LLM triple extraction (168 shipped), build + traverse your own graph (class Cosmos service or local networkx, same API), chunks-vs-chunks+graph duel, and the case where graph LOSES — the routing verdict | `labs/lab_2c.py` | yes · interactive |
 | 3 | **Agentic RAG: The Five Decisions** — router, HyDE/multi-query, decomposition, sufficiency + CRAG web fallback, budget caps | `labs/lab_3.py` | yes · interactive |
 | 3b | **Route Smart, Not Slow: Adaptive RAG** — LLM complexity router (with its own eval), the direct/naive/agentic cost ladder, a live LLM-call meter, and the naive-vs-adaptive-vs-agentic showdown | `labs/lab_3b.py` | yes · interactive |
 | 4 | **Memory & Personalization** — rolling window, summarization, user profile, user-scoped retrieval, decay | `labs/lab_4.py` | yes |
@@ -39,7 +40,7 @@ Run in order; each builds on the prior scorecard. *(interactive = guided CLI tut
 | 5 | **The Calibrated Judge & the Eval Gate** — RAGAS triad, judge vs human labels (Cohen's κ + bias probes), CI gate | `labs/lab_5.py` | yes |
 | 6 | **Guardrails & Security** *(WIP)* — 4-gate gauntlet, tenant ACLs, EU AI Act mapping | `labs/lab_6.py` | yes |
 | 7 | **Human-in-the-Loop** *(WIP)* — risk-tagged tools, pause/resume, the eval→HITL bridge | `labs/lab_7.py` | yes |
-| 8 | **MCP: Build a Server, Then Harden It** *(WIP · TypeScript/Node 22+)* — OAuth/audience binding, tool-poisoning guard, resilience | `labs/mcp_server/` | yes |
+| 8 | **MCP: Build a Server, Then Harden It** *(WIP · TypeScript/Node 22+)* — OAuth/audience binding, tool-poisoning guard, resilience | `labs/mcp_server/` (`npm run lab`) | yes · interactive |
 
 ## Install (Colab)
 ```python

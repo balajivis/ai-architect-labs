@@ -1,0 +1,1013 @@
+{
+ "_note": "Pre-extracted entity/relation triples for the Hard Pack (lab_2c GraphRAG). Extraction is demoed live in the lab on 2 docs; this ships the full set so class never waits.",
+ "triples": [
+  {
+   "s": "Northwind Customer Data Retention Standard",
+   "r": "defines",
+   "o": "customer data retention",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "engineering teams",
+   "r": "must conform",
+   "o": "Northwind Customer Data Retention Standard",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "exceptions",
+   "r": "require",
+   "o": "Data Privacy Office approval",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "tenant-configured retention overrides",
+   "r": "may shorten",
+   "o": "retention periods",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "Data Processing Addendum",
+   "r": "prevails over",
+   "o": "this Standard",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "closed customer PII",
+   "r": "retained for",
+   "o": "24 months",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "legal hold",
+   "r": "suspends",
+   "o": "deletion",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "backups",
+   "r": "retained for",
+   "o": "35 days",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "audit logs",
+   "r": "retained for",
+   "o": "7 years",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "irreversible deletion",
+   "r": "uses",
+   "o": "crypto-shredding",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "crypto-shredding",
+   "r": "destroys",
+   "o": "per-tenant encryption keys",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "DSARs",
+   "r": "fulfilled within",
+   "o": "30 calendar days",
+   "doc": "data-retention-active"
+  },
+  {
+   "s": "Northwind Customer Data Retention Standard",
+   "r": "superseded_by",
+   "o": "data-retention-active",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "standard",
+   "r": "governs",
+   "o": "customer PII",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "standard",
+   "r": "applies_to",
+   "o": "production datastores",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "standard",
+   "r": "applies_to",
+   "o": "backup media",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "DPO",
+   "r": "owns",
+   "o": "standard",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "questions",
+   "r": "routed_to",
+   "o": "DPO",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "customer PII",
+   "r": "retained_for",
+   "o": "36 months",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "backup snapshots",
+   "r": "retained_for",
+   "o": "35 days",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "audit logs",
+   "r": "retained_for",
+   "o": "7 years",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "Northwind",
+   "r": "disposes_of",
+   "o": "customer PII",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "Northwind",
+   "r": "uses",
+   "o": "crypto-shredding",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "legal hold",
+   "r": "suspends",
+   "o": "disposal",
+   "doc": "data-retention-superseded"
+  },
+  {
+   "s": "matrix",
+   "r": "governs",
+   "o": "expense approval",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "matrix",
+   "r": "supersedes",
+   "o": "conflicting guidance",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "Finance",
+   "r": "owns",
+   "o": "document",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "policy",
+   "r": "applies_to",
+   "o": "employee and contractor expenses",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "structuring",
+   "r": "routes_to",
+   "o": "Finance review",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "higher authorities",
+   "r": "approve",
+   "o": "lower-band expense",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "$1,000-$4,999 expense",
+   "r": "requires",
+   "o": "Manager",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "$5,000-$24,999 expense",
+   "r": "requires",
+   "o": "Director",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "$25,000-$99,999 expense",
+   "r": "requires",
+   "o": "VP",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "$100,000+ expense",
+   "r": "requires",
+   "o": "CFO approval",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "$100,000+ expense",
+   "r": "requires",
+   "o": "board notification",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "out-of-policy travel",
+   "r": "requires",
+   "o": "Director sign-off",
+   "doc": "expense-approval-thresholds"
+  },
+  {
+   "s": "People Operations",
+   "r": "maintains",
+   "o": "Parental Leave Policy",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "Parental Leave Policy",
+   "r": "takes_effect_on",
+   "o": "1 May 2026",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "Parental Leave Policy",
+   "r": "supersedes",
+   "o": "prior policy",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "Parental Leave Policy",
+   "r": "applies_to",
+   "o": "benefits-eligible Northwind employees",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "Parental Leave Policy",
+   "r": "excludes",
+   "o": "contractors interns temporary staff",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "statutory entitlement",
+   "r": "overrides",
+   "o": "Northwind policy",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "primary caregiver",
+   "r": "entitled_to",
+   "o": "18 weeks paid leave",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "secondary caregiver",
+   "r": "entitled_to",
+   "o": "8 weeks paid leave",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "paid parental leave",
+   "r": "requires",
+   "o": "90 days continuous employment",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "leave entitlement",
+   "r": "must_be_taken_within",
+   "o": "12 months",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "leave entitlement",
+   "r": "may_be_taken_in",
+   "o": "up to 3 blocks",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "PTO",
+   "r": "continues_to_accrue_during",
+   "o": "parental leave",
+   "doc": "hr-parental-leave-active"
+  },
+  {
+   "s": "policy",
+   "r": "is_archived",
+   "o": "document",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "policy",
+   "r": "superseded_by",
+   "o": "hr-parental-leave-active",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "policy",
+   "r": "applies_to",
+   "o": "benefits-eligible Northwind employees",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "policy",
+   "r": "covers",
+   "o": "birth of a child",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "policy",
+   "r": "covers",
+   "o": "adoption placement",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "policy",
+   "r": "covers",
+   "o": "foster placement",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "statutory entitlement",
+   "r": "overrides",
+   "o": "policy",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "contractors",
+   "r": "not_eligible_under",
+   "o": "policy",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "primary caregiver",
+   "r": "entitled_to",
+   "o": "14 weeks paid parental leave",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "secondary caregiver",
+   "r": "entitled_to",
+   "o": "4 weeks paid parental leave",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "employee",
+   "r": "must_complete",
+   "o": "90 days continuous employment",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "parental leave",
+   "r": "must_be_used_within",
+   "o": "12 months of qualifying event",
+   "doc": "hr-parental-leave-superseded"
+  },
+  {
+   "s": "PTO accrual schedule",
+   "r": "applies_to",
+   "o": "full-time employees",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "part-time employees",
+   "r": "accrue_under",
+   "o": "separate arrangements",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "tenure",
+   "r": "measured_from",
+   "o": "most recent hire date",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "approved leaves of absence",
+   "r": "preserve",
+   "o": "continuous service",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "PTO",
+   "r": "accrues_monthly",
+   "o": "monthly",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "People Operations",
+   "r": "recalculates",
+   "o": "employee band",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "PTO carryover",
+   "r": "capped_at",
+   "o": "5 days",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "balance above 5 days",
+   "r": "forfeited_on",
+   "o": "December 31",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "carried-over days",
+   "r": "consumed_before",
+   "o": "newly accrued days",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "parental leave",
+   "r": "tracked_as",
+   "o": "separate entitlement",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "PTO",
+   "r": "continues_during",
+   "o": "standard paid parental leave",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "unpaid parental-leave extensions",
+   "r": "pause",
+   "o": "PTO accrual",
+   "doc": "hr-pto-accrual-active"
+  },
+  {
+   "s": "runbook",
+   "r": "defines",
+   "o": "incident response method",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "runbook",
+   "r": "applies_to",
+   "o": "Northwind systems",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "runbook",
+   "r": "owned_by",
+   "o": "IT Security",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "suspected incident",
+   "r": "treated_as",
+   "o": "confirmed incident",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "potential incident",
+   "r": "reported_to",
+   "o": "IT Security",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "severity",
+   "r": "drives",
+   "o": "escalation",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "SEV-1",
+   "r": "requires",
+   "o": "Executive notification",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "SEV-1",
+   "r": "requires",
+   "o": "Legal notification",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "on-call responder",
+   "r": "assigns",
+   "o": "Incident Commander",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "Legal",
+   "r": "engaged_at",
+   "o": "triage",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "notification",
+   "r": "requires",
+   "o": "Legal sign-off",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "Data Retention Standard",
+   "r": "defines",
+   "o": "retention window",
+   "doc": "incident-response-runbook"
+  },
+  {
+   "s": "document",
+   "r": "defines",
+   "o": "service-level commitments",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "service-level commitments",
+   "r": "applies_to",
+   "o": "production environments",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "signed enterprise agreement",
+   "r": "prevails_over",
+   "o": "document",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "entitlements",
+   "r": "tied_to",
+   "o": "subscribing legal entity",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "entitlements",
+   "r": "requires",
+   "o": "written approval",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "Northwind",
+   "r": "classifies",
+   "o": "incoming incident",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "responding engineer",
+   "r": "assigns",
+   "o": "severity",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "critical incident",
+   "r": "has_target",
+   "o": "eight business hours",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "high incident",
+   "r": "has_target",
+   "o": "twelve business hours",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "support",
+   "r": "delivered_through",
+   "o": "email",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "support",
+   "r": "delivered_through",
+   "o": "customer support portal",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "account",
+   "r": "designates",
+   "o": "authorized contacts",
+   "doc": "support-tier-bronze"
+  },
+  {
+   "s": "document",
+   "r": "defines",
+   "o": "Gold support plan commitments",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "Gold support plan",
+   "r": "applies_to",
+   "o": "production environments",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "Gold support plan",
+   "r": "applies_to",
+   "o": "designated contacts",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "master services agreement",
+   "r": "controls",
+   "o": "conflicts",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "first response",
+   "r": "excludes",
+   "o": "automated receipt confirmations",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "P1 incident",
+   "r": "has_target",
+   "o": "1 business hour first response",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "P2 incident",
+   "r": "has_target",
+   "o": "4 business hours first response",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "P3 incident",
+   "r": "has_target",
+   "o": "1 business day first response",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "P4 incident",
+   "r": "has_target",
+   "o": "2 business days first response",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "Gold support plan",
+   "r": "provides",
+   "o": "24x5 coverage",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "P1 incident",
+   "r": "has_target",
+   "o": "1 business day restoration",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "Gold support plan",
+   "r": "allows",
+   "o": "email portal telephone Slack Connect",
+   "doc": "support-tier-gold"
+  },
+  {
+   "s": "document",
+   "r": "governs",
+   "o": "support plan",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "commitments",
+   "r": "apply_to",
+   "o": "matching active entitlement",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "affected subscription",
+   "r": "determines",
+   "o": "applicable targets",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "P1 incident",
+   "r": "has_first-response",
+   "o": "15 minutes",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "P2 incident",
+   "r": "has_first-response",
+   "o": "1 hour",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "P3 incident",
+   "r": "has_first-response",
+   "o": "4 business hours",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "P4 request",
+   "r": "has_first-response",
+   "o": "1 business day",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "plan",
+   "r": "provides",
+   "o": "24x7 coverage",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "P1 incident",
+   "r": "has_restoration",
+   "o": "4 hours",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "P2 incident",
+   "r": "has_restoration",
+   "o": "8 hours",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "plan",
+   "r": "includes",
+   "o": "TAM",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "monthly availability below 99.95%",
+   "r": "triggers",
+   "o": "service credit",
+   "doc": "support-tier-platinum"
+  },
+  {
+   "s": "document",
+   "r": "defines",
+   "o": "service-level commitments",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "Northwind Technologies",
+   "r": "extends",
+   "o": "Silver support plan",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "commitments",
+   "r": "apply_to",
+   "o": "active subscriptions",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "document",
+   "r": "supersedes",
+   "o": "verbal representation",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "Northwind Master Services Agreement",
+   "r": "governs",
+   "o": "silent cases",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "eligibility",
+   "r": "begins_on",
+   "o": "subscription start date",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "renewal",
+   "r": "does_not_reset",
+   "o": "accrued history",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "properly classified ticket",
+   "r": "starts",
+   "o": "first-reply clock",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "top-severity incident",
+   "r": "targets",
+   "o": "4 business hours first reply",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "service",
+   "r": "is_delivered_during",
+   "o": "extended weekday hours",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "top-severity incident",
+   "r": "targets",
+   "o": "2 business days restoration",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "monthly availability below 99.7%",
+   "r": "earns",
+   "o": "service credit",
+   "doc": "support-tier-silver"
+  },
+  {
+   "s": "policy",
+   "r": "maintained_by",
+   "o": "IT Security",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "policy",
+   "r": "applies_to",
+   "o": "every team",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "full Security review",
+   "r": "triggered_by",
+   "o": "annual spend >= $25,000",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "full Security review",
+   "r": "triggered_by",
+   "o": "customer PII",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "full Security review",
+   "r": "triggered_by",
+   "o": "production data",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "full review vendors",
+   "r": "must provide",
+   "o": "SOC 2 Type II evidence",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "production-data vendors",
+   "r": "require",
+   "o": "penetration-test evidence",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "PII-processing vendor",
+   "r": "must sign",
+   "o": "standard DPA",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "PII-processing vendor",
+   "r": "must complete",
+   "o": "Vendgistics Risk Assessment v3",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "IT Security",
+   "r": "assigns",
+   "o": "risk rating",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "SSO",
+   "r": "enforced_via",
+   "o": "Okta",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "vendor portals",
+   "r": "must support",
+   "o": "SAML 2.0",
+   "doc": "vendor-onboarding-security"
+  },
+  {
+   "s": "IT Security",
+   "r": "owns",
+   "o": "document",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "standard",
+   "r": "applies_to",
+   "o": "Standard remote-access tier",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "standard",
+   "r": "replaces",
+   "o": "previously published version",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "standard",
+   "r": "covers",
+   "o": "corporate-issued laptops",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "managed laptops",
+   "r": "use",
+   "o": "always-on remote-access profile",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "Cisco Secure Client 5.1.4",
+   "r": "is_approved_for",
+   "o": "Standard tier",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "Cisco Secure Client 5.1.4",
+   "r": "connects_to",
+   "o": "Cisco Firepower 2130 concentrator",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "authentication",
+   "r": "requires",
+   "o": "corporate directory credential",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "authentication",
+   "r": "requires",
+   "o": "Duo MFA",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "device-health gate",
+   "r": "requires",
+   "o": "CrowdStrike Falcon agent 7.x or later",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "session inactivity",
+   "r": "disconnects_after",
+   "o": "30 minutes",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "split tunneling",
+   "r": "is_disabled_for",
+   "o": "Standard tier",
+   "doc": "vpn-client-standard-active"
+  },
+  {
+   "s": "Standard VPN client policy",
+   "r": "superseded_by",
+   "o": "vpn-client-standard-active",
+   "doc": "vpn-client-standard-superseded"
+  },
+  {
+   "s": "policy",
+   "r": "applies_to",
+   "o": "corporate-issued laptops",
+   "doc": "vpn-client-standard-superseded"
+  },
+  {
+   "s": "policy",
+   "r": "governs",
+   "o": "Northwind employees",
+   "doc": "vpn-client-standard-superseded"
+  },
+  {
+   "s": "personal devices",
+   "r": "covered_by",
+   "o": "BYOD and mobile-access standards",
+   "doc": "vpn-client-standard-superseded"
+  },
+  {
+   "s": "standard profile",
+   "r": "uses",
+   "o": "Cisco AnyConnect 4.10",
+   "doc": "vpn-client-standard-superseded"
+  },
+  {
+   "s": "approved client",
+   "r": "connects_to",
+   "o": "vpn.northwind.example",
+   "doc": "vpn-client-standard-superseded"
+  },
+  {
+   "s": "approved client",
+   "r": "uses",
+   "o": "Standard connection profile",
+   "doc": "vpn-client-standard-superseded"
+  },
+  {
+   "s": "VPN authentication",
+   "r": "requires",
+   "o": "Duo MFA",
+   "doc": "vpn-client-standard-superseded"
+  },
+  {
+   "s": "gateway",
+   "r": "performs",
+   "o": "certificate posture check",
+   "doc": "vpn-client-standard-superseded"
+  },
+  {
+   "s": "gateway",
+   "r": "enforces",
+   "o": "idle-disconnect timeout",
+   "doc": "vpn-client-standard-superseded"
+  },
+  {
+   "s": "gateway",
+   "r": "enforces",
+   "o": "maximum session length",
+   "doc": "vpn-client-standard-superseded"
+  },
+  {
+   "s": "split tunneling",
+   "r": "disabled_on",
+   "o": "standard profile",
+   "doc": "vpn-client-standard-superseded"
+  }
+ ]
+}
