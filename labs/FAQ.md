@@ -56,5 +56,8 @@ I · Advanced RAG (retrieval that's measured, agentic RAG, memory) · II · Eval
 ## How do I know retrieval is actually working / recall
 Score it, don't eyeball it. For each golden case, check whether the retrieved chunks' source ids include the `support` doc(s): recall@k = fraction of wanted docs retrieved, hit@1 = top result is a wanted doc. Low recall means the right chunk never made it into the window — no prompt will save you; fix the retriever (that's Lab 2).
 
+## Are all the packages installed / how do I check my environment
+Your machine snapshot (attached to this question) already lists every lab package in your repo `.venv` with its version, and flags any that are MISSING. To check yourself: `.venv/bin/pip list` (or `pip list` with the venv active). If anything's missing or you're unsure, just reinstall the full set — it's idempotent: `pip install -e ".[evals,viz]"`. That installs core (mai_rag, openai, sentence-transformers, numpy, pandas, sqlite-vec) plus the eval (ragas, datasets) and viz (umap-learn, scikit-learn) extras.
+
 ## The lab asks for a key during retrieval — is that right
 No. Retrieval is keyless (local MiniLM embeddings). If something asks for a key before generation, something's wrong — check you didn't accidentally route retrieval through an LLM.

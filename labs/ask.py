@@ -65,30 +65,48 @@ def _git(*args: str) -> str:
     except Exception:
         return ""
 
-def _venv_mai_rag() -> str:
-    """Where the labs actually run: check mai_rag in the repo's venv (fast — reads installed
-    metadata, doesn't import torch). ask.py itself may run on a different interpreter."""
+# The lab package set: core + [evals] + [viz] + the heavy transitive ones students ask about.
+LAB_PKGS = ["mai_rag", "openai", "langchain-groq", "rank-bm25", "tavily-python",
+            "sentence-transformers", "sqlite-vec", "numpy", "pandas", "matplotlib",
+            "ragas", "datasets", "umap-learn", "scikit-learn", "torch", "transformers"]
+
+def _find_venv_python():
     for venv in (_repo / ".venv", _repo / "venv", pathlib.Path(".venv"), pathlib.Path("venv")):
-        py = venv / "bin" / "python"
-        if not py.exists():
-            py = venv / "Scripts" / "python.exe"   # windows
-        if py.exists():
-            try:
-                out = subprocess.run(
-                    [str(py), "-c", "import importlib.metadata as m; print(m.version('mai_rag'))"],
-                    capture_output=True, text=True, timeout=8)
-                if out.returncode == 0 and out.stdout.strip():
-                    return f"{venv.name}: mai_rag {out.stdout.strip()} INSTALLED (run labs with {py})"
-                return f"{venv.name}: mai_rag NOT installed (run: {py} -m pip install -e '.[evals,viz]')"
-            except Exception:
-                return f"{venv.name}: found but couldn't probe"
-    return "no repo .venv found — create one: python3 -m venv .venv && .venv/bin/pip install -e '.[evals,viz]'"
+        for sub in ("bin/python", "Scripts/python.exe"):
+            py = venv / sub
+            if py.exists():
+                return venv, py
+    return None, None
+
+def _venv_probe() -> str:
+    """Where the labs actually run: check EVERY lab package in the repo's venv (fast — reads
+    installed metadata, no heavy imports). ask.py itself may run on a different interpreter."""
+    venv, py = _find_venv_python()
+    if not py:
+        return "no repo .venv found — create: python3 -m venv .venv && .venv/bin/pip install -e '.[evals,viz]'"
+    code = ("import importlib.metadata as m\n"
+            "for p in " + repr(LAB_PKGS) + ":\n"
+            "    try: print(p + '=' + m.version(p))\n"
+            "    except Exception: print(p + '=MISSING')")
+    try:
+        out = subprocess.run([str(py), "-c", code], capture_output=True, text=True, timeout=12)
+        lines = [l for l in out.stdout.splitlines() if "=" in l]
+        if not lines:
+            return f"{venv.name} found ({py}) but couldn't read installed packages"
+        present = [l for l in lines if not l.endswith("=MISSING")]
+        missing = [l.split("=")[0] for l in lines if l.endswith("=MISSING")]
+        summary = f"{venv.name} ({py})\n  installed: " + ", ".join(present)
+        summary += ("\n  MISSING: " + ", ".join(missing) + " -> run `pip install -e \".[evals,viz]\"` in this venv"
+                    if missing else "\n  all core + [evals] + [viz] packages present")
+        return summary
+    except Exception as e:
+        return f"{venv.name} found but probe failed: {type(e).__name__}"
 
 def snapshot() -> str:
     L = [
         f"ask.py's interpreter: python {platform.python_version()} ({sys.executable}) — may differ from your lab venv",
         f"os: {platform.system()} {platform.release()} {platform.machine()}",
-        f"repo venv (where labs run): {_venv_mai_rag()}",
+        f"repo venv (where labs run): {_venv_probe()}",
     ]
     env = [f"{k}={'set' if os.environ.get(k) else 'unset'}"
            for k in ("GROQ_API_KEY", "OPENAI_API_KEY", "AZURE_OPENAI_API_KEY", "GEMINI_API_KEY")]
