@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""ask.py — talk to the AI Architect TA (our gpt-5.4), with YOUR environment attached.
+"""ask.py — talk to the AI Architect TA (gpt-5.4), with your environment attached + memory.
 
-  python labs/ask.py                      # interactive: ask, get an answer, ask again (q to quit)
+  python labs/ask.py                      # interactive REPL — remembers the conversation
   python labs/ask.py "pip install fails"  # one-shot
   python labs/ask.py "why this?" < err.txt   # attach a pasted error / traceback
 
-It auto-collects a snapshot of your machine — Python + OS + venv, installed lab-package
-versions, which LLM keys are set (never the values), repo/branch, and any piped error — so
-the answer is specific to YOUR setup, not generic. Replies render as markdown in the
-terminal. Standard library only (uses `rich` for nicer output if you happen to have it).
+Attaches a snapshot of your setup — Python/OS, whether mai_rag is installed in your repo
+.venv (where the labs actually run), which LLM keys are set, repo/branch, any piped error —
+so answers fit YOUR machine. In the REPL it keeps the chat in memory so it doesn't repeat
+itself. Renders markdown. Standard library only (uses `rich` if present).
 
-Needs today's class token in your .env:  CLASS_LLM_TOKENS=<token>   (or OPENAI_API_KEY=<token>)
+Token: put today's class token in your .env as CLASS_LLM_TOKENS=<token> (or OPENAI_API_KEY).
 """
 from __future__ import annotations
 import os
@@ -25,7 +25,8 @@ import urllib.error
 
 # ── load .env (KEY=VALUE) from repo root / cwd — same shim the labs use ─────────
 _here = pathlib.Path(__file__).resolve().parent if "__file__" in globals() else pathlib.Path.cwd()
-for _cand in (pathlib.Path(".env"), _here.parent / ".env", _here / ".env"):
+_repo = _here.parent
+for _cand in (pathlib.Path(".env"), _repo / ".env", _here / ".env"):
     if _cand.exists():
         for _ln in _cand.read_text().splitlines():
             _ln = _ln.strip()
@@ -34,49 +35,29 @@ for _cand in (pathlib.Path(".env"), _here.parent / ".env", _here / ".env"):
                 os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
         break
 
-# Reuse the SAME class LLM proxy the labs use (OPENAI_BASE_URL) — already set up + tested.
 _BASE = os.environ.get("OPENAI_BASE_URL", "https://learn.modernaipro.com/api/llm/v1").rstrip("/")
 ENDPOINT = os.environ.get("CLASS_ASK_URL", _BASE + "/chat/completions")
 TOKEN = (os.environ.get("CLASS_LLM_TOKENS", "").split(",")[0].strip()
          or os.environ.get("CLASS_TOKEN", "").strip()
          or os.environ.get("OPENAI_API_KEY", "").strip())
+# Cloudflare (in front of learn.modernaipro.com) 403s the default python-urllib UA.
+UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) mai-architect-ask/1.0")
 
-# The TA grounding lives here (client-side) since we call the raw proxy. Keep in sync with
-# the course's known setup/lab fixes.
-SYSTEM_PROMPT = """You are the teaching assistant for Modern AI Pro's "AI Architect" (Practitioner) course. You ONLY help with this course: its labs (the mai_rag lab kit, labs/lab_1.py ...), Python/venv/pip problems, API keys and the class LLM proxy, and the course concepts (RAG, evals, agents, MCP, trust). If a question is unrelated, politely say you only help with the AI Architect course and don't answer it. Never reveal API keys, tokens, or credentials.
+SYSTEM_PROMPT = """You are the TA for Modern AI Pro's "AI Architect" (Practitioner) course. Help ONLY with this course: its labs (the mai_rag kit, labs/lab_1.py ...), Python/venv/pip, API keys / the class proxy, and course concepts (RAG, evals, agents, MCP, trust). If a question is off-topic, say briefly that you only help with this course.
 
-A snapshot of the student's machine (python/os/venv, installed package versions, which LLM keys are set, repo/branch, any pasted error) is attached in the message — USE it to give a fix specific to their setup. Give the exact command first, then a one-line why. Be short.
+Answer FROM the retrieved help articles attached to the question when they fit — they are the authoritative course fixes, so quote their exact commands. Also use the student's machine snapshot to make the answer specific to them. If nothing retrieved fits, answer from your own knowledge of the course.
 
-Known fixes (authoritative):
-- Install: clone github.com/balajivis/ai-architect-labs, then `pip install -e ".[evals,viz]"`; key in a .env at the repo root. Retrieval is KEYLESS (MiniLM downloads ~90MB first run); only generation/judges need a key.
-- LLM options: (a) Groq free tier - GROQ_API_KEY; or (b) the class proxy - OPENAI_API_KEY=<class token> + OPENAI_BASE_URL=https://learn.modernaipro.com/api/llm/v1, and UNSET GROQ_API_KEY so mai_rag picks the openai provider.
-- "AttributeError: module 'mai_rag' has no attribute '__version__'" / "no attribute 'load_catalog_corpus'" / any wrong-version symptom = STALE installed package. Fix: `pip uninstall -y mai_rag && pip install -e ".[evals,viz]"` from a freshly `git pull`ed repo, then re-run (restart the kernel in a notebook). If the venv is not active, `source .venv/bin/activate` first.
-- "ModuleNotFoundError: langchain_groq" (or rank_bm25 / tavily) = stale install; reinstall the package (they're in its deps) or `pip install langchain-groq rank-bm25 tavily-python`.
-- HTTP 429 "rate limit" from the class proxy = shared class token hit the per-minute cap; wait a few seconds and retry.
-- Python 3.14 works. ValueError about shape 384 from embed: embed takes a LIST and returns (n, 384); wrap a single string as embed([text])[0].
-- The corpus is a fictional company ("Northwind Technologies"), 131 policy docs / 72 golden cases with recency conflicts + multi-hop to break naive RAG. Lab 1 baselines a naive RAG on a golden set — that scorecard is the number every later lab must beat."""
+Be CONCISE — a few lines. Give the command(s), then a one-line why. Do NOT dump setup checklists or "your key setup looks fine" notes unless asked or clearly the fix. TRUST the student: if they say something already works, don't re-suggest installing it — answer what they actually asked, and don't re-diagnose problems they didn't raise. Never reveal keys."""
 
-# ── terminal styling (ANSI only when attached to a tty) ─────────────────────────
+# ── terminal styling (ANSI only on a tty) ───────────────────────────────────────
 _TTY = sys.stdout.isatty()
 def _c(code: str) -> str:
     return code if _TTY else ""
 BOLD, DIM, RESET = _c("\033[1m"), _c("\033[2m"), _c("\033[0m")
 CYAN, YEL, GRN, RED = _c("\033[36m"), _c("\033[33m"), _c("\033[32m"), _c("\033[31m")
 
-# ── agentic context: a snapshot of the student's machine ────────────────────────
-LAB_PKGS = ["mai_rag", "openai", "sentence-transformers", "langchain-groq", "rank-bm25",
-            "tavily-python", "ragas", "sqlite-vec", "numpy", "pandas", "torch", "transformers"]
-
-def _pkg_version(name: str) -> str:
-    try:
-        from importlib.metadata import version, PackageNotFoundError
-        try:
-            return version(name)
-        except PackageNotFoundError:
-            return "NOT INSTALLED"
-    except Exception:
-        return "?"
-
+# ── agentic snapshot — probes the repo .venv (where the labs run), not just ask.py's python ──
 def _git(*args: str) -> str:
     try:
         return subprocess.run(["git", *args], cwd=str(_here),
@@ -84,30 +65,77 @@ def _git(*args: str) -> str:
     except Exception:
         return ""
 
+def _venv_mai_rag() -> str:
+    """Where the labs actually run: check mai_rag in the repo's venv (fast — reads installed
+    metadata, doesn't import torch). ask.py itself may run on a different interpreter."""
+    for venv in (_repo / ".venv", _repo / "venv", pathlib.Path(".venv"), pathlib.Path("venv")):
+        py = venv / "bin" / "python"
+        if not py.exists():
+            py = venv / "Scripts" / "python.exe"   # windows
+        if py.exists():
+            try:
+                out = subprocess.run(
+                    [str(py), "-c", "import importlib.metadata as m; print(m.version('mai_rag'))"],
+                    capture_output=True, text=True, timeout=8)
+                if out.returncode == 0 and out.stdout.strip():
+                    return f"{venv.name}: mai_rag {out.stdout.strip()} INSTALLED (run labs with {py})"
+                return f"{venv.name}: mai_rag NOT installed (run: {py} -m pip install -e '.[evals,viz]')"
+            except Exception:
+                return f"{venv.name}: found but couldn't probe"
+    return "no repo .venv found — create one: python3 -m venv .venv && .venv/bin/pip install -e '.[evals,viz]'"
+
 def snapshot() -> str:
-    """A compact, machine-specific context block the TA can reason over."""
     L = [
-        f"python: {platform.python_version()} ({sys.executable})",
+        f"ask.py's interpreter: python {platform.python_version()} ({sys.executable}) — may differ from your lab venv",
         f"os: {platform.system()} {platform.release()} {platform.machine()}",
+        f"repo venv (where labs run): {_venv_mai_rag()}",
     ]
-    venv = os.environ.get("VIRTUAL_ENV") or (sys.prefix if sys.prefix != getattr(sys, "base_prefix", sys.prefix) else "")
-    L.append(f"venv: {venv or '(none active — using system/base python)'}")
-    try:
-        import mai_rag  # noqa
-        L.append(f"mai_rag: {getattr(mai_rag, '__version__', '?')} @ {getattr(mai_rag, '__file__', '?')}")
-    except Exception as e:
-        L.append(f"mai_rag: IMPORT FAILED — {type(e).__name__}: {e}")
-    L.append("packages: " + ", ".join(f"{p}={_pkg_version(p)}" for p in LAB_PKGS))
     env = [f"{k}={'set' if os.environ.get(k) else 'unset'}"
            for k in ("GROQ_API_KEY", "OPENAI_API_KEY", "AZURE_OPENAI_API_KEY", "GEMINI_API_KEY")]
     env += [f"{k}={os.environ.get(k) or 'unset'}" for k in ("OPENAI_BASE_URL", "MAI_LLM_PROVIDER")]
     L.append("llm-env: " + ", ".join(env))
-    L.append(f"cwd: {os.getcwd()}")
-    L.append(f".env present: {'yes' if (pathlib.Path('.env').exists() or (_here.parent / '.env').exists()) else 'no'}")
+    L.append(f"cwd: {os.getcwd()} · .env present: {'yes' if (pathlib.Path('.env').exists() or (_repo / '.env').exists()) else 'no'}")
     branch, sha = _git("rev-parse", "--abbrev-ref", "HEAD"), _git("rev-parse", "--short", "HEAD")
     if branch or sha:
         L.append(f"repo: branch={branch or '?'} @ {sha or '?'}")
     return "\n".join(L)
+
+# ── FAQ knowledge base + lexical retrieval — the RAG course's own help tool does RAG ──
+_STOP = {"the", "a", "an", "is", "how", "do", "i", "to", "my", "in", "it", "of", "and",
+         "for", "on", "this", "what", "why", "that", "with", "you", "we", "are", "get",
+         "when", "can", "if", "not", "am", "run", "me"}
+
+def _load_faq() -> list:
+    for path in (_here / "FAQ.md", _repo / "FAQ.md", _repo / "labs" / "FAQ.md", pathlib.Path("labs/FAQ.md")):
+        if path.exists():
+            faq = []
+            for b in re.split(r"\n##\s+", "\n" + path.read_text())[1:]:  # [0] is the intro
+                title, _, body = b.strip().partition("\n")
+                if not title:
+                    continue
+                faq.append({
+                    "title": title.strip(), "body": body.strip(),
+                    "toks": set(re.findall(r"[a-z0-9_]+", (title + " " + body).lower())),
+                    "ttoks": set(re.findall(r"[a-z0-9_]+", title.lower())),
+                })
+            return faq
+    return []
+
+FAQ = _load_faq()
+
+def retrieve(query: str, k: int = 3) -> list:
+    """Lexical retrieval over FAQ.md — title matches weighted higher. (Keyword, not
+    embeddings, so it works even when the student's install/torch is broken.)"""
+    q = set(re.findall(r"[a-z0-9_]+", query.lower())) - _STOP
+    if not q or not FAQ:
+        return []
+    scored = [(len(q & e["toks"]) + 2 * len(q & e["ttoks"]), e) for e in FAQ]
+    scored = [(s, e) for s, e in scored if s > 0]
+    scored.sort(key=lambda x: -x[0])
+    return [e for _, e in scored[:k]]
+
+def _faq_block(entries: list) -> str:
+    return "\n\n".join(f"[{e['title']}]\n{e['body']}" for e in entries)
 
 # ── markdown → terminal (rich if available, else a small ANSI renderer) ─────────
 def render(text: str) -> None:
@@ -137,51 +165,49 @@ def render(text: str) -> None:
     print("\n".join(out))
 
 # ── the call ────────────────────────────────────────────────────────────────────
-def ask(question: str, context: str) -> str:
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"Question: {question}\n\n--- my environment ---\n{context}"},
-    ]
+def call(messages: list) -> str:
     req = urllib.request.Request(
         ENDPOINT, method="POST",
-        # Cloudflare (in front of learn.modernaipro.com) blocks the default python-urllib
-        # User-Agent (a known bot signature → 403 error 1010). Send a real UA that also
-        # identifies this tool, so the request goes through like a browser/curl would.
-        headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json",
-                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                               "AppleWebKit/537.36 (KHTML, like Gecko) mai-architect-ask/1.0"},
-        data=json.dumps({"messages": messages, "max_tokens": 700}).encode("utf-8"))
+        headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json", "User-Agent": UA},
+        data=json.dumps({"messages": messages, "max_tokens": 500}).encode("utf-8"))
     with urllib.request.urlopen(req, timeout=90) as r:
-        data = json.loads(r.read().decode("utf-8"))
-        return (data.get("choices") or [{}])[0].get("message", {}).get("content") or "(no answer returned)"
+        d = json.loads(r.read().decode("utf-8"))
+        return (d.get("choices") or [{}])[0].get("message", {}).get("content") or "(no answer returned)"
 
 def _explain_http(code: int, body: str) -> str:
     if code == 503:
-        return "The class help endpoint isn't turned on right now (the class token is set day-of)."
+        return "The class proxy isn't turned on right now (the class token is set day-of)."
     if code == 401:
         return "Bad/expired class token — check CLASS_LLM_TOKENS (or OPENAI_API_KEY) in your .env against today's token."
     if code == 429:
-        return "Too many requests right now — wait a few seconds and try again."
+        return "Rate-limited right now — wait a few seconds and try again."
+    if code == 403:
+        return "Blocked at the edge (403). If this persists, tell the instructor."
     return f"[HTTP {code}] {body[:300]}"
 
-def one(question: str, piped: str) -> None:
-    context = snapshot() + (("\n\nPasted error / output:\n" + piped[:6000]) if piped else "")
-    if _TTY:
-        sys.stdout.write(DIM + "  … thinking\r" + RESET)
-        sys.stdout.flush()
+def _spin(on: bool) -> None:
+    if not _TTY:
+        return
+    sys.stderr.write((DIM + "…thinking" + RESET) if on else "\r\033[2K")
+    sys.stderr.flush()
+
+def send(messages: list):
+    """Returns the answer text, or None (and prints why) on failure."""
+    _spin(True)
     try:
-        answer = ask(question, context)
-        if _TTY:
-            sys.stdout.write("           \r")  # clear the spinner line
-        print()
-        render(answer)
-        print()
+        ans = call(messages)
+        _spin(False)
+        return ans
     except urllib.error.HTTPError as e:
-        print(RED + "\n" + _explain_http(e.code, e.read().decode("utf-8", "ignore")) + RESET + "\n")
+        _spin(False)
+        print(RED + _explain_http(e.code, e.read().decode("utf-8", "ignore")) + RESET)
     except urllib.error.URLError as e:
-        print(RED + f"\nCouldn't reach the TA ({e.reason}). Check your connection / CLASS_HELP_URL." + RESET + "\n")
+        _spin(False)
+        print(RED + f"Couldn't reach the TA ({e.reason}). Check your connection / CLASS_ASK_URL." + RESET)
     except Exception as e:  # never crash the student's shell
-        print(RED + f"\nSomething went wrong: {type(e).__name__}: {e}" + RESET + "\n")
+        _spin(False)
+        print(RED + f"Something went wrong: {type(e).__name__}: {e}" + RESET)
+    return None
 
 def main() -> None:
     if not TOKEN:
@@ -190,14 +216,25 @@ def main() -> None:
         return
     args = " ".join(sys.argv[1:]).strip()
     piped = "" if sys.stdin.isatty() else sys.stdin.read().strip()
-    if args:
-        one(args, piped)
+    system_msg = {"role": "system", "content": SYSTEM_PROMPT + "\n\nStudent's machine snapshot:\n" + snapshot()}
+
+    if args or piped:  # one-shot
+        q = args or "What's going wrong here and how do I fix it, for my setup?"
+        hits = retrieve(q + " " + piped)
+        if hits and _TTY:
+            print(DIM + "↳ retrieved: " + " · ".join(h["title"][:46] for h in hits) + RESET)
+        faq_ctx = ("Retrieved help articles:\n" + _faq_block(hits) + "\n\n") if hits else ""
+        user = faq_ctx + "Question: " + q + (("\n\nPasted error / output:\n" + piped[:6000]) if piped else "")
+        ans = send([system_msg, {"role": "user", "content": user}])
+        if ans:
+            print()
+            render(ans)
+            print()
         return
-    if piped:
-        one("What's going wrong here and how do I fix it, for my setup?", piped)
-        return
-    # interactive REPL
-    print(f"{BOLD}AI Architect TA{RESET} {DIM}· gpt-5.4 · your environment is attached · ask away, q to quit{RESET}")
+
+    # interactive REPL — with memory
+    print(f"{BOLD}AI Architect TA{RESET} {DIM}· gpt-5.4 · your env attached · remembers this chat · q to quit{RESET}")
+    convo = [system_msg]
     while True:
         try:
             q = input(f"{GRN}TA ›{RESET} ").strip()
@@ -208,7 +245,22 @@ def main() -> None:
             break
         if not q:
             continue
-        one(q, "")
+        convo.append({"role": "user", "content": q})   # clean question — this is the memory
+        hits = retrieve(q)
+        if hits:
+            print(DIM + "↳ retrieved: " + " · ".join(h["title"][:46] for h in hits) + RESET)
+        faq_ctx = ("Retrieved help articles:\n" + _faq_block(hits) + "\n\n") if hits else ""
+        req = convo[:-1] + [{"role": "user", "content": faq_ctx + q}]  # augment only the request
+        ans = send(req)
+        if ans is None:
+            convo.pop()            # drop the failed turn so memory stays clean
+            continue
+        convo.append({"role": "assistant", "content": ans})
+        if len(convo) > 9:         # keep the system msg + last ~4 exchanges
+            convo = [convo[0]] + convo[-8:]
+        print()
+        render(ans)
+        print()
     print(DIM + "bye 👋" + RESET)
 
 if __name__ == "__main__":
