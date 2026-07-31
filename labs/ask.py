@@ -46,7 +46,7 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
 
 SYSTEM_PROMPT = """You are the TA for Modern AI Pro's "AI Architect" (Practitioner) course. Help ONLY with this course: its labs (the mai_rag kit, labs/lab_1.py ...), Python/venv/pip, API keys / the class proxy, and course concepts (RAG, evals, agents, MCP, trust). If a question is off-topic, say briefly that you only help with this course.
 
-Answer FROM the retrieved help articles attached to the question when they fit — they are the authoritative course fixes, so quote their exact commands. Also use the student's machine snapshot to make the answer specific to them. If nothing retrieved fits, answer from your own knowledge of the course.
+Answer FROM the retrieved help articles attached to the question when they fit — they are the authoritative course fixes, so quote their exact commands. Also use the student's machine snapshot to make the answer specific to them. When a code file is attached (the lab file they asked about, or the file from a pasted traceback), READ it and point at the specific line/function that matters. If nothing retrieved fits, answer from your own knowledge of the course.
 
 Be CONCISE — a few lines. Give the command(s), then a one-line why. Do NOT dump setup checklists or "your key setup looks fine" notes unless asked or clearly the fix. TRUST the student: if they say something already works, don't re-suggest installing it — answer what they actually asked, and don't re-diagnose problems they didn't raise. Never reveal keys."""
 
@@ -155,6 +155,55 @@ def retrieve(query: str, k: int = 3) -> list:
 def _faq_block(entries: list) -> str:
     return "\n\n".join(f"[{e['title']}]\n{e['body']}" for e in entries)
 
+# ── agentic RAG: pull in the CODE FILE(s) the question / traceback is about ──────
+CODE_MAX = 12000   # chars per attached file
+
+def _code_refs(text: str) -> set:
+    refs = set()
+    for m in re.findall(r'File "([^"]+\.py)"', text):               # python tracebacks
+        refs.add(m)
+    for m in re.findall(r'(?<![\w"])([\w./-]+\.py)\b', text):         # bare .py paths / names
+        refs.add(m)
+    for n in re.findall(r'\blab[ _-]?(\d+[a-z]?)\b', text.lower()):   # "lab 2" / "lab_2"
+        refs.add(f"labs/lab_{n}.py")
+    return refs
+
+def gather_code(text: str, limit: int = 3) -> list:
+    """Attach the code the question is actually about — the lab file it names, or the file(s)
+    in a pasted traceback. Security: only .py files that resolve INSIDE the repo or cwd, never
+    arbitrary system paths; each capped at CODE_MAX."""
+    roots = []
+    for r in (_repo, pathlib.Path.cwd()):
+        try:
+            roots.append(str(r.resolve()))
+        except Exception:
+            pass
+    out, seen = [], set()
+    for ref in _code_refs(text):
+        for cand in (pathlib.Path(ref), _repo / ref, _repo / "labs" / pathlib.Path(ref).name,
+                     pathlib.Path.cwd() / ref):
+            try:
+                p = cand.resolve()
+            except Exception:
+                continue
+            if p in seen or p.suffix != ".py" or not p.is_file():
+                continue
+            if not any(str(p).startswith(root) for root in roots):    # stay inside the repo/cwd
+                continue
+            try:
+                code = p.read_text(errors="ignore")
+            except Exception:
+                continue
+            seen.add(p)
+            out.append((p, code[:CODE_MAX] + ("\n… (truncated)" if len(code) > CODE_MAX else "")))
+            break
+        if len(out) >= limit:
+            break
+    return out
+
+def _code_block(files: list) -> str:
+    return "\n\n".join(f"--- {p.name} ({p}) ---\n{code}" for p, code in files)
+
 # ── markdown → terminal (rich if available, else a small ANSI renderer) ─────────
 def render(text: str) -> None:
     try:
@@ -239,10 +288,17 @@ def main() -> None:
     if args or piped:  # one-shot
         q = args or "What's going wrong here and how do I fix it, for my setup?"
         hits = retrieve(q + " " + piped)
-        if hits and _TTY:
-            print(DIM + "↳ retrieved: " + " · ".join(h["title"][:46] for h in hits) + RESET)
+        files = gather_code(q + "\n" + piped)
+        if _TTY and (hits or files):
+            bits = []
+            if hits:
+                bits.append("articles: " + " · ".join(h["title"][:38] for h in hits))
+            if files:
+                bits.append("code: " + ", ".join(p.name for p, _ in files))
+            print(DIM + "↳ retrieved " + " | ".join(bits) + RESET)
         faq_ctx = ("Retrieved help articles:\n" + _faq_block(hits) + "\n\n") if hits else ""
-        user = faq_ctx + "Question: " + q + (("\n\nPasted error / output:\n" + piped[:6000]) if piped else "")
+        code_ctx = ("Attached code files:\n" + _code_block(files) + "\n\n") if files else ""
+        user = faq_ctx + code_ctx + "Question: " + q + (("\n\nPasted error / output:\n" + piped[:6000]) if piped else "")
         ans = send([system_msg, {"role": "user", "content": user}])
         if ans:
             print()
@@ -265,10 +321,17 @@ def main() -> None:
             continue
         convo.append({"role": "user", "content": q})   # clean question — this is the memory
         hits = retrieve(q)
-        if hits:
-            print(DIM + "↳ retrieved: " + " · ".join(h["title"][:46] for h in hits) + RESET)
+        files = gather_code(q)
+        if hits or files:
+            bits = []
+            if hits:
+                bits.append("articles: " + " · ".join(h["title"][:38] for h in hits))
+            if files:
+                bits.append("code: " + ", ".join(p.name for p, _ in files))
+            print(DIM + "↳ retrieved " + " | ".join(bits) + RESET)
         faq_ctx = ("Retrieved help articles:\n" + _faq_block(hits) + "\n\n") if hits else ""
-        req = convo[:-1] + [{"role": "user", "content": faq_ctx + q}]  # augment only the request
+        code_ctx = ("Attached code files:\n" + _code_block(files) + "\n\n") if files else ""
+        req = convo[:-1] + [{"role": "user", "content": faq_ctx + code_ctx + q}]  # augment only the request
         ans = send(req)
         if ans is None:
             convo.pop()            # drop the failed turn so memory stays clean
