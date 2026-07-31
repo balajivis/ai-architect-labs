@@ -13,6 +13,9 @@ dist/
 
 # Local secrets
 .env
+
+# Lab 4b memory stack — each student's agent memory is theirs, never committed
+.memory/
 labs/__pycache__/
 node_modules/
 /labs/mcp_server/package-lock.json

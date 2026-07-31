@@ -75,6 +75,7 @@ These are **Python files exported from Colab** (`labs/lab_1.py … lab_5.py`), r
 | 2 | `labs/lab_2.py` | Hybrid search, metadata filtering, cross-encoder rerank, contextual retrieval, UMAP — make retrieval measurable. |
 | 3 | `labs/lab_3.py` | Query routing, HyDE, decomposition, a sufficiency loop + web-search (CRAG) fallback. |
 | 4 | `labs/lab_4.py` | Working / long-term memory, user-scoped retrieval, personalization. |
+| 4b | `labs/lab_4b.py` | **The Memory Stack** (interactive tutor) — the four layers built one at a time, files visible on disk: L1 short-term (in-context) · L2 working (`working.yaml`) · L3 episodic (dated `.md`, the REM-flush) · L4 durable (`semantic/profile.yaml`, fact/preference/decision/action_item). Recall + isolation evals, then memory × RAG composed (not collapsed). Memory lives in `.memory/` (git-ignored). |
 | 5 | `labs/lab_5.py` | The RAGAS triad, a judge calibrated to human labels (Cohen's κ + bias probes), and the **eval gate**. |
 | 6 | `labs/lab_6.py` | **Guardrails & Security** (WIP) — a 4-gate gauntlet (PII→injection→off-policy→output) scored as evaluators, row-level tenant ACLs, EU AI Act mapping. |
 | 7 | `labs/lab_7.py` | **Human-in-the-Loop** (WIP) — risk-tag tools, pause/resume an action, the eval→HITL bridge, score the gate. |
