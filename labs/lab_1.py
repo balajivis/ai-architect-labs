@@ -14,7 +14,7 @@ later lab must beat. This is eval-driven development: define "good" first.
 """
 
 # --- repo local-run shim: load .env, make Colab-only names work off-Colab ----
-import os, pathlib, sys, textwrap, json
+import os, pathlib, sys, textwrap, json, time
 
 _here = pathlib.Path(__file__).resolve().parent if "__file__" in globals() else pathlib.Path.cwd()
 for _cand in (pathlib.Path(".env"), _here.parent / ".env", _here / ".env"):
@@ -64,9 +64,25 @@ def prompt_next():
 store = None                      # set in Move 1
 _rag_cache = {}                   # memoize naive_rag so we don't re-call the LLM every move
 
-def ask(prompt, temperature=0.0):
-    """One LLM chokepoint (mai_rag.llm) — provider comes from your env / the class token."""
-    return llm.complete(prompt, tier="small", temperature=temperature)
+def ask(prompt, temperature=0.0, retries=6):
+    """One LLM chokepoint (mai_rag.llm) — provider comes from your env / the class token.
+    Retries gracefully on a rate-limit (429) with exponential backoff: a shared class
+    token can burst past the proxy's limit, and the labs fire many calls in a loop."""
+    for attempt in range(retries):
+        try:
+            return llm.complete(prompt, tier="small", temperature=temperature)
+        except Exception as e:
+            rate_limited = type(e).__name__ == "RateLimitError" or "429" in str(e) or "rate limit" in str(e).lower()
+            if not rate_limited:
+                raise
+            if attempt == retries - 1:
+                raise RuntimeError(
+                    "Still rate-limited after backing off — the class LLM proxy is busy. "
+                    "Wait a minute and re-run this move, or ask the instructor to raise the limit."
+                ) from None
+            wait = min(2 ** attempt * 2, 30)      # 2 → 4 → 8 → 16 → 30 → 30
+            print(f"  {C['d']}… rate-limited, backing off {wait}s (retry {attempt + 1}/{retries - 1}){C['x']}", flush=True)
+            time.sleep(wait)
 
 def naive_rag(query, k=5):
     """The simplest RAG: retrieve top-k → stuff context → answer. The thing every lab beats."""
@@ -104,7 +120,11 @@ golden = [
      "support": "fin-procurement-thresholds-competitive-bidding + fin-purchase-approval-matrix", "tag": "multi-hop"},
     {"q": "For a $30,000 purchase, how many competitive quotes are required?",
      "expected": "Three quotes (the $25,000–$99,999 band).",
+
      "support": "fin-procurement-thresholds-competitive-bidding", "tag": "precision"},
+     {"q": "What are the use cases for the Enterprise Tier and what is the criterion?",
+     "expected": "Use case is: Multi-cloud data integration, compliance mandate. Enterprise contract value $100k-$500k+",
+     "support": "cs-sales-playbook", "tag": "precision"},
     {"q": "If both partners work at Northwind, how much parental leave does each receive?",
      "expected": "Each receives 16 weeks independently; the leave may overlap or be staggered.",
      "support": "hr-parental-leave-active", "tag": "precision"},
