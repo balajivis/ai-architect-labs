@@ -34,6 +34,7 @@ for _cand in (pathlib.Path(".env"), _here.parent / ".env", _here / ".env"):
         break
 
 import json
+import re
 import time
 import textwrap
 
@@ -49,11 +50,19 @@ store = None
 golden: list[dict] = []
 _tavily = None          # lazy + OPTIONAL — the lab degrades gracefully without a key
 
+_ACTIVE_BUDGET = None       # set inside agent() so EVERY ask() below it counts against the cap
+
 def ask(prompt, temperature=0.0):
+    if _ACTIVE_BUDGET is not None:
+        _ACTIVE_BUDGET.tick()          # meter the REAL LLM call, not a hand-placed counter
     return llm.complete(prompt, tier="small", temperature=temperature)
 
 def _json(raw):
-    return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
+    """Structural JSON extraction (parsing, not classification). Clear ValueError on non-JSON."""
+    m = re.search(r"\{.*\}", raw or "", re.DOTALL)
+    if not m:
+        raise ValueError(f"model did not return JSON: {(raw or '')[:120]!r}")
+    return json.loads(m.group(0))
 
 def web_available() -> bool:
     return bool(os.environ.get("TAVILY_API_SEARCH") or os.environ.get("TAVILY_API_KEY"))
@@ -123,7 +132,8 @@ def hyde_search(q, k=5):
 # ── Decision 3 · decomposition ───────────────────────────────────────────────
 def decompose(q):
     out = ask(f"Break this into 2-3 standalone sub-questions, one per line:\n{q}")
-    return [l.strip(" -*0123456789.") for l in out.splitlines() if "?" in l][:3]
+    subs = [l.strip(" -*0123456789.") for l in out.splitlines() if "?" in l][:3]
+    return subs or [q]              # if the model omits '?', fall back to the original — never search nothing
 
 def agentic_retrieve(q, k=4):
     subs = decompose(q)
@@ -167,23 +177,30 @@ class Budget:
         if time.time() - self.t0 > self.max_seconds:  raise RuntimeError("budget: wall-clock exceeded")
 
 def agent(q, max_calls=10, max_seconds=60):
-    """The finished product: route → (direct | retrieve | decompose) → sufficiency → web → answer."""
+    """The finished product: route → (direct | retrieve | decompose) → sufficiency → web → answer.
+    The budget is enforced INSIDE ask() (see _ACTIVE_BUDGET), so the cap counts every real LLM call
+    — route + analyze + decompose + sufficiency + answer — not a subset of hand-placed ticks."""
+    global _ACTIVE_BUDGET
     b = Budget(max_calls, max_seconds)
-    strat = route(q); b.tick()
-    if strat == "direct":
-        return "direct", ask(f"Answer this briefly and directly: {q}")
-    if strat == "decompose":
-        _, docs = agentic_retrieve(q); b.tick()
-    else:
-        docs = [(h.source, h.content) for h in store.search(q, k=4)]
-    used = "catalog"
-    if not sufficient(q, docs)["sufficient"]:
-        web = web_search(q); b.tick()
-        if web:
-            docs = docs[:2] + web; used = "catalog+WEB"
-    ctx = "\n\n".join(f"[{s}] {c}" for s, c in docs)
-    ans = ask(f"Answer using ONLY the context; cite sources inline as [source].\n\nQ: {q}\n\nContext:\n{ctx}\n\nAnswer:")
-    return f"{strat}/{used}", ans
+    prev, _ACTIVE_BUDGET = _ACTIVE_BUDGET, b
+    try:
+        strat = route(q)
+        if strat == "direct":
+            return "direct", ask(f"Answer this briefly and directly: {q}")
+        if strat == "decompose":
+            _, docs = agentic_retrieve(q)
+        else:
+            docs = [(h.source, h.content) for h in store.search(q, k=4)]
+        used = "catalog"
+        if not sufficient(q, docs)["sufficient"]:
+            web = web_search(q)
+            if web:
+                docs = docs[:2] + web; used = "catalog+WEB"
+        ctx = "\n\n".join(f"[{s}] {c}" for s, c in docs)
+        ans = ask(f"Answer using ONLY the context; cite sources inline as [source].\n\nQ: {q}\n\nContext:\n{ctx}\n\nAnswer:")
+        return f"{strat}/{used}", ans
+    finally:
+        _ACTIVE_BUDGET = prev
 
 # ── THE STAGES ───────────────────────────────────────────────────────────────
 def s1_setup():
@@ -224,7 +241,10 @@ def s3_router():
         rows = []
         with Spinner(f"routing all {len(golden)} golden queries ({label})"):
             for c in golden:
-                got = route(c["q"], corpus_aware=corpus_aware)
+                try:
+                    got = route(c["q"], corpus_aware=corpus_aware)
+                except (ValueError, KeyError):
+                    got = "retrieve"           # malformed classifier reply → safe default, keep the eval alive
                 rows.append({"query": c["q"][:44], "tag": c["tag"], "routed": got,
                              "expected": expected[c["q"]], "ok": got == expected[c["q"]]})
         return pd.DataFrame(rows)

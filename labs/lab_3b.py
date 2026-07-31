@@ -32,6 +32,7 @@ for _cand in (pathlib.Path(".env"), _here.parent / ".env", _here / ".env"):
         break
 
 import json
+import re
 
 import numpy as np
 import pandas as pd
@@ -62,7 +63,11 @@ def meter_read():
     return METER["calls"], METER["chars"] // 4      # chars/4 ≈ prompt tokens
 
 def _json(raw):
-    return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
+    """Structural JSON extraction (parsing, not classification). Clear ValueError on non-JSON."""
+    m = re.search(r"\{.*\}", raw or "", re.DOTALL)
+    if not m:
+        raise ValueError(f"model did not return JSON: {(raw or '')[:120]!r}")
+    return json.loads(m.group(0))
 
 # ── the three paths on the ladder (cost measured, not estimated) ─────────────
 def path_direct(q: str) -> str:
@@ -81,7 +86,10 @@ def path_agentic(q: str, k: int = 4) -> str:
     sub_raw = ask("Break this question into 1-3 standalone sub-questions (JSON only: "
                   f'{{"subs": ["...", ...]}}).\n\nQuestion: {q}')
     try:
-        subs = _json(sub_raw).get("subs", [q])[:3] or [q]
+        subs = _json(sub_raw).get("subs", [q])
+        if not isinstance(subs, list) or not subs:   # a string-valued "subs" must not be sliced into chars
+            subs = [q]
+        subs = subs[:3]
     except ValueError:
         subs = [q]
     partials = []
@@ -128,7 +136,10 @@ def grade(q, answer, expected):
          "information isn't in the corpus.\n"
          'Reply JSON only: {"reason":"<short>","score":<1.0|0.5|0.0>}.\n\n'
          f"QUESTION: {q}\nEXPECTED: {expected}\nANSWER: {answer}")
-    return _json(ask(p, temperature=0))["score"]
+    try:
+        return float(_json(ask(p, temperature=0))["score"])
+    except (ValueError, KeyError, TypeError):        # one prose/keyless judge reply must not kill the showdown
+        return 0.0
 
 # expected route per golden tag — the router's own ground truth
 TAG2ROUTE = {"no-retrieval": "direct", "site": "simple", "topic": "simple",
@@ -193,13 +204,14 @@ def s3_ladder():
 
 def s4_adaptive_run():
     ADAPTIVE_ROWS.clear()
-    meter_reset()
+    ROUTES.clear()          # re-route LIVE so the router's own classify call is metered into serving cost,
+    meter_reset()           # not hidden by stage-2's cache — otherwise adaptive looks ~1 call/query cheaper than it is
     print(f"  routing + answering + judging all {len(GOLDEN)} cases adaptively:\n")
     for c in GOLDEN:
         before = METER["calls"]
         with Spinner(f"[{c['tag']}] {c['q'][:44]}"):
             a, r = answer_adaptive(c["q"])
-            cost = METER["calls"] - before          # serving cost only — judge excluded
+            cost = METER["calls"] - before          # router classify + path calls; judge excluded (called below)
             g = grade(c["q"], a, c["expected"])
         ADAPTIVE_ROWS.append({"question": c["q"][:36], "tag": c["tag"], "routed": r,
                               "calls": cost, "score": g})
@@ -208,8 +220,8 @@ def s4_adaptive_run():
     show_df(df, "the adaptive run — every case: route taken, calls spent, judge score")
     SHOWDOWN["adaptive"] = {"quality": float(df["score"].mean()), "calls": int(df["calls"].sum())}
     print(f"  adaptive: quality {SHOWDOWN['adaptive']['quality']:.3f} · {SHOWDOWN['adaptive']['calls']} serving calls")
-    note("watch the calls column follow the routes: 1 for direct and simple, ~4 only where the "
-         "query earned it. Spend follows complexity — that's the whole idea.")
+    note("watch the calls column follow the routes: ~2 for direct/simple (a route + the answer), and "
+         "more only where the query earned decomposition. Spend follows complexity — that's the whole idea.")
 
 def s5_showdown():
     for system, fn in (("always-naive", path_naive), ("always-agentic", path_agentic)):

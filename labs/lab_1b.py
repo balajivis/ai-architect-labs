@@ -222,8 +222,12 @@ def s1_anatomy():
         first = chs[0].replace("\n", " ")[:100]
         print(f"  {yellow(name):<28} → {len(chs):>2} chunks   first: {dim(first + '…')}")
     cut = chunk_fixed(body, 60, 0.0)
-    boundary = cut[0].split()[-6:] + ["‖"] + cut[1].split()[:6]
-    panel("a fact, cut in half by a fixed boundary (the ‖ is the chunk break)", " ".join(boundary))
+    if len(cut) >= 2:
+        boundary = cut[0].split()[-6:] + ["‖"] + cut[1].split()[:6]
+        panel("a fact, cut in half by a fixed boundary (the ‖ is the chunk break)", " ".join(boundary))
+    else:
+        note("this demo doc fits in a single 60-word chunk — nothing to cut here; the size dial (next) "
+             "is where the tension shows.")
     note("every dial downstream exists to manage one tension: chunks small enough to be precise, "
          "big enough to carry their meaning. You just watched 'fixed' cut a sentence mid-thought.")
 
@@ -308,7 +312,11 @@ def s6_topk():
         print(f"\n  {bold('the threshold dial')} — top similarity per query:")
         print(f"    answerable   : {top_a[1]:.3f}  ({top_a[0]})")
         print(f"    unanswerable : {top_u[1]:.3f}  ({top_u[0]})  ← retrieval ALWAYS returns something")
-        print(f"    a cutoff between them (~{(top_u[1] + top_a[1]) / 2:.2f}) lets the system say “I don't know”")
+        if top_a[1] > top_u[1]:
+            print(f"    a cutoff between them (~{(top_u[1] + top_a[1]) / 2:.2f}) lets the system say “I don't know”")
+        else:
+            print(f"    {yellow('no clean gap on this pair')}: the unanswerable query scored ≥ the answerable one "
+                  f"— a single cosine cutoff would misfire here (why a threshold needs calibrating, not guessing)")
     note("recall rises with k, but every extra chunk costs prompt tokens and adds noise the model "
          "must ignore. And a score THRESHOLD is the cheapest guardrail you'll ever ship: below it, "
          "don't answer.")

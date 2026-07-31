@@ -14,7 +14,7 @@ later lab must beat. This is eval-driven development: define "good" first.
 """
 
 # --- repo local-run shim: load .env, make Colab-only names work off-Colab ----
-import os, pathlib, sys, textwrap, json, time
+import os, pathlib, sys, textwrap, json, time, re
 
 _here = pathlib.Path(__file__).resolve().parent if "__file__" in globals() else pathlib.Path.cwd()
 for _cand in (pathlib.Path(".env"), _here.parent / ".env", _here / ".env"):
@@ -71,14 +71,15 @@ def ask(prompt, temperature=0.0):
 
 def naive_rag(query, k=5):
     """The simplest RAG: retrieve top-k → stuff context → answer. The thing every lab beats."""
-    if query in _rag_cache:
-        return _rag_cache[query]
+    key = (query, k)                  # cache on (query, k) — a re-poke at a new k must not return stale contexts
+    if key in _rag_cache:
+        return _rag_cache[key]
     hits = store.search(query, k=k)
     context = "\n\n".join(f"[{i+1}] ({h.title}) {h.content}" for i, h in enumerate(hits))
     prompt = ("Answer the question using ONLY the context below. If the answer isn't there, "
               f"say you don't have enough information.\n\nQuestion: {query}\n\nContext:\n{context}\n\nAnswer:")
     out = {"answer": ask(prompt), "contexts": [h.content for h in hits]}
-    _rag_cache[query] = out
+    _rag_cache[key] = out
     return out
 
 # Golden set — HARD, grounded in the real docs. Built to break naive single-shot RAG:
@@ -126,7 +127,12 @@ golden = [
 ]
 
 def _json(raw):
-    return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
+    """Structural JSON extraction (permitted — parsing, not classification). Raises a clear
+    ValueError on non-JSON so a weak model's prose reply is a caught error, not a raw traceback."""
+    m = re.search(r"\{.*\}", raw or "", re.DOTALL)
+    if not m:
+        raise ValueError(f"model did not return JSON: {(raw or '')[:120]!r}")
+    return json.loads(m.group(0))
 
 def llm_judge(q, answer, expected):          # holistic correctness (the naive judge)
     p = ('Grade the ANSWER against EXPECTED for the QUESTION. Reply JSON only: '
@@ -262,7 +268,14 @@ def m6_whose_fault():
         out = naive_rag(c["q"]); rm = retrieval_metrics(c["q"], c["support"])
         comp = completeness(out["answer"], c["expected"])["score"]
         if rm["recall"] is None:
-            declined = any(s in out["answer"].lower() for s in ("enough information", "don't", "not stated"))
+            # "did the model refuse?" is a classification → LLM-judge it, never a keyword list (course rule)
+            try:
+                declined = bool(_json(ask(
+                    'Did the ANSWER decline to answer — i.e. it says the information is not '
+                    'available / not in the documents — rather than giving a factual answer? '
+                    'Reply JSON only: {"declined": true|false}.\n\nANSWER: ' + out["answer"]))["declined"])
+            except (ValueError, KeyError):
+                declined = False
             diag = "OK (declined)" if declined else "LLM — hallucinated"
         elif rm["recall"] < 1.0: diag = "EMBEDDING — doc not retrieved"
         elif comp < 0.75:        diag = "LLM — had docs, answer off"
@@ -328,7 +341,7 @@ def main():
             note("skipped."); continue
         try:
             run()
-        except RuntimeError as e:                 # clean one-liner (key/rate) — no traceback
+        except (RuntimeError, ValueError) as e:   # clean one-liner (key/rate/parse) — no traceback
             print(f"\n  {C['y']}⚠  {e}{C['x']}\n")
             sys.exit(1)
     print(f"\n{C['g']}  ✔ Lab 1 complete.{C['x']} That baseline is the number to beat — Lab 2 adds hybrid search + reranking,")

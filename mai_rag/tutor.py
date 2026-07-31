@@ -86,8 +86,8 @@ class Spinner:
         i = 0
         while not self._stop.is_set():
             frame = self.FRAMES[i % len(self.FRAMES)]
-            sys.stdout.write(f"\r  {cyan(frame)} {self.label} {dim(f'{time.time() - self._t0:4.0f}s')} ")
-            sys.stdout.flush()
+            sys.stderr.write(f"\r  {cyan(frame)} {self.label} {dim(f'{time.time() - self._t0:4.0f}s')} ")
+            sys.stderr.flush()
             i += 1
             time.sleep(0.12)
 
@@ -104,7 +104,8 @@ class Spinner:
         self._stop.set()
         if self._thread:
             self._thread.join()
-            sys.stdout.write("\r" + " " * (width() - 1) + "\r")
+            sys.stderr.write("\r" + " " * (width() - 1) + "\r")
+            sys.stderr.flush()
         took = time.time() - self._t0
         if took >= 1:
             print(f"  {dim(f'({self.label}: {took:.0f}s)')}")
@@ -123,8 +124,8 @@ def choice(prompt: str, options: dict[str, str], default: str) -> str:
     while True:
         try:
             raw = input(f"  {yellow('›')} ").strip()
-        except EOFError:
-            return default
+        except (EOFError, KeyboardInterrupt):     # Ctrl-D / Ctrl-C cancels THIS picker → default, like menu()
+            print(); return default
         if raw == "":
             return default
         if raw.isdigit() and 1 <= int(raw) <= len(keys):
@@ -174,7 +175,7 @@ class Tutor:
         for i, st in enumerate(self.stages):
             state = "current" if i == current else st.status
             mark = TINT[state](MARKS[state])
-            calls = dim(f"~{st.calls} LLM calls") if st.calls not in ("0", "") else dim("no LLM")
+            calls = dim(f"~{str(st.calls).lstrip('~')} LLM calls") if st.calls not in ("0", "") else dim("no LLM")
             print(f"    {mark} {i + 1}. {st.title:<52} {calls}")
         print()
 
@@ -193,9 +194,7 @@ class Tutor:
         while True:
             try:
                 a = input(f"  {yellow('▶ Enter')} run · {yellow('s')} skip · {yellow('o')} overview · {yellow('q')} quit {yellow('›')} ").strip().lower()
-            except EOFError:
-                return "run"
-            except KeyboardInterrupt:
+            except (EOFError, KeyboardInterrupt):    # Ctrl-D / Ctrl-C at the menu means stop, same as fail_menu()
                 print(); return "quit"
             if a in ("", "run", "y"):
                 return "run"

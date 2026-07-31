@@ -53,7 +53,11 @@ def ask(prompt, temperature=0.0):
     return llm.complete(prompt, tier="small", temperature=temperature)
 
 def _json(raw):
-    return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
+    """Structural JSON extraction (parsing, not classification). Clear ValueError on non-JSON."""
+    m = re.search(r"\{.*\}", raw or "", re.DOTALL)
+    if not m:
+        raise ValueError(f"model did not return JSON: {(raw or '')[:120]!r}")
+    return json.loads(m.group(0))
 
 def tok(s):                                    # structural tokenization (NOT classification)
     return re.findall(r"\w+", s.lower())
@@ -248,10 +252,10 @@ def s2_baseline():
 # floor). Dense embeddings blur these; BM25 nails them; fusion can rescue cases where
 # EACH side alone fails. Corpus-guarded: runs only where the support docs exist.
 SHOWCASE = [
-    ("Who approved change ticket CHG-20026-00412?", "itsec-firewall-change-management",
-     "an exact ticket ID — one doc contains it verbatim"),
-    ("What is the minimum AnyConnect version required?", "itsec-vpn-client-standard",
-     "a version floor — the active doc must beat its legacy twin AND legal boilerplate"),
+    ("Which VPN client version is approved on the Standard tier?", "vpn-client-standard-active",
+     "an exact version string (Cisco Secure Client 5.1.4) — the active doc must beat its superseded twin"),
+    ("How long is closed-account customer PII retained?", "data-retention-active",
+     "a precise retention period (24 months) — active vs its superseded twin, where dense blurs the two"),
 ]
 
 def _rank_line(label, docs, want):
@@ -306,8 +310,8 @@ def s4_metadata():
 def s5_derive():
     ensure_status()
     superseded = [s for s, st in _status_of.items() if st != "active"]
-    active_twins = [a for a in ["hr-parental-leave-active", "identity-access-management-policy",
-                                "itsec-vpn-client-standard"] if a in _status_of]
+    active_twins = [a for a in ["hr-parental-leave-active", "vpn-client-standard-active",
+                                "data-retention-active"] if a in _status_of]
     slice_docs = superseded + active_twins
     if not slice_docs:
         note("this corpus has no recency twins with a status field — nothing to derive. Skipping.")
@@ -317,7 +321,10 @@ def s5_derive():
              "SUPERSEDED / legacy / archived one? Extract the effective date if stated.\n"
              'Reply JSON only: {"status": "active"|"superseded", "effective_date": "<YYYY-MM-DD|unknown>", "why": "<short>"}\n\n'
              + doc_body(doc_id))
-        return _json(ask(p, temperature=0))
+        try:
+            return _json(ask(p, temperature=0))
+        except (ValueError, KeyError):             # a malformed reply marks this doc unknown, not the run dead
+            return {"status": "?", "effective_date": "unknown", "why": "unparseable model reply"}
     with Spinner(f"deriving status for {len(slice_docs)} docs from their TEXT alone"):
         derived = {d: derive_status(d) for d in slice_docs}
     ddf = pd.DataFrame([{"doc": d[:44], "true": _status_of[d], "derived": derived[d]["status"],
@@ -455,7 +462,7 @@ def s8_umap():
          "verdict from the baseline: dense retrieval has no way to prefer the active twin.")
 
 def s9_finale():
-    def rag_answer(search_fn, q, k=5):
+    def rag_answer(search_fn, q, k=RETRIEVE_K):    # answer at the SAME k retrieval is scored at, so the table is causal
         hits = search_fn(q, k)
         ctx = "\n\n".join(f"[{i+1}] ({h.source}) {h.content}" for i, h in enumerate(hits))
         p = ("Answer the question using ONLY the context. "
@@ -466,7 +473,7 @@ def s9_finale():
         p = ("Grade the ANSWER against EXPECTED. 1.0 fully correct, 0.5 partial, 0.0 wrong/missing.\n"
              'Reply JSON only: {"reason":"<short>","score":<1.0|0.5|0.0>}.\n\n'
              f"QUESTION: {q}\nEXPECTED: {expected}\nANSWER: {answer}")
-        return _json(ask(p, temperature=0))["score"]
+        return float(_json(ask(p, temperature=0))["score"])
     ladder = [("naive baseline", naive_search),
               ("metadata", filter_active(naive_search)),
               ("metadata + rerank", rerank(filter_active(naive_search)))]
@@ -476,8 +483,8 @@ def s9_finale():
             for c in golden:
                 try:
                     scores.append(grade(c["q"], rag_answer(fn, c["q"]), c["expected"]))
-                except (ValueError, KeyError):
-                    pass                        # a malformed judge reply drops the case, not the run
+                except (ValueError, KeyError, TypeError):
+                    pass                        # a malformed/non-numeric judge reply drops the case, not the run
         ANS[lbl] = float(np.mean(scores)) if scores else float("nan")
         print(f"  {lbl:26s} answer correctness: {ANS[lbl]:.3f}")
         score(fn, lbl, quiet=True)              # refresh retrieval numbers under matching labels
