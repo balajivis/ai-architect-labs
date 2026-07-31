@@ -144,7 +144,12 @@ def ask(question: str, context: str) -> str:
     ]
     req = urllib.request.Request(
         ENDPOINT, method="POST",
-        headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"},
+        # Cloudflare (in front of learn.modernaipro.com) blocks the default python-urllib
+        # User-Agent (a known bot signature → 403 error 1010). Send a real UA that also
+        # identifies this tool, so the request goes through like a browser/curl would.
+        headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json",
+                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                               "AppleWebKit/537.36 (KHTML, like Gecko) mai-architect-ask/1.0"},
         data=json.dumps({"messages": messages, "max_tokens": 700}).encode("utf-8"))
     with urllib.request.urlopen(req, timeout=90) as r:
         data = json.loads(r.read().decode("utf-8"))
