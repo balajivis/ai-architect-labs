@@ -60,7 +60,7 @@ except NameError:
 import mai_rag
 print("mai_rag", mai_rag.__version__)
 
-from mai_rag import corpus, evals, viz
+from mai_rag import corpus, evals, viz, llm
 
 store = corpus.load_policy_corpus("policy.db")   # copies the pre-embedded DB — instant (pass rebuild=True to embed from raw docs)
 store.stats()
@@ -85,12 +85,12 @@ chunks["token_count"].hist(bins=40)
 for h in store.search("How much parental leave do I get?", k=5):
     print(f"{h.score:.3f}  {h.title}\n     {h.content[:120]}…")
 
-# 5 - Setup LLM
-# [pip/install handled once in your venv — see CLAUDE.md] !pip install -q -U langchain_groq
-from langchain_groq import ChatGroq
-# from google.colab import userdata   # (replaced by repo shim above)
-
-llm_groq = ChatGroq(model_name="openai/gpt-oss-120b", api_key=userdata.get("GROQ_API_KEY"))
+# 5 - Setup LLM — one chokepoint, any provider. No client to build: mai_rag.llm.complete()
+# picks the provider from your env. Point it at the CLASS PROXY with just a token:
+#   OPENAI_API_KEY=<class token>   (OPENAI_BASE_URL is preset in .env.example)
+# ...or bring your own GROQ_API_KEY / OPENAI_API_KEY. (`llm` imported above.)
+def ask(prompt, temperature=0.0):
+    return llm.complete(prompt, tier="small", temperature=temperature)
 
 # 6 — Build a basic naive RAG: retrieve → stuff context → answer
 def naive_rag(query, k=5):
@@ -101,7 +101,7 @@ def naive_rag(query, k=5):
         "If the answer isn't there, say you don't have enough information.\n\n"
         f"Question: {query}\n\nContext:\n{context}\n\nAnswer:"
     )
-    answer = llm_groq.invoke(prompt).content
+    answer = ask(prompt)
     return {"answer": answer, "contexts": [h.content for h in hits]}
 
 naive_rag("How much parental leave do I get?")["answer"]
@@ -185,8 +185,7 @@ print(len(golden), "cases after your additions:",
 
 # 8 — Build a basic eval: LLM-as-judge (correctness) + 1 RAG metric (faithfulness)
 import json
-judge = ChatGroq(model_name="openai/gpt-oss-120b", api_key=userdata.get("GROQ_API_KEY"),
-                 temperature=0)  # deterministic grading
+# grading below uses ask(..., temperature=0) — deterministic, same small model, any provider
 
 def _json(raw):                       # LLMs wrap JSON in prose — slice it out
     return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
@@ -195,14 +194,14 @@ def llm_judge(q, answer, expected):   # does the answer match what we expect?
     p = (f'Grade the ANSWER against EXPECTED for the QUESTION. '
          f'Reply JSON only: {{"score": <0..1>, "reason": "<short>"}}.\n\n'
          f'QUESTION: {q}\nEXPECTED: {expected}\nANSWER: {answer}')
-    return _json(judge.invoke(p).content)
+    return _json(ask(p, temperature=0))
 
 def faithfulness(answer, contexts):   # is every claim grounded in the retrieved context?
     ctx = "\n\n".join(contexts)
     p = (f'Is every claim in the ANSWER supported by the CONTEXT? '
          f'Reply JSON only: {{"score": <0..1>, "reason": "<short>"}} (1=grounded, 0=hallucinated).\n\n'
          f'CONTEXT:\n{ctx}\n\nANSWER: {answer}')
-    return _json(judge.invoke(p).content)
+    return _json(ask(p, temperature=0))
 
 out = naive_rag("How much parental leave do I get?")
 print("CORRECTNESS:", llm_judge(golden[0]["q"], out["answer"], golden[0]["expected"]))
@@ -239,7 +238,7 @@ def grade(q, answer, expected):                 # correctness, anchored + reason
          "Scale: 1.0 fully correct - 0.5 partially correct or incomplete - 0.0 wrong or missing.\n"
          'Reply JSON only: {"reason": "<one sentence>", "score": <1.0|0.5|0.0>}.\n\n'
          f"QUESTION: {q}\nEXPECTED: {expected}\nANSWER: {answer}")
-    return _json(judge.invoke(p).content)
+    return _json(ask(p, temperature=0))
 
 def faithfulness_claims(answer, contexts):       # claim-decomposition, not holistic
     ctx = "\n\n".join(contexts)
@@ -248,7 +247,7 @@ def faithfulness_claims(answer, contexts):       # claim-decomposition, not holi
          "claims, e.g. a refusal like 'I don't have enough information').\n"
          'Reply JSON only: {"reason": "<n claims, m supported>", "score": <0..1>}.\n\n'
          f"CONTEXT:\n{ctx}\n\nANSWER: {answer}")
-    return _json(judge.invoke(p).content)
+    return _json(ask(p, temperature=0))
 
 # sanity-check on the recency landmine
 out = naive_rag(golden[0]["q"])
@@ -305,7 +304,7 @@ def completeness(answer, expected):
          "score = fraction of required points covered (1.0 all, 0.0 none). "
          'Reply JSON only: {"reason": "<covered / missing>", "score": <0..1>}.\n\n'
          f"EXPECTED: {expected}\nANSWER: {answer}")
-    return _json(judge.invoke(p).content)
+    return _json(ask(p, temperature=0))
 
 rows = []
 for c in golden:
