@@ -64,25 +64,10 @@ def prompt_next():
 store = None                      # set in Move 1
 _rag_cache = {}                   # memoize naive_rag so we don't re-call the LLM every move
 
-def ask(prompt, temperature=0.0, retries=6):
-    """One LLM chokepoint (mai_rag.llm) — provider comes from your env / the class token.
-    Retries gracefully on a rate-limit (429) with exponential backoff: a shared class
-    token can burst past the proxy's limit, and the labs fire many calls in a loop."""
-    for attempt in range(retries):
-        try:
-            return llm.complete(prompt, tier="small", temperature=temperature)
-        except Exception as e:
-            rate_limited = type(e).__name__ == "RateLimitError" or "429" in str(e) or "rate limit" in str(e).lower()
-            if not rate_limited:
-                raise
-            if attempt == retries - 1:
-                raise RuntimeError(
-                    "Still rate-limited after backing off — the class LLM proxy is busy. "
-                    "Wait a minute and re-run this move, or ask the instructor to raise the limit."
-                ) from None
-            wait = min(2 ** attempt * 2, 30)      # 2 → 4 → 8 → 16 → 30 → 30
-            print(f"  {C['d']}… rate-limited, backing off {wait}s (retry {attempt + 1}/{retries - 1}){C['x']}", flush=True)
-            time.sleep(wait)
+def ask(prompt, temperature=0.0):
+    """One LLM chokepoint (mai_rag.llm) — provider from your env / the class token.
+    Rate-limit retries + friendly key/proxy errors now live in mai_rag.llm.complete()."""
+    return llm.complete(prompt, tier="small", temperature=temperature)
 
 def naive_rag(query, k=5):
     """The simplest RAG: retrieve top-k → stuff context → answer. The thing every lab beats."""
@@ -341,7 +326,11 @@ def main():
         say(teach)
         if prompt_next() == "skip":
             note("skipped."); continue
-        run()
+        try:
+            run()
+        except RuntimeError as e:                 # clean one-liner (key/rate) — no traceback
+            print(f"\n  {C['y']}⚠  {e}{C['x']}\n")
+            sys.exit(1)
     print(f"\n{C['g']}  ✔ Lab 1 complete.{C['x']} That baseline is the number to beat — Lab 2 adds hybrid search + reranking,")
     print("    and the only thing that counts as success is moving these exact numbers.\n")
 
