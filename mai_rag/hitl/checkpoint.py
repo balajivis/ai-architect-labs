@@ -115,21 +115,27 @@ def checkpoint(action: Action, *, use_structural: bool = True, use_triggers: boo
 
     WIP: with all use_* flags False this is the Move-1 pass-through stub
     (returns proceed for everything). Moves 2-4 flip them on."""
-    # Safety is non-optional and evaluated first so it can override structural
-    # proceed — but a destructive structural block still wins if both fire.
+    # Evaluate every enabled layer and return the MOST-RESTRICTIVE decision, so a
+    # destructive structural BLOCK always wins over a safety MODIFY (redact) when
+    # both fire — the invariant this gate must guarantee (was: safety-first early
+    # return, which let a destructive action with PII downgrade to redact-and-proceed).
+    decisions: list[Decision] = []
     if use_safety:
         d = _safety(action, safety_floor=safety_floor)
         if d is not None:
-            return d
+            decisions.append(d)
     if use_structural:
         d = _structural(action)
         if d is not None:
-            return d
+            decisions.append(d)
     if use_triggers:
         d = _triggers(action, confidence_floor=confidence_floor,
                       eval_score=eval_score, eval_floor=eval_floor)
         if d is not None:
-            return d
+            decisions.append(d)
+    if decisions:
+        _severity = {BLOCK: 3, QUEUE: 2, MODIFY: 1, PROCEED: 0}
+        return max(decisions, key=lambda d: _severity.get(d.action, 0))
 
     reason = "proceed (pass-through stub)" if not (use_structural or use_triggers or use_safety) \
         else ("write — proceed + audit" if action.risk == RISK_WRITE else "read — proceed")

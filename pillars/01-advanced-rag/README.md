@@ -9,7 +9,7 @@ You already call an API and run basic retrieval. This pillar is the jump from a 
 
 ## The spine (every module)
 
-**Concept → popular library → production reference → lab on the shared corpus.** The golden set + scorecard from Module 1 is the through-line; Modules 2–5 each re-run it and must move `viz.compare(baseline, candidate)`.
+**Concept → popular library → production reference → lab on the shared corpus.** The golden set + scorecard from Module 1 is the through-line; Modules 2–5 each re-run it and must move `viz.compare_runs(store, baseline, candidate)`.
 
 ## Modules
 

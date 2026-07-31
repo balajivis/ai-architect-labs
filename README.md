@@ -82,21 +82,21 @@ is a query, not a re-run.
 | `corpus` | load + chunk + embed the bundled enterprise-policy corpus |
 | `store` | SQL + vector data layer (sqlite-vec; pgvector-shaped) |
 | `baseline` | `naive_rag()` — the thing every module beats |
-| `evals` | 9 evaluator engines (mirrors Kapi) + pluggable RAGAS backend |
+| `evals` | 11 evaluator engines (8 native + 3 safety; mirrors Kapi) + pluggable RAGAS backend |
 | `golden` | `GoldenSet` — the through-line test fixture |
 | `viz` | editorial-styled scorecard / compare / heatmap / UMAP |
 | `llm` | one tiered LLM chokepoint (Groq/OpenAI/Azure/Gemini) |
 
 ## The corpus
-A coherent fictional company ("Northwind Technologies") — 13 interlinked policy
-docs (~12.5k words) engineered to exercise real RAG failure modes: multi-hop
+A coherent fictional company ("Northwind Technologies") — 131 policy documents
+engineered to exercise real RAG failure modes: multi-hop
 facts, distractors, a deliberate **recency conflict** (superseded vs active IAM
-policy), acronyms, and paraphrase. Ships with 10 candidate golden cases.
+policy), acronyms, and paraphrase. Ships with 72 candidate golden cases.
 
 ## Notebooks
 - `notebooks/01_evaluation_first.ipynb` — build golden cases, open the box on
   faithfulness, baseline the naive RAG.
 
 ## Status
-Pre-release (`v0.1.0`). Module 1 complete; Modules 2–5 (retrieval, agentic,
+Pre-release (`v0.1.8`). Module 1 complete; Modules 2–5 (retrieval, agentic,
 routing, memory) build on the same `store` + `golden` + `viz` spine.

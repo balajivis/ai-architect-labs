@@ -22,16 +22,16 @@
 
 ## Key ideas
 
-- **The 9-engine toolkit:** llm-judge, semantic-similarity, exact-match, contains, human-review + **RAGAS ×4**.
+- **The 11-engine toolkit:** 8 native (llm-judge, faithfulness, answer-relevancy, context-precision, context-recall, semantic-similarity, contains, exact-match) + 3 safety (pii-exposure, harmful-intent, relevancy). The "RAGAS ×4" (faithfulness, answer-relevancy, context-precision/recall) *are* those four native engines — same schema, run via the native path or the real `ragas` library.
 - **Safety is an eval, not a regex** — PII, jailbreak, toxicity, prompt-injection are all model-judged.
 - **The 3-tier golden hierarchy:** base capability → blueprint-specific → production thumbs-downs promoted back into the set.
-- **Eval-driven loop:** every technique is judged by whether it moves the scorecard — `viz.compare("baseline", candidate)`.
+- **Eval-driven loop:** every technique is judged by whether it moves the scorecard — `viz.compare_runs(store, "baseline", candidate)`.
 
 ## Lab setup
 
 ```bash
 pip install "mai_rag[evals] @ git+https://github.com/balajivis/ai-architect-labs.git"
-from mai_rag.evals import suite          # the 9 engines
+from mai_rag.evals import run_suite, REGISTRY, DEFAULT_SUITE  # the 11 engines
 from mai_rag.evals import ragas_backend  # native | ragas — same schema
 ```
 The golden set you saved in Pillar I Module 1 is the fixture here. Safety/PII evals use Azure Content Safety or an LLM judge — never regex.

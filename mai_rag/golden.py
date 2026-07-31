@@ -78,11 +78,17 @@ class GoldenSet:
         return gs
 
     @classmethod
-    def from_seed(cls, store: Store, save: bool = True) -> "GoldenSet":
+    def from_seed(cls, store: Store, save: bool = True, limit: int | None = None) -> "GoldenSet":
         """Load the shipped candidate cases (`golden_seed.json`) — a starting
-        point students extend, not a substitute for authoring their own."""
+        point students extend, not a substitute for authoring their own.
+        Pass `limit` to load only the first N: the full seed is 72 cases, and a
+        quickstart baseline through the 6-evaluator suite is ~430 judge calls,
+        which rate-limits a Groq free tier. `from_seed(store, limit=10)` keeps it cheap."""
         gs = cls(store)
-        for s in load_golden_seed():
+        seed = load_golden_seed()
+        if limit:
+            seed = seed[:limit]
+        for s in seed:
             gs.add(GoldenCase(
                 question=s["question"], expected=s.get("expected_answer", ""),
                 contexts=s.get("supporting_doc_ids", []),

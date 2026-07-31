@@ -1,5 +1,5 @@
 """
-mai_rag.evals — the nine-engine evaluator suite (mirrors Kapi's registry) plus
+mai_rag.evals — the eleven-engine evaluator suite (8 native + 3 safety) plus
 the golden-set runner that persists every run into the data layer.
 
 Pluggable RAGAS backend: the four RAG metrics can run as `native` (the

@@ -1,6 +1,6 @@
 # AI Architect — The Four Pillars
 
-The Architect Programme covers the four production layers that separate a demo from a deployment. 16 hours, 70% hands-on labs, one capstone. Each folder below holds that pillar's spine; labs land in [`../notebooks/`](../notebooks/) (Python) or each pillar folder (Node, for MCP).
+The Architect Programme covers the four production layers that separate a demo from a deployment. 16 hours, 70% hands-on labs, one capstone. Each folder below holds that pillar's spine; the runnable labs live in [`../labs/`](../labs/) — Python files `lab_1.py … lab_7.py`, plus the one TypeScript/Node MCP lab in [`../labs/mcp_server/`](../labs/mcp_server/) (not a pillar folder). A single notebook, [`../notebooks/01_evaluation_first.ipynb`](../notebooks/01_evaluation_first.ipynb), mirrors Pillar I Module 1.
 
 | # | Pillar | Layer | Folder |
 |---|---|---|---|

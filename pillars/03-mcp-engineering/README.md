@@ -33,6 +33,6 @@
 
 ```bash
 npm i @modelcontextprotocol/sdk
-npx @modelcontextprotocol/inspector node ./server.mjs
+npx @modelcontextprotocol/inspector node --experimental-strip-types labs/mcp_server/server.ts
 ```
-A minimal working server (blackboard read/write + task claiming) ships as the Module 2 worked example. Build, inspect, then harden it.
+A minimal working server (`labs/mcp_server/server.ts` — TypeScript, run via `node --experimental-strip-types`) exposing `policy_search` / `policy_get` over the policy corpus ships as the Module 2 worked example. Build, inspect, then harden it.

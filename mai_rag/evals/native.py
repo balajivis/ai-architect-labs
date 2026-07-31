@@ -101,8 +101,9 @@ def semantic_similarity(e: EvalInput) -> Score | None:
     if not e.expected:
         return None
     a, b = embed([e.answer, e.expected])
-    cos = float(np.dot(a, b))  # vectors are L2-normalized
-    s = clamp01((cos + 1) / 2)
+    cos = float(np.dot(a, b))  # L2-normalized vectors → dot = cosine in [-1, 1]
+    s = clamp01(cos)           # report cosine directly (RAGAS convention); the old
+    #                            affine (cos+1)/2 floored unrelated answers at 0.5
     return Score("semantic_similarity", s, s >= 0.7, f"cosine={cos:.2f}")
 
 

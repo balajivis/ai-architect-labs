@@ -32,8 +32,8 @@ The **AI Architect** course is the engineer's deep-dive into the four production
 |---|--------|----------------|
 | I | **Advanced RAG** | retrieval that's measured, agentic RAG, memory |
 | II | **Evals & Benchmarks** | RAGAS, calibrated LLM-judge, the release gate |
-| III | **Trust & Governance** | guardrails, access control, HITL, compliance |
-| IV | **Deployment & MCP** | MCP servers, OAuth, shipping to production |
+| III | **MCP Engineering** | MCP servers, OAuth, shipping to production |
+| IV | **Trust & Production** | guardrails, access control, HITL, compliance |
 
 **The through-line is a golden set.** Lab 1 baselines a naive RAG on a golden set — that scorecard is the number every later lab must beat. Every technique is judged by whether it moves the same set. "We tested it" is not documentation; the eval suite is.
 
@@ -90,7 +90,7 @@ If the student wants to run the labs on **their own domain** instead of our ship
 
 ## How to run any lab — the recipe
 
-1. **Run Move 0 (setup) first.** Confirm it prints `mai_rag 0.1.7` (or newer) and the corpus loads (~136 docs, ~15–25s). If the version is older, **restart the kernel** and re-run (a stale install is cached).
+1. **Run Move 0 (setup) first.** Confirm it prints `mai_rag 0.1.8` (or newer) and the corpus loads (131 docs, ~15–25s). If the version is older, **restart the kernel** and re-run (a stale install is cached).
 2. **Go move by move.** Read the markdown header, run the code cell, look at the output _together_ before moving on. Most cells make several LLM calls — they take 30s–2min, that's normal.
 3. **Interpret, don't just run.** When a scorecard or heatmap prints, help the student read it: which metric moved, where a dark cell means the technique broke.
 
@@ -106,7 +106,7 @@ If the student wants to run the labs on **their own domain** instead of our ship
 
 | Symptom | Fix |
 |---|---|
-| `no attribute 'load_catalog_corpus'` / wrong version | Stale install — **restart the kernel**, re-run Move 0, confirm `0.1.7` (or newer). |
+| `no attribute 'load_catalog_corpus'` / wrong version | Stale install — **restart the kernel**, re-run Move 0, confirm `0.1.8` (or newer). |
 | `ValueError: ... 384` from `embed` | `embed` takes a **list** and returns `(n, 384)`. Wrap a single string: `embed([text])[0]`. |
 | `from google.colab import userdata` fails locally | You're not on Colab — set the key via `os.environ` / `.env` instead (see Setup). |
 | RAGAS install is slow / conflicts | It's heavy. Use a clean venv; or run the `backend="native"` path, which needs no extra. |

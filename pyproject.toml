@@ -16,6 +16,9 @@ dependencies = [
     "sentence-transformers>=2.6",   # local, keyless embeddings (MiniLM)
     "matplotlib>=3.7",
     "openai>=1.30",                 # OpenAI-compatible: OpenAI, Azure, Groq (base_url)
+    "langchain-groq>=0.2",          # labs 1-4 generation (imported at cell top → must be core)
+    "rank-bm25>=0.2",               # lab 2 hybrid retrieval
+    "tavily-python>=0.5",           # lab 3 web-search (CRAG) fallback
     "requests>=2.31",
     "tqdm>=4.66",
 ]

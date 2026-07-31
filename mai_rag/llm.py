@@ -86,10 +86,17 @@ def complete(prompt: str, tier: str = "small", temperature: float = 0.0,
     else:
         client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-    resp = client.chat.completions.create(
-        model=model, messages=messages,
-        temperature=temperature, max_tokens=max_tokens,
-    )
+    # gpt-5.x on Azure requires `max_completion_tokens` (not `max_tokens`) and only the
+    # default temperature; OpenAI 4o / Groq llama keep the classic params.
+    if provider == "azure":
+        resp = client.chat.completions.create(
+            model=model, messages=messages, max_completion_tokens=max_tokens,
+        )
+    else:
+        resp = client.chat.completions.create(
+            model=model, messages=messages,
+            temperature=temperature, max_tokens=max_tokens,
+        )
     return resp.choices[0].message.content or ""
 
 

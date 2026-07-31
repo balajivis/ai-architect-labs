@@ -1,5 +1,5 @@
 /**
- * harness.ts — Lab 8 verification harness (TypeScript, Node 20+).
+ * harness.ts — Lab 8 verification harness (TypeScript, Node 22+).
  *
  * The whole verify loop lives in Node now — no Python driver. It uses the
  * official MCP SDK *client* to exercise the server you build, plus a couple of
