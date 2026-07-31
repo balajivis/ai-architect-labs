@@ -43,13 +43,13 @@ The **AI Architect** course is the engineer's deep-dive into the four production
 
 ## Setup (do this once)
 
-Retrieval is **keyless** — embeddings run locally via MiniLM (~90 MB downloads on first use). Only **generation and the LLM-judge** need a key — **one** of `GROQ_API_KEY` / `OPENAI_API_KEY` / `AZURE_OPENAI_API_KEY` / `GEMINI_API_KEY`. **Groq has a free tier — recommend it to students who don't have a key.**
+Retrieval is **keyless** — embeddings run locally via MiniLM (~90 MB downloads on first use). Only **generation and the LLM-judge** need a key. **Default for this cohort: paste the CLASS TOKEN into `OPENAI_API_KEY`** — `.env.example` already presets `OPENAI_BASE_URL` to the class proxy (small model, gpt-5.4; no key of your own needed; **leave `GROQ_API_KEY` unset** — mai_rag prefers Groq if it's set). Every lab routes through `mai_rag.llm`, so the token drives all of them. Or bring your own: **one** of `GROQ_API_KEY` (free tier) / `OPENAI_API_KEY` / `AZURE_OPENAI_API_KEY` / `GEMINI_API_KEY`.
 
 **Running locally in VS Code (recommended — faster, no Colab disconnects):**
 ```bash
 python -m venv .venv
 .venv/bin/pip install "mai_rag[evals,viz] @ git+https://github.com/balajivis/ai-architect-labs.git"
-cp .env.example .env        # then put your GROQ key in .env
+cp .env.example .env        # then paste your CLASS TOKEN into OPENAI_API_KEY (base URL preset)
 ```
 Then open a `labs/lab_*.py` file and either run it (`python labs/lab_1.py`) or — better — use VS Code's **Run Cell / interactive window** to step through it. Pick the `.venv` kernel.
 

@@ -68,7 +68,7 @@ except NameError:
 import mai_rag, pandas as pd, numpy as np
 print("mai_rag", mai_rag.__version__)
 
-from mai_rag import corpus, evals, viz
+from mai_rag import corpus, evals, viz, llm
 from mai_rag.baseline import naive_rag       # the naive RAG you built in Lab 1 — now just our baseline
 
 # ── The one-line switch (the flow is data-agnostic — same notebook, swap the data) ──
@@ -281,14 +281,13 @@ Below we **pretend we never had `status`**, re-derive it from the doc *text* on 
 """
 
 # First LLM use in Lab 2 — Groq via Colab userdata (add GROQ_API_KEY in the 🔑 Secrets panel)
-# [pip/install handled once in your venv — see CLAUDE.md] !pip install -q -U langchain_groq
-from langchain_groq import ChatGroq
 # from google.colab import userdata   # (replaced by repo shim above)
 
-judge = ChatGroq(model_name="openai/gpt-oss-120b", api_key=userdata.get("GROQ_API_KEY"), temperature=0)
+def ask(prompt, temperature=0.0):
+    return llm.complete(prompt, tier="small", temperature=temperature)
 def _json(raw):                              # LLMs wrap JSON in prose — slice it out
     return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
-print("LLM ready:", judge.model_name)
+print("LLM ready:", llm.model_for("small"))
 
 # Derive status from the DOC TEXT alone — pretend the field never existed
 def doc_body(doc_id, n=2500):
@@ -302,7 +301,7 @@ def derive_status(doc_id):                   # classification → LLM, never a k
          "SUPERSEDED / legacy / archived one? Extract the effective date if stated.\n"
          'Reply JSON only: {"status": "active"|"superseded", "effective_date": "<YYYY-MM-DD|unknown>", "why": "<short>"}\n\n'
          + doc_body(doc_id))
-    return _json(judge.invoke(p).content)
+    return _json(ask(p, temperature=0))
 
 # the recency-twin slice (the docs Move 3's WHERE actually depends on)
 superseded   = [s for s, st in status_of.items() if st != "active"]
@@ -397,7 +396,7 @@ def contextualize(doc_id, chunk):
          "In <=25 words, give context situating this chunk within the document — explicitly note "
          "whether the policy is CURRENT or SUPERSEDED and its effective date if stated. "
          "Reply with the context sentence only.")
-    return judge.invoke(p).content.strip()
+    return ask(p, temperature=0).strip()
 
 def cos(a, b):
     a, b = np.asarray(a), np.asarray(b)
@@ -467,7 +466,7 @@ mini_gold = [
 def ctx_mini(title, chunk):                       # context = which plan (the high-salience topic word)
     p = (f"Document title: {title}\nChunk: {chunk}\n"
          "In <=12 words, name which plan this chunk describes. Context only.")
-    return judge.invoke(p).content.strip()
+    return ask(p, temperature=0).strip()
 
 Xn = embed(chunks)                                                       # naive: chunk text only
 Xc = embed([ctx_mini(t, c) + "  " + c for t, c in zip(titles, chunks)])  # contextual: title-context prepended
@@ -540,13 +539,13 @@ def rag_answer(search_fn, q, k=5):
     p = ("Answer the question using ONLY the context. "
          "If it isn't there, say you don't have enough information.\n\n"
          f"Question: {q}\n\nContext:\n{ctx}\n\nAnswer:")
-    return judge.invoke(p).content
+    return ask(p, temperature=0)
 
 def grade(q, answer, expected):                  # correctness vs the golden expected
     p = ("Grade the ANSWER against EXPECTED. 1.0 fully correct, 0.5 partial, 0.0 wrong/missing.\n"
          'Reply JSON only: {"reason":"<short>","score":<1.0|0.5|0.0>}.\n\n'
          f"QUESTION: {q}\nEXPECTED: {expected}\nANSWER: {answer}")
-    return _json(judge.invoke(p).content)["score"]
+    return _json(ask(p, temperature=0))["score"]
 
 def answer_score(search_fn, label):
     s = float(np.mean([grade(c["q"], rag_answer(search_fn, c["q"]), c["expected"]) for c in golden]))

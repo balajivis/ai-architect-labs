@@ -63,14 +63,13 @@ except NameError:
 
 
 # [pip/install handled once in your venv — see CLAUDE.md] !pip install -q -U "mai_rag[evals] @ git+https://github.com/balajivis/ai-architect-labs.git"
-# [pip/install handled once in your venv — see CLAUDE.md] !pip install -q -U langchain_groq tavily-python
+# [pip/install handled once in your venv — see CLAUDE.md] !pip install -q -U tavily-python
 
 import mai_rag, pandas as pd, numpy as np, json
 print("mai_rag", mai_rag.__version__)   # need >= 0.1.5 for load_catalog_corpus
 
-from mai_rag import corpus
+from mai_rag import corpus, llm
 # from google.colab import userdata   # (replaced by repo shim above)
-from langchain_groq import ChatGroq
 from tavily import TavilyClient
 
 store  = corpus.load_catalog_corpus(rebuild=True)    # ~136 shallow catalog docs, embeds live ~20s
@@ -78,7 +77,8 @@ golden = corpus.load_golden_catalog()                # 12 cases, tagged for the 
 print(store.stats())
 print(len(golden), "golden cases:", {t: sum(c["tag"] == t for c in golden) for t in {c["tag"] for c in golden}})
 
-llm    = ChatGroq(model_name="openai/gpt-oss-120b", api_key=userdata.get("GROQ_API_KEY"), temperature=0)
+def ask(prompt, temperature=0.0):
+    return llm.complete(prompt, tier="small", temperature=temperature)
 tavily = TavilyClient(api_key=userdata.get("TAVILY_API_SEARCH"))
 def _json(raw):                                      # LLMs wrap JSON in prose — slice it out
     return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
@@ -97,7 +97,7 @@ def naive_rag(q, k=5):
     ctx = "\n\n".join(f"[{i+1}] ({h.source}) {h.content}" for i, h in enumerate(hits))
     p = ("Answer using ONLY the context. If it isn't there, say you don't have enough information.\n\n"
          f"Question: {q}\n\nContext:\n{ctx}\n\nAnswer:")
-    return llm.invoke(p).content
+    return ask(p)
 
 # watch single-shot stumble on the hard-shaped queries
 for c in golden:
@@ -116,7 +116,7 @@ def analyze_query(q):
          '"complexity": "simple|complex", "reason": "<short>"}. '
          'needs_retrieval=false for greetings, chit-chat, and pure math / general knowledge that needs no documents.\n\n'
          f'Query: {q}')
-    return _json(llm.invoke(p).content)
+    return _json(ask(p))
 
 def route(q):
     a = analyze_query(q)
@@ -133,10 +133,10 @@ A user's words rarely match the document's words. **HyDE** drafts a hypothetical
 """
 
 def hyde(q):
-    return llm.invoke(f"Write a 2-sentence hypothetical answer to this question:\n{q}\nAnswer:").content
+    return ask(f"Write a 2-sentence hypothetical answer to this question:\n{q}\nAnswer:")
 
 def multi_query(q, n=3):
-    out = llm.invoke(f"Write {n} alternative search queries for this question, one per line:\n{q}").content
+    out = ask(f"Write {n} alternative search queries for this question, one per line:\n{q}")
     return [l.strip(" -*0123456789.") for l in out.splitlines() if l.strip()][:n]
 
 def hyde_search(q, k=5):
@@ -153,7 +153,7 @@ A question like *"how does the Practitioner course differ from Vibe Coding?"* ne
 """
 
 def decompose(q):
-    out = llm.invoke(f"Break this into 2-3 standalone sub-questions, one per line:\n{q}").content
+    out = ask(f"Break this into 2-3 standalone sub-questions, one per line:\n{q}")
     return [l.strip(" -*0123456789.") for l in out.splitlines() if "?" in l][:3]
 
 def agentic_retrieve(q, k=4):
@@ -168,7 +168,7 @@ def agentic_retrieve(q, k=4):
 def decomposed_answer(q):
     subs, docs = agentic_retrieve(q)
     ctx = "\n\n".join(f"[{s}] {c}" for s, c in docs)
-    ans = llm.invoke(f"Using this context, answer with inline [source] citations: {q}\n\nContext:\n{ctx}\n\nAnswer:").content
+    ans = ask(f"Using this context, answer with inline [source] citations: {q}\n\nContext:\n{ctx}\n\nAnswer:")
     return subs, ans
 
 q = next(c["q"] for c in golden if c["tag"] == "multi-hop")
@@ -185,7 +185,7 @@ def sufficient(q, docs):
     p = ('Can the CONTEXT answer the QUESTION specifically and completely (exact facts, not just the topic)? '
          'Reply JSON only: {"sufficient": true|false, "why": "<short>"}.\n\n'
          f'QUESTION: {q}\nCONTEXT: {ctx}')
-    return _json(llm.invoke(p).content)["sufficient"]
+    return _json(ask(p))["sufficient"]
 
 def web_search(q, k=3):
     r = tavily.search(query=q, max_results=k)
@@ -198,7 +198,7 @@ def crag_answer(q, k=4):
         hits = hits[:2] + web_search(q)
         source = "catalog + WEB"
     ctx = "\n\n".join(f"[{s}] {c}" for s, c in hits)
-    ans = llm.invoke(f"Answer using ONLY the context; cite sources inline as [source].\n\nQ: {q}\n\nContext:\n{ctx}\n\nAnswer:").content
+    ans = ask(f"Answer using ONLY the context; cite sources inline as [source].\n\nQ: {q}\n\nContext:\n{ctx}\n\nAnswer:")
     return source, ans
 
 q = next(c["q"] for c in golden if c["tag"] == "needs-web")
@@ -223,7 +223,7 @@ class Budget:
 def agent(q):
     b = Budget(); strat = route(q); b.tick()
     if strat == "direct":
-        return "direct", llm.invoke(f"Answer this briefly and directly: {q}").content
+        return "direct", ask(f"Answer this briefly and directly: {q}")
     if strat == "decompose":
         _, docs = agentic_retrieve(q); b.tick()
     else:
@@ -232,7 +232,7 @@ def agent(q):
     if not sufficient(q, docs):                       # CRAG corrective step on either retrieval path
         docs = docs[:2] + web_search(q); used = "catalog + WEB"; b.tick()
     ctx = "\n\n".join(f"[{s}] {c}" for s, c in docs)
-    ans = llm.invoke(f"Answer using ONLY the context; cite sources inline as [source].\n\nQ: {q}\n\nContext:\n{ctx}\n\nAnswer:").content
+    ans = ask(f"Answer using ONLY the context; cite sources inline as [source].\n\nQ: {q}\n\nContext:\n{ctx}\n\nAnswer:")
     return f"{strat}/{used}", ans
 
 for c in golden[:5]:
@@ -248,7 +248,7 @@ def grade(q, ans, expected):
          'If EXPECTED says no-retrieval/direct, reward a correct direct answer; if it says needs-web, '
          'reward a correct sourced answer. JSON only: {"score": <1.0|0.5|0.0>}.\n\n'
          f'Q: {q}\nEXPECTED: {expected}\nANSWER: {ans}')
-    return _json(llm.invoke(p).content)["score"]
+    return _json(ask(p))["score"]
 
 rows = []
 for c in golden:

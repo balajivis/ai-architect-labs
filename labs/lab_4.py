@@ -63,17 +63,16 @@ except NameError:
 
 
 # [pip/install handled once in your venv — see CLAUDE.md] !pip install -q -U "mai_rag[evals] @ git+https://github.com/balajivis/ai-architect-labs.git"
-# [pip/install handled once in your venv — see CLAUDE.md] !pip install -q -U langchain_groq
 
 import mai_rag, pandas as pd, json
 print("mai_rag", mai_rag.__version__)   # need >= 0.1.5
 
-from mai_rag import corpus
+from mai_rag import corpus, llm
 # from google.colab import userdata   # (replaced by repo shim above)
-from langchain_groq import ChatGroq
 
 store = corpus.load_catalog_corpus(rebuild=True)     # same ~136-doc MAI catalog as Lab 3
-llm   = ChatGroq(model_name="openai/gpt-oss-120b", api_key=userdata.get("GROQ_API_KEY"), temperature=0)
+def ask(prompt, temperature=0.0):
+    return llm.complete(prompt, tier="small", temperature=temperature)
 def _json(raw): return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
 def retrieve(q, k=4):
     return "\n\n".join(f"[{h.source}] {h.content}" for h in store.search(q, k=k))
@@ -114,7 +113,7 @@ Answer each turn on its own — no memory of prior turns. The opening turn works
 
 def stateless_answer(user_msg):
     ctx = retrieve(user_msg)
-    return llm.invoke(f"Answer the user using the catalog context.\n\nUser: {user_msg}\n\nContext:\n{ctx}\n\nAnswer:").content
+    return ask(f"Answer the user using the catalog context.\n\nUser: {user_msg}\n\nContext:\n{ctx}\n\nAnswer:")
 
 # replay conversation 1 with NO memory — watch the follow-ups fall apart
 for t in conversations[0]["turns"]:
@@ -134,10 +133,10 @@ class ShortTermMemory:
 
 def chat(user_msg, mem):
     history = mem.context()
-    standalone = llm.invoke("Given the conversation, rewrite the user's LAST message as a standalone question "
-                            f"(resolve any pronouns like 'that'/'it').\n\n{history}\nUser: {user_msg}\n\nStandalone question:").content
+    standalone = ask("Given the conversation, rewrite the user's LAST message as a standalone question "
+                            f"(resolve any pronouns like 'that'/'it').\n\n{history}\nUser: {user_msg}\n\nStandalone question:")
     ctx = retrieve(standalone)
-    ans = llm.invoke(f"Conversation so far:\n{history}\n\nUser: {user_msg}\n\nCatalog context:\n{ctx}\n\nAnswer:").content
+    ans = ask(f"Conversation so far:\n{history}\n\nUser: {user_msg}\n\nCatalog context:\n{ctx}\n\nAnswer:")
     mem.add("User", user_msg); mem.add("Bot", ans)
     return ans, standalone
 
@@ -160,9 +159,9 @@ class CompactingMemory(ShortTermMemory):
         super().add(role, text)
         if len(self.turns) > self.window * 2:                  # fold oldest turns into a running summary
             old = self.turns[:-self.window]
-            self.summary = llm.invoke("Update the running summary with these older turns (<=60 words).\n"
+            self.summary = ask("Update the running summary with these older turns (<=60 words).\n"
                                       f"Summary: {self.summary}\nTurns:\n" +
-                                      "\n".join(f"{r}: {t}" for r, t in old)).content
+                                      "\n".join(f"{r}: {t}" for r, t in old))
             self.turns = self.turns[-self.window:]
     def context(self):
         head = f"[summary] {self.summary}\n" if self.summary else ""
@@ -183,9 +182,9 @@ Some facts outlive the conversation: *who the user is, what they know, what they
 class UserProfile:
     def __init__(self): self.facts = []
     def update(self, user_msg):
-        out = llm.invoke('Extract DURABLE facts about the user (role, skills, goals) from this message. '
+        out = ask('Extract DURABLE facts about the user (role, skills, goals) from this message. '
                          'Reply JSON only: {"facts": ["..."]} (empty list if none).\n\n'
-                         f'Message: "{user_msg}"').content
+                         f'Message: "{user_msg}"')
         for f in _json(out).get("facts", []):
             if f not in self.facts: self.facts.append(f)
     def text(self): return "; ".join(self.facts) or "(unknown user)"
@@ -196,9 +195,9 @@ for t in conversations[0]["turns"]:
 print("Learned profile:", profile.text(), "\n")
 
 q = "What should I focus on learning first?"
-generic  = llm.invoke(f"Q: {q}\nContext:\n{retrieve(q)}\n\nAnswer:").content
-personal = llm.invoke(f"User profile: {profile.text()}\n\nQ: {q}\nContext:\n{retrieve(q)}\n\n"
-                      "Give a recommendation tailored to THIS user:").content
+generic  = ask(f"Q: {q}\nContext:\n{retrieve(q)}\n\nAnswer:")
+personal = ask(f"User profile: {profile.text()}\n\nQ: {q}\nContext:\n{retrieve(q)}\n\n"
+                      "Give a recommendation tailored to THIS user:")
 print("GENERIC :", generic[:160].replace("\n", " "))
 print("\nPERSONAL:", personal[:240].replace("\n", " "))
 
@@ -244,7 +243,7 @@ def grade_turn(user, answer, expect):
     p = ('Did the ANSWER correctly handle the user turn, given EXPECTED? 1.0 yes, 0.5 partial, 0.0 confused/wrong. '
          'JSON only: {"score": <1.0|0.5|0.0>}.\n\n'
          f'USER: {user}\nEXPECTED: {expect}\nANSWER: {answer}')
-    return _json(llm.invoke(p).content)["score"]
+    return _json(ask(p))["score"]
 
 rows = []
 for conv in conversations:
