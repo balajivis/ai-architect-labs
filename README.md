@@ -23,6 +23,23 @@ spine you can read right after cloning — see [`pillars/`](./pillars/):
 | III | [MCP Engineering](./pillars/03-mcp-engineering/) | Integration |
 | IV | [Trust & Production](./pillars/04-trust-and-production/) | Operations |
 
+## The labs — index
+
+Run in order; each builds on the prior scorecard. *(interactive = guided CLI tutor: Enter to run each stage, `s` skip, `q` quit)*
+
+| Lab | Name | File | Needs a key? |
+|---|---|---|---|
+| 1 | **Evaluation First** — golden cases, hand-rolled judges, the baseline to beat | `labs/lab_1.py` | yes · interactive |
+| 1b | **RAG Foundations: The Dials** — chunking, size, overlap, embedding model, top-k, threshold, phrasing; live leaderboard + workbench | `labs/lab_1b.py` | **no — 100% keyless** · interactive |
+| 2 | **Retrieval, Measured** — hybrid+RRF, metadata (given & LLM-derived), cross-encoder rerank, contextual, UMAP, the answers finale | `labs/lab_2.py` | yes · interactive |
+| 3 | **Agentic RAG: The Five Decisions** — router, HyDE/multi-query, decomposition, sufficiency + CRAG web fallback, budget caps | `labs/lab_3.py` | yes · interactive |
+| 4 | **Memory & Personalization** — rolling window, summarization, user profile, user-scoped retrieval, decay | `labs/lab_4.py` | yes |
+| 4b | **The Memory Stack** — the four layers on disk (short-term · working.yaml · episodic .md · durable profile.yaml), recall/isolation evals, memory × RAG | `labs/lab_4b.py` | yes · interactive |
+| 5 | **The Calibrated Judge & the Eval Gate** — RAGAS triad, judge vs human labels (Cohen's κ + bias probes), CI gate | `labs/lab_5.py` | yes |
+| 6 | **Guardrails & Security** *(WIP)* — 4-gate gauntlet, tenant ACLs, EU AI Act mapping | `labs/lab_6.py` | yes |
+| 7 | **Human-in-the-Loop** *(WIP)* — risk-tagged tools, pause/resume, the eval→HITL bridge | `labs/lab_7.py` | yes |
+| 8 | **MCP: Build a Server, Then Harden It** *(WIP · TypeScript/Node 22+)* — OAuth/audience binding, tool-poisoning guard, resilience | `labs/mcp_server/` | yes |
+
 ## Install (Colab)
 ```python
 !pip install -q "mai_rag[evals] @ git+https://github.com/balajivis/ai-architect-labs.git"
