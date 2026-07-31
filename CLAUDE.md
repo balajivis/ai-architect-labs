@@ -72,6 +72,7 @@ These are **Python files exported from Colab** (`labs/lab_1.py … lab_5.py`), r
 | Lab | File | What it builds |
 |-----|------|----------------|
 | 1 | `labs/lab_1.py` | Build golden cases, open the box on faithfulness, **baseline** the naive RAG. The number to beat. |
+| 1b | `labs/lab_1b.py` | **RAG Foundations: The Dials** (interactive tutor, **100% keyless** — no LLM/token) — chunking strategy · chunk size · overlap · embedding model (MiniLM vs MPNet) · top-k · similarity threshold · phrasing sensitivity · title-prepending. Every twist re-scored on the golden set with in-terminal bars + a live leaderboard; free-play workbench finale. |
 | 2 | `labs/lab_2.py` | Hybrid search, metadata filtering, cross-encoder rerank, contextual retrieval, UMAP — make retrieval measurable. |
 | 3 | `labs/lab_3.py` | Query routing, HyDE, decomposition, a sufficiency loop + web-search (CRAG) fallback. |
 | 4 | `labs/lab_4.py` | Working / long-term memory, user-scoped retrieval, personalization. |
