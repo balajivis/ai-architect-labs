@@ -15,6 +15,7 @@ dependencies = [
     "sqlite-vec>=0.1.6",
     "sentence-transformers>=2.6",   # local, keyless embeddings (MiniLM)
     "matplotlib>=3.7",
+    "pandas>=2.0",                  # labs render scorecards/tables as DataFrames
     "openai>=1.30",                 # OpenAI-compatible: OpenAI, Azure, Groq (base_url)
     "langchain-groq>=0.2",          # labs 1-4 generation (imported at cell top → must be core)
     "rank-bm25>=0.2",               # lab 2 hybrid retrieval
