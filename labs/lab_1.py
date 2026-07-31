@@ -154,6 +154,35 @@ golden = [
 print(len(golden), "cases:", {t: sum(c["tag"] == t for c in golden) for t in {c["tag"] for c in golden}})
 golden[0]
 
+"""## Author the golden set — now add YOUR OWN (the core skill)
+
+You have the shipped candidates above; the transferable skill is writing your own.
+A good eval case is a precise question + a known-good answer + the doc(s) that support
+it. Add at least one **multi-hop** question that spans two documents. These "blueprint
+tier" cases are yours — and you should **re-ground `expected` in the real text** with the
+`read_doc()` helper further down, not grade against a guess.
+"""
+
+# 7b — Author your own: extend the golden set with YOUR cases (the "blueprint" tier).
+# Same dict shape as cell 7 (q / expected / support / tag). `support` may name two
+# docs joined with " + " for a multi-hop; the retrieval metric below already splits on it.
+golden += [
+    # worked example — a multi-hop incident question spanning two policies:
+    {"q": "If an employee loses a laptop with customer data while travelling, "
+          "what must they do and how is that data meant to be handled?",
+     "expected": "Report it to the Security Team promptly per the incident-response "
+                 "runbook, and handle the customer data at the level the Data "
+                 "Classification policy requires.",
+     "support": "incident-response-runbook + data-classification-retention-policy",
+     "tag": "multi-hop"},
+
+    # --- YOUR TURN: add 1-2 of your own, grounded in a doc you actually read below. ---
+    # {"q": "...", "expected": "...", "support": "<doc-source-id>", "tag": "blueprint"},
+]
+
+print(len(golden), "cases after your additions:",
+      {t: sum(c["tag"] == t for c in golden) for t in {c["tag"] for c in golden}})
+
 # 8 — Build a basic eval: LLM-as-judge (correctness) + 1 RAG metric (faithfulness)
 import json
 judge = ChatGroq(model_name="openai/gpt-oss-120b", api_key=userdata.get("GROQ_API_KEY"),
