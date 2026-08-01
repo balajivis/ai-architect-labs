@@ -52,23 +52,14 @@ import yaml
 import mai_rag
 from mai_rag import corpus, llm
 
-# ── interactive helpers (same pattern as lab_1) ──────────────────────────────
-INTERACTIVE = sys.stdin.isatty()
+# ── the shared tutor kit — same Tutor/Stage/note/menu labs 1/1b/2/2c/3/3b/3c use, so the
+#    intro screen, stage map, forgiving menu, and failure-recovery are uniform ──────────────
+from mai_rag.tutor import Tutor, Stage, note, COLOR
+
+# The move bodies + show_file() below use inline C[...] color spans; gate the dict on the kit's
+# COLOR flag so it honors NO_COLOR / non-tty exactly like the kit's own green()/bold() helpers.
 C = {"b": "\033[1m", "d": "\033[2m", "y": "\033[33m", "g": "\033[32m", "c": "\033[36m", "x": "\033[0m"} \
-    if sys.stdout.isatty() else {k: "" for k in "bdygcx"}
-
-def banner(n, total, title):
-    print(f"\n{C['c']}{'═'*74}{C['x']}")
-    print(f"{C['b']}  MOVE {n}/{total} · {title}{C['x']}")
-    print(f"{C['c']}{'═'*74}{C['x']}")
-
-def say(text):
-    for para in textwrap.dedent(text).strip("\n").split("\n\n"):
-        print(textwrap.indent(textwrap.fill(" ".join(para.split()), 84), "  "))
-        print()
-
-def note(text):
-    print(f"  {C['d']}↳ {text}{C['x']}")
+    if COLOR else {k: "" for k in "bdygcx"}
 
 def show_file(path: pathlib.Path, label=None):
     """Print a memory file exactly as it sits on disk — seeing the artifact IS the lesson."""
@@ -76,20 +67,6 @@ def show_file(path: pathlib.Path, label=None):
     body = path.read_text().rstrip() if path.exists() else "(does not exist yet)"
     print(textwrap.indent(body, f"  {C['y']}│{C['x']} "))
     print(f"  {C['y']}└─{C['x']}")
-
-def prompt_next():
-    if not INTERACTIVE:
-        print(f"  {C['d']}… auto-run{C['x']}")
-        return "run"
-    try:
-        a = input(f"  {C['y']}▶ Enter{C['x']} run  ·  {C['y']}s{C['x']} skip  ·  {C['y']}q{C['x']} quit  › ").strip().lower()
-    except EOFError:
-        return "run"
-    except KeyboardInterrupt:
-        print("\n  Memory persisted to .memory/ — inspect it. 👋\n"); sys.exit(0)
-    if a in ("q", "quit", "exit"):
-        print("\n  Memory persisted to .memory/ — inspect it. 👋\n"); sys.exit(0)
-    return "skip" if a in ("s", "skip") else "run"
 
 def est_tokens(s: str) -> int:
     return max(1, len(s) // 4)          # rough chars/4 — good enough for the economics lesson
@@ -363,31 +340,39 @@ STEPS = [
      "happened. Separate stores, composed at answer time.", m7_memory_x_rag),
 ]
 
+# rough LLM-call estimate per move, shown on the stage map
+_CALLS = ["~2", "~4", "~2", "~2", "~2", "~8", "~8"]
+
+TUTOR = Tutor(
+    title="Lab 4b — The Memory Stack",
+    tagline="Modern AI Pro · AI Architect · Agent Memory — Working · Episodic · Semantic",
+    mission="""
+    An LLM has NO memory — everything it "remembers" is something you put back into the prompt.
+    So memory is an ARCHITECTURE you design, not a model feature. You build the four-layer stack
+    real agent systems use, one layer at a time, WATCHING THE FILES CHANGE ON DISK: L1 short-term
+    (in-context) · L2 working (working.yaml, rewritten) · L3 episodic (dated .md, the REM-flush) ·
+    L4 durable (semantic/profile.yaml, distilled facts). Then you prove it with two evals — RECALL
+    (a new session remembers) and ISOLATION (another user must not) — and compose memory × RAG
+    without collapsing them. Memory lives in .memory/ (git-ignored) — open it as you go.
+    """,
+    stages=[Stage(title, teach, run, calls)
+            for (title, teach, run), calls in zip(STEPS, _CALLS)],
+    outro="""
+    Your agent's whole mind is now sitting in .memory/priya/ — open it. Working is a paragraph,
+    episodes are summaries, the profile is distilled truth: layers ARE compaction. Next, Lab 5
+    turns judges like ours into a calibrated suite.
+    """,
+)
+
+
 def main():
-    print(__doc__.split("\n\n", 1)[1] if "\n\n" in __doc__ else __doc__)
-    print(f"  {C['d']}mai_rag {mai_rag.__version__} · provider: ", end="")
+    provider = "provider "
     try:
-        print(f"{llm._provider()}{C['x']}")
+        provider += llm._provider()
     except Exception:
-        print(f"NONE — set OPENAI_API_KEY (class token) in .env{C['x']}")
-    for i, (title, teach, run) in enumerate(STEPS, 1):
-        banner(i, len(STEPS), title)
-        say(teach)
-        if prompt_next() == "skip":
-            note("skipped."); continue
-        try:
-            run()
-        except RuntimeError as e:                 # key/rate — fatal, clean one-liner (no traceback)
-            print(f"\n  {C['y']}⚠  {e}{C['x']}\n")
-            sys.exit(1)
-        except ValueError as e:                   # one malformed model reply → skip this move, keep the lab alive
-            print(f"\n  {C['y']}⚠  step hiccup ({e}) — skipping, your memory so far is intact.{C['x']}\n")
-            continue
-        except KeyboardInterrupt:
-            print("\n  interrupted — memory so far is in .memory/ 👋\n"); sys.exit(0)
-    print(f"\n{C['g']}  ✔ Lab 4b complete.{C['x']} Your agent's whole mind is sitting in .memory/priya/ — open it.")
-    print("    Working is a paragraph, episodes are summaries, the profile is distilled truth:")
-    print("    layers ARE compaction. Next: Lab 5 turns judges like ours into a calibrated suite.\n")
+        provider += "NONE — set OPENAI_API_KEY (class token) in .env"
+    TUTOR.run(provider_line=f"mai_rag {mai_rag.__version__} · {provider} · memory lives in .memory/")
+
 
 if __name__ == "__main__":
     main()
