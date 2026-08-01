@@ -62,6 +62,9 @@ LAB_INDEX = """LAB MAP (Modern AI Pro · AI Architect — four pillars, taught e
   each re-scored on the golden set. Go here for "how does chunking/embeddings/top-k affect retrieval".
 - Lab 2  (lab_2.py) · Pillar I · Advanced Retrieval, measured: HYBRID search (BM25/lexical + dense), RRF fusion,
   metadata filtering, CROSS-ENCODER RERANK, contextual retrieval, UMAP maps. Go here for hybrid/reranking/keyword-vs-vector.
+- Lab 2c (lab_2c.py) · Pillar I · GraphRAG, Routed: build a knowledge GRAPH from documents (LLM triple extraction),
+  traverse it, DUEL graph+chunks vs chunks-alone on relation-shaped questions, and learn WHEN graph loses / how to
+  route to it. THIS is the GraphRAG / knowledge-graph lab. Go here for graphRAG, entities/relations, multi-hop over a graph.
 - Lab 3  (lab_3.py) · Pillar I · Agentic RAG "The Five Decisions": router (should I retrieve?), HyDE/multi-query,
   DECOMPOSITION (multi-hop), sufficiency + CRAG web fallback, budget caps. Go here for agentic/multi-hop/query-rewriting RAG.
 - Lab 3b (lab_3b.py) · Pillar I · Adaptive RAG: a complexity router sends each query to direct/naive/agentic;
@@ -76,8 +79,8 @@ LAB_INDEX = """LAB MAP (Modern AI Pro · AI Architect — four pillars, taught e
 - Lab 7  (lab_7.py, WIP) · Pillar IV · Human-in-the-Loop: risk-tagged tools, pause/resume an action, the eval→HITL bridge.
 - Lab 8  (labs/mcp_server/, WIP, TypeScript) · Pillar III · MCP Engineering: build + harden an MCP server over the wire
   (OAuth/audience, tool-poisoning guard, resilience). The one non-Python lab; needs Node 22+.
-NOT dedicated labs (name the closest): GraphRAG / knowledge-graph RAG → closest is Lab 2 (structured/contextual retrieval)
-+ Lab 3 (multi-hop decomposition); fine-tuning / model training → out of scope (this course is retrieval + eval + trust)."""
+NOT dedicated labs (name the closest): fine-tuning / model training → out of scope (this course is retrieval + eval +
+trust). GraphRAG IS covered — it's Lab 2c (do not say it's missing)."""
 
 # ── terminal styling (ANSI only on a tty) ───────────────────────────────────────
 _TTY = sys.stdout.isatty()
