@@ -34,6 +34,7 @@ gemini = ["google-generativeai>=0.7"]
 rerank = ["cohere>=5.5", "voyageai>=0.2"]
 graph  = ["neo4j>=5.20"]
 agents = ["langgraph>=0.2"]     # lab 3c — agent architectures as glass-box graphs
+adk    = ["google-adk[extensions]>=2.0"]   # lab 3d — the enterprise stack (LiteLLM adapter included)
 memory = ["mem0ai>=0.1"]
 viz    = ["umap-learn>=0.5", "scikit-learn>=1.4"]
 
