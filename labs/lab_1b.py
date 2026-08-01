@@ -265,6 +265,34 @@ def s2_size():
         print(f"\n  {green('curve saved')} → {out}")
     except Exception:
         note("(matplotlib unavailable — bars above tell the story)")
+
+    # ── YOUR TURN: dial a size and watch the score move. The sweep above is the map; this is the
+    #    steering wheel — pick sizes (or type your own) and find the sweet spot yourself.
+    #    (Auto-run / CI / Colab-non-tty skips straight past, so the lab stays runnable headless.)
+    from mai_rag.tutor import TTY_IN
+    if TTY_IN:
+        print(f"\n  {bold('your turn')} — dial a chunk size and see it re-score live:")
+        while True:
+            pick = choice("chunk size to try (words)?",
+                          {"30": "30 — tiny fragments", "90": "90", "180": "180 (a common default)",
+                           "360": "360", "720": "720 — one vector per section",
+                           "custom": "type my own…", "done": "done — on to the next dial"}, "done")
+            if pick == "done":
+                break
+            if pick == "custom":
+                raw = input("    size in words › ").strip()
+                if not (raw.isdigit() and int(raw) >= 1):
+                    note("give a whole number of words, e.g. 150."); continue
+                pick = raw
+            size = int(pick)
+            with Spinner(f"chunk+embed+score @ {size} words"):
+                r = score_config(f"fixed@{size}", "fixed", size, 0.0, quiet=True)
+            rows.append(r)
+            best = max(rows, key=lambda x: x["MRR"])
+            tag = green("← best so far") if r is best else dim(f"(best is {best['_cfg']['size']}w @ MRR {best['MRR']:.3f})")
+            print(f"  fixed@{size:<4} {sparkbar(r['MRR'])} MRR={r['MRR']:.3f}  recall={r['recall']:.2f}  "
+                  f"{dim(str(r['chunks']) + ' chunks')}  {tag}")
+
     note("too small: fragments lose their meaning (and the doc explodes into chunks). Too big: one "
          "vector averages many topics — dilution. The sweet spot is a CURVE you measure, not a rule "
          "you memorize.")
