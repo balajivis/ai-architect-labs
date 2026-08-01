@@ -103,7 +103,13 @@ LAB_INDEX = """LAB MAP (Modern AI Pro · AI Architect — four pillars, taught e
   (Cohen's kappa + bias probes), and the release/eval GATE. Go here for RAGAS/judge-calibration/CI gate.
 - Lab 6  (lab_6.py, WIP) · Pillar IV · Guardrails & Security: a 4-gate gauntlet (PII → injection → off-policy → output)
   scored as evaluators, row-level TENANT ACLs, EU AI Act mapping. Go here for guardrails/PII/jailbreak/tenant isolation.
-- Lab 7  (lab_7.py, WIP) · Pillar IV · Human-in-the-Loop: risk-tagged tools, pause/resume an action, the eval→HITL bridge.
+- Lab 7  (lab_7.py) · Pillar IV · Human-in-the-Loop: an action-boundary gate (structural risk-tag · dynamic
+  triggers · the real 4-gate guardrails as a safety floor), an atomic pause+approval queue with three resume
+  paths (approve / reject / resolve-with-a-human-edit), and the eval→HITL bridge. Go here for HITL/approval
+  queues/pause-resume/risk-tagged tools.
+- Lab 7b (lab_7b.py) · Pillar IV · Ship Audit-Ready: TRACE one RAG→eval→HITL request (references + timings, never
+  payloads), attribute COST per stage, classify the EU AI Act risk TIER (LLM-judged), map SOC2 controls, and GATE
+  on a replayable record. Go here for observability/tracing/cost-attribution/EU AI Act/SOC2/audit-ready/compliance.
 - Lab 8  (labs/mcp_server/, WIP, TypeScript) · Pillar III · MCP Engineering: build + harden an MCP server over the wire
   (OAuth/audience, tool-poisoning guard, resilience). The one non-Python lab; needs Node 22+.
 NOT dedicated labs (name the closest): fine-tuning / model training → out of scope (this course is retrieval + eval +
