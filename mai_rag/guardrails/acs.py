@@ -30,17 +30,32 @@ _KEY_VAR = "AZURE_CONTENT_SAFETY_KEY"
 
 _NOT_CONFIGURED = {"configured": False, "reason": "ACS not configured"}
 
+# Flip to True in the git pull that wires the live adapter below. Until then
+# is_configured() must stay False even when the creds ARE set — otherwise a
+# student who already has ACS vars in their environment routes into the stub
+# and loses the whole lab to a NotImplementedError.
+_LIVE = False
+
+
+def _creds_present() -> bool:
+    return bool(os.getenv(_ENDPOINT_VAR) and os.getenv(_KEY_VAR))
+
 
 def is_configured() -> bool:
-    """True only when BOTH Azure Content Safety creds are present in the env.
-    The Guardrail pipeline calls this to decide live-ACS vs native fall-through."""
-    return bool(os.getenv(_ENDPOINT_VAR) and os.getenv(_KEY_VAR))
+    """True only when BOTH Azure Content Safety creds are present in the env AND
+    the live adapter has shipped. The Guardrail pipeline calls this to decide
+    live-ACS vs native fall-through."""
+    return _LIVE and _creds_present()
 
 
 def status() -> dict:
     """A printable one-liner for Move 0's optional ACS block."""
     if is_configured():
         return {"configured": True, "reason": "ACS configured (live adapter)"}
+    if _creds_present():
+        return {"configured": False,
+                "reason": "ACS creds found, but the live adapter ships in a later "
+                          "git pull — using the native LLM-judge path"}
     return dict(_NOT_CONFIGURED)
 
 

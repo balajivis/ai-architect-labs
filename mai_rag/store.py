@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from pathlib import Path
 from dataclasses import dataclass
 from typing import Any, Iterable, Sequence
 
@@ -33,9 +34,22 @@ def get_embedder():
     """Load the MiniLM encoder once. Keyless and local."""
     global _embedder
     if _embedder is None:
-        from sentence_transformers import SentenceTransformer
-
-        _embedder = SentenceTransformer(EMBED_MODEL_NAME)
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError:
+            raise RuntimeError(
+                'sentence-transformers is missing — run: pip install -e ".[evals,viz]"'
+            ) from None
+        try:
+            _embedder = SentenceTransformer(EMBED_MODEL_NAME)
+        except Exception as e:
+            # The likeliest first-five-minutes failure in the whole course. Frame it,
+            # rather than surfacing a raw HuggingFace traceback that reads as our bug.
+            raise RuntimeError(
+                f"Couldn't load the local embedding model {EMBED_MODEL_NAME!r} (~90 MB, "
+                f"downloaded once from huggingface.co). Check your internet connection "
+                f"and re-run this cell — it resumes from cache. [{type(e).__name__}]"
+            ) from None
     return _embedder
 
 
@@ -132,6 +146,10 @@ def connect(path: str = ":memory:") -> sqlite3.Connection:
     """Open the DB, load sqlite-vec, ensure the schema exists."""
     import sqlite_vec
 
+    # BUILD_YOUR_CORPUS.md invites students to pass their own db_path; a nested one
+    # otherwise fails with "unable to open database file", which reads as corruption.
+    if path != ":memory:":
+        Path(path).expanduser().parent.mkdir(parents=True, exist_ok=True)
     # check_same_thread=False so the same store can be read from a worker thread
     # (e.g. mai_rag.bridge's threaded HTTP server in Lab 8). The labs drive the
     # connection single-threaded, so disabling the ownership guard is safe.

@@ -36,4 +36,6 @@ def clamp01(x) -> float:
         x = float(x)
     except (TypeError, ValueError):
         return 0.0
+    if x != x:   # NaN is how RAGAS reports a FAILED metric — min(1.0, nan) is 1.0, so
+        return 0.0   # without this a broken metric prints as a perfect score.
     return max(0.0, min(1.0, x))

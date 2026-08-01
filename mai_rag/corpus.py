@@ -53,9 +53,18 @@ def _find_prebuilt_db() -> Path | None:
     return None
 
 
+def _normalize_newlines(text: str) -> str:
+    """Git for Windows checks out `*.md` with CRLF by default. Paragraph splitting
+    keys on "\\n\\n", which CRLF text does not contain — every doc would collapse to
+    a single chunk, silently, and every retrieval score in the course would be
+    garbage with no error to explain it. Normalize once, at the door."""
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
 def _parse_frontmatter(text: str) -> tuple[dict, str]:
     """Split a `---`-delimited YAML-ish frontmatter block from the body.
     Parses simple `key: value` lines (no nested YAML) to avoid a PyYAML dep."""
+    text = _normalize_newlines(text)
     if not text.startswith("---"):
         return {}, text
     end = text.find("\n---", 3)
@@ -75,7 +84,7 @@ def _chunk(body: str, target: int = CHUNK_TARGET_WORDS,
            overlap: int = CHUNK_OVERLAP_WORDS) -> list[str]:
     """Boundary-aware greedy chunking: pack paragraphs to ~target words, with a
     small word overlap so a fact split across a boundary is still retrievable."""
-    paras = [p.strip() for p in body.split("\n\n") if p.strip()]
+    paras = [p.strip() for p in _normalize_newlines(body).split("\n\n") if p.strip()]
     chunks: list[str] = []
     cur: list[str] = []
     count = 0

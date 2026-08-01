@@ -86,9 +86,20 @@ class GoldenSet:
         which rate-limits a Groq free tier. `from_seed(store, limit=10)` keeps it cheap."""
         gs = cls(store)
         seed = load_golden_seed()
-        if limit:
+        if limit is not None:            # `if limit:` treated limit=0 as "no limit"
             seed = seed[:limit]
+        # Re-running the setup cell against a PERSISTED db used to insert a second copy
+        # of every case, silently doubling the golden set — and every score, cost and
+        # gate computed from it — with no error to explain the drift.
+        already = {r[0] for r in store.conn.execute("SELECT question FROM golden_cases")}
         for s in seed:
+            if s.get("question") in already:
+                continue
+            if "question" not in s:
+                raise ValueError(
+                    "golden seed case is missing 'question' — this looks like the "
+                    "q/expected/support shape, which from_seed doesn't consume "
+                    "(see load_golden's docstring).")
             gs.add(GoldenCase(
                 question=s["question"], expected=s.get("expected_answer", ""),
                 contexts=s.get("supporting_doc_ids", []),

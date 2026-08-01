@@ -30,11 +30,22 @@ import os, pathlib, sys, textwrap, json, shutil, datetime, re
 _here = pathlib.Path(__file__).resolve().parent if "__file__" in globals() else pathlib.Path.cwd()
 for _cand in (pathlib.Path(".env"), _here.parent / ".env", _here / ".env"):
     if _cand.exists():
-        for _line in _cand.read_text().splitlines():
+        try:                                     # utf-8-sig eats a Windows Notepad BOM,
+            _txt = _cand.read_text(encoding="utf-8-sig")   # which otherwise corrupts the FIRST key
+        except (OSError, UnicodeDecodeError):
+            _txt = ""                            # an unreadable .env must never crash the import
+        for _line in _txt.splitlines():
             _line = _line.strip()
+            if _line.startswith("export "):        # people paste shell-style lines into .env
+                _line = _line[7:].lstrip()
             if _line and not _line.startswith("#") and "=" in _line:
                 _k, _v = _line.split("=", 1)
-                os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
+                _v = _v.strip()
+                if len(_v) > 1 and _v[0] == _v[-1] and _v[0] in ("\'", '"'):
+                    _v = _v[1:-1]                # quoted: take it verbatim
+                elif " #" in _v:
+                    _v = _v.split(" #", 1)[0].strip()   # unquoted: drop a trailing comment
+                os.environ.setdefault(_k.strip(), _v)
         break
 
 import yaml

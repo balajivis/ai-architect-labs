@@ -28,11 +28,22 @@ _here = pathlib.Path(__file__).resolve().parent if "__file__" in globals() else 
 _repo = _here.parent
 for _cand in (pathlib.Path(".env"), _repo / ".env", _here / ".env"):
     if _cand.exists():
-        for _ln in _cand.read_text().splitlines():
+        try:                                     # utf-8-sig eats a Windows Notepad BOM,
+            _txt = _cand.read_text(encoding="utf-8-sig")   # which otherwise corrupts the FIRST key
+        except (OSError, UnicodeDecodeError):
+            _txt = ""                            # an unreadable .env must never crash the import
+        for _ln in _txt.splitlines():
             _ln = _ln.strip()
+            if _ln.startswith("export "):        # people paste shell-style lines into .env
+                _ln = _ln[7:].lstrip()
             if _ln and not _ln.startswith("#") and "=" in _ln:
                 _k, _v = _ln.split("=", 1)
-                os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
+                _v = _v.strip()
+                if len(_v) > 1 and _v[0] == _v[-1] and _v[0] in ("\'", '"'):
+                    _v = _v[1:-1]                # quoted: take it verbatim
+                elif " #" in _v:
+                    _v = _v.split(" #", 1)[0].strip()   # unquoted: drop a trailing comment
+                os.environ.setdefault(_k.strip(), _v)
         break
 
 _BASE = os.environ.get("OPENAI_BASE_URL", "https://learn.modernaipro.com/api/llm/v1").rstrip("/")
@@ -50,7 +61,23 @@ Answer FROM the retrieved help articles attached to the question when they fit �
 
 Be CONCISE — a few lines. Give the command(s), then a one-line why. Do NOT dump setup checklists or "your key setup looks fine" notes unless asked or clearly the fix. TRUST the student: if they say something already works, don't re-suggest installing it — answer what they actually asked, and don't re-diagnose problems they didn't raise. Never reveal keys.
 
-When a student asks WHICH lab covers a topic (e.g. "which lab for graphRAG / reranking / memory isolation / evals?"), use the LAB MAP below to name the specific lab(s) and the move/technique in them. If the exact topic has no dedicated lab (graphRAG and knowledge-graph RAG are NOT separate labs, for instance), say so plainly and point to the CLOSEST lab — don't invent a lab that doesn't exist."""
+When a student asks WHICH lab covers a topic (e.g. "which lab for graphRAG / reranking / memory isolation / evals?"), use the LAB MAP below to name the specific lab(s) and the move/technique in them. If the exact topic has no dedicated lab (graphRAG and knowledge-graph RAG are NOT separate labs, for instance), say so plainly and point to the CLOSEST lab — don't invent a lab that doesn't exist.
+
+COMPANY FACTS (use these for "who built this / what company is behind this" questions — do NOT confuse
+them with the lab corpus):
+- This course, the labs, and the mai_rag kit are built by Modern AI Pro (modernaipro.com), the AI education
+  company. The class platform / proxy lives at learn.modernaipro.com.
+- Founder & lead instructor: Dr. Balaji Viswanathan — CEO & Lead Instructor, two decades in AI and robotics,
+  former CEO of Mitra Robot (AI/robotics deployed in 50+ global organizations), PhD in human-robot
+  interaction, earlier at Microsoft and Black Duck (Synopsys).
+- Modern AI Pro is the education arm of a three-product family: Modern AI Pro (LEARN — this course),
+  Kapi (BUILD — enterprise AI agent platform, app.getkapi.com, ships all 8 agent layers: UI, graph,
+  integrations, knowledge, memory, HITL, eval, observability — "Most AI Agents Fail. Yours Won't."), and
+  Brahmasumm (DEPLOY — air-gapped enterprise knowledge discovery). The intended journey: learn AI here,
+  build agents with Kapi, deploy knowledge systems at work with Brahmasumm.
+- DISAMBIGUATION: "Northwind Technologies" is the FICTIONAL company in the lab CORPUS (~131 synthetic
+  policy docs engineered to break naive RAG). It did not build anything and is not real. "Which company
+  built it?" about the course/labs/kit → Modern AI Pro. Questions about the corpus content → Northwind."""
 
 # ── LAB MAP — what each lab builds, so the TA can route a topic to the right lab ──
 # Keep in sync with CLAUDE.md's lab table. Pillars: I Advanced RAG · II Evals · III MCP · IV Trust.

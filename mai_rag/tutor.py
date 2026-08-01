@@ -24,7 +24,25 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable
 
-TTY_IN = sys.stdin.isatty()
+def _stdin_is_interactive() -> bool:
+    """VS Code's interactive window / Jupyter is NOT a tty, but input() works there.
+    Treating it as non-interactive made every tutor auto-run every stage — including
+    lab 6's ~250-call gate matrix that the lab documents as skippable. Detect the
+    kernel explicitly; a genuinely piped or CI run still falls through to auto-run.
+    Set MAI_NONINTERACTIVE=1 to force auto-run anywhere."""
+    if os.environ.get("MAI_NONINTERACTIVE"):
+        return False
+    if sys.stdin is None:
+        return False
+    if "ipykernel" in sys.modules and hasattr(sys.stdin, "readline"):
+        return True
+    try:
+        return sys.stdin.isatty()
+    except Exception:
+        return False
+
+
+TTY_IN = _stdin_is_interactive()
 TTY_OUT = sys.stdout.isatty()
 COLOR = TTY_OUT and os.environ.get("NO_COLOR") is None
 

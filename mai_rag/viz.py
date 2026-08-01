@@ -127,6 +127,13 @@ def confusion_matrix(decisions, labels=None,
     if labels is None:
         labels = sorted({t for t, _ in pairs} | {p for _, p in pairs})
     labels = [str(x) for x in labels]
+    if not labels:
+        # Reachable whenever an upstream fixture silently loaded as [] — say that,
+        # instead of "zero-size array to reduction operation maximum" from numpy.
+        raise ValueError(
+            "confusion_matrix: nothing to plot — the upstream stage produced zero "
+            "decisions. Check that the golden fixture actually loaded (restart the "
+            'kernel and re-run setup; if it persists: pip install -e ".[evals,viz]").')
     idx = {l: i for i, l in enumerate(labels)}
 
     M = np.zeros((len(labels), len(labels)), dtype=int)

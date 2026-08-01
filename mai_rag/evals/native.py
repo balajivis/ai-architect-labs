@@ -36,7 +36,13 @@ def faithfulness(e: EvalInput) -> Score:
         f"CONTEXT:\n{ctx}\n\nANSWER:\n{e.answer}\n\n"
         'Keys: claims (list of {claim, supported: true/false}), reasoning.'
     )
-    claims = r.get("claims") or []
+    # A small judge model often ignores the {claim, supported} shape and returns a
+    # flat list of strings — keep only the dicts rather than AttributeError below.
+    raw = r.get("claims") or []
+    claims = [c for c in raw if isinstance(c, dict)]
+    if raw and not claims:   # judge replied, but in the wrong shape — that's a FAILED
+        return Score("faithfulness", 0.0, False,   # metric, not a perfect one
+                     "judge returned claims in an unusable shape (no {claim, supported} objects)")
     if not claims:
         return Score("faithfulness", 1.0, True, "no factual claims to verify")
     supported = sum(1 for c in claims if c.get("supported"))
@@ -70,9 +76,15 @@ def context_precision(e: EvalInput) -> Score | None:
     verdicts = r.get("verdicts") or []
     if not verdicts:
         return Score("context_precision", 0.0, False, "no verdicts returned")
+    # One verdict per chunk is the contract; a judge that returns more would
+    # otherwise inflate the denominator and quietly change the metric.
+    note = "" if len(verdicts) == len(e.contexts) else \
+        f" (judge returned {len(verdicts)} verdicts for {len(e.contexts)} chunks)"
+    verdicts = verdicts[:len(e.contexts)]
     rel = sum(1 for v in verdicts if v)
     s = rel / len(verdicts)
-    return Score("context_precision", s, s >= 0.5, f"{rel}/{len(verdicts)} chunks relevant")
+    return Score("context_precision", s, s >= 0.5,
+                 f"{rel}/{len(verdicts)} chunks relevant{note}")
 
 
 def context_recall(e: EvalInput) -> Score | None:
@@ -87,7 +99,11 @@ def context_recall(e: EvalInput) -> Score | None:
         f"REFERENCE:\n{e.expected}\n\nCONTEXT:\n{ctx}\n\n"
         'Keys: facts (list of {fact, present: true/false}), reasoning.'
     )
-    facts = r.get("facts") or []
+    raw = r.get("facts") or []
+    facts = [f for f in raw if isinstance(f, dict)]   # same shape guard
+    if raw and not facts:
+        return Score("context_recall", 0.0, False,
+                     "judge returned facts in an unusable shape (no {fact, present} objects)")
     if not facts:
         return Score("context_recall", 1.0, True, "no facts to cover")
     present = sum(1 for f in facts if f.get("present"))

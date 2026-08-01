@@ -135,19 +135,28 @@ def complete(prompt: str, tier: str = "small", temperature: float = 0.0,
 
         # OpenAI-compatible path covers openai / groq / azure
         from openai import OpenAI, AzureOpenAI
+        # The SDK default is a 600s read timeout with 2 hidden retries — on a half-open
+        # connection (class wifi, a stalling proxy) that is ~30 min of a frozen cell with
+        # no output. We own the retry policy in the loop below, so turn the SDK's off.
+        _net = {"timeout": float(os.getenv("MAI_LLM_TIMEOUT", "60")), "max_retries": 0}
         if provider == "azure":
             client: Any = AzureOpenAI(
                 api_key=os.environ["AZURE_OPENAI_API_KEY"],
                 azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
                 api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-08-01-preview"),
+                **_net,
             )
             # gpt-5.x on Azure needs max_completion_tokens + only the default temperature
             resp = client.chat.completions.create(model=model, messages=messages, max_completion_tokens=max_tokens)
         else:
-            client = (OpenAI(api_key=os.environ["GROQ_API_KEY"], base_url="https://api.groq.com/openai/v1")
-                      if provider == "groq" else OpenAI(api_key=os.environ["OPENAI_API_KEY"]))
+            client = (OpenAI(api_key=os.environ["GROQ_API_KEY"],
+                             base_url="https://api.groq.com/openai/v1", **_net)
+                      if provider == "groq" else OpenAI(api_key=os.environ["OPENAI_API_KEY"], **_net))
             resp = client.chat.completions.create(model=model, messages=messages,
                                                   temperature=temperature, max_tokens=max_tokens)
+        if not resp.choices:   # some proxies return an empty list on a filtered prompt
+            return PLATFORM_BLOCK + (" The provider returned no completion choices; "
+                                     "no answer was generated.")
         out = resp.choices[0].message.content or ""
         METER.record(resp, prompt=prompt, output=out)
         return out
@@ -162,9 +171,15 @@ def complete(prompt: str, tier: str = "small", temperature: float = 0.0,
             is_rate = status == 429 or name == "RateLimitError" or "rate limit" in m
             is_key = (status in (401, 403) or name in ("AuthenticationError", "PermissionDeniedError")
                       or "not enabled" in m or "invalid or missing class token" in m or "invalid api key" in m)
-            if is_rate and attempt < retries - 1:
+            # A timeout, a dropped connection or a 5xx (proxy restarting, provider
+            # overloaded) is transient mid-class — back off and retry like a 429
+            # rather than failing the stage on the first blip.
+            is_transient = is_rate or (status is not None and status >= 500) or name in (
+                "APITimeoutError", "APIConnectionError", "InternalServerError")
+            if is_transient and attempt < retries - 1:
                 wait = min(2 ** attempt * 2, 30)      # 2 → 4 → 8 → 16 → 30 → 30
-                print(f"[mai_rag.llm] rate-limited — backing off {wait}s (retry {attempt + 1}/{retries - 1})",
+                why = "rate-limited" if is_rate else f"transient error ({name})"
+                print(f"[mai_rag.llm] {why} — backing off {wait}s (retry {attempt + 1}/{retries - 1})",
                       file=sys.stderr, flush=True)
                 time.sleep(wait)
                 continue
@@ -179,6 +194,11 @@ def complete(prompt: str, tier: str = "small", temperature: float = 0.0,
                 raise RuntimeError(_KEY_HINT) from None
             if is_rate:
                 raise RuntimeError(_RATE_HINT) from None
+            if name in ("APITimeoutError", "APIConnectionError"):
+                raise RuntimeError(
+                    "Can't reach the LLM endpoint (timed out / connection refused). Check your "
+                    "internet, and check OPENAI_BASE_URL in your .env if you're on the class "
+                    "proxy. On slow wifi, raise the limit: MAI_LLM_TIMEOUT=120") from None
             raise RuntimeError(f"LLM call failed ({name}{' ' + str(status) if status else ''}): {str(e)[:160]}") from None
 
 

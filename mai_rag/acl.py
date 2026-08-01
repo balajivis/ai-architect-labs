@@ -46,7 +46,11 @@ def resolve_tenant(token: str | None) -> str:
         raise PermissionError("No bearer token — cannot resolve a tenant. Unauthenticated callers get no rows.")
     tenant = _TOKENS.get(token)
     if tenant is None:
-        raise PermissionError(f"Unknown bearer token {token!r} — refusing to resolve a tenant.")
+        # Never echo the credential itself: register_token() invites students to add
+        # their own, and this is the access-control lab — leaking a token into notebook
+        # output, logs or a screen-share is exactly what it teaches against.
+        raise PermissionError(
+            f"Unknown bearer token (…{token[-4:]}) — refusing to resolve a tenant.")
     return tenant
 
 

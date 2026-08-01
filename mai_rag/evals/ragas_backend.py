@@ -18,7 +18,8 @@ _RAGAS_METRICS = {"faithfulness", "answer_relevancy", "context_precision", "cont
 
 def available() -> bool:
     try:
-        import ragas  # noqa: F401
+        import ragas       # noqa: F401
+        import datasets    # noqa: F401  — also in the [evals] extra, imported in score()
         return True
     except Exception:
         return False

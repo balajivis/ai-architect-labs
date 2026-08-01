@@ -49,4 +49,8 @@ mai_rag = [
     # Lab 6 (guardrails / RLS / EU AI Act) + Lab 7 (HITL action set) fixtures
     "data/golden_attacks.json", "data/golden_seed_action.json",
     "data/eu_ai_act_map.json", "data/governance_canvas.json",
+    # Lab 2c reads this directly off mai_rag/data — without it, a non-editable
+    # (pip install from git) student gets FileNotFoundError at stage 1.
+    "data/hard_triples.json",
+    "data/COMPANY_BIBLE.md",
 ]

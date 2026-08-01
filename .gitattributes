@@ -1,0 +1,17 @@
+# Git for Windows defaults to core.autocrlf=true. The corpus loader splits
+# paragraphs on "\n\n", which CRLF text does not contain — a CRLF checkout
+# collapses every doc to a single chunk and silently invalidates every
+# retrieval score in the course. Keep text files LF on every platform.
+* text=auto eol=lf
+
+*.md   text eol=lf
+*.json text eol=lf
+*.py   text eol=lf
+*.ts   text eol=lf
+*.yaml text eol=lf
+*.yml  text eol=lf
+
+*.png  binary
+*.jpg  binary
+*.db   binary
+*.sqlite binary
