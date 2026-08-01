@@ -29,6 +29,7 @@ dependencies = [
 [project.optional-dependencies]
 # Each module's notebook installs only what it needs — keeps Colab installs fast.
 evals  = ["ragas>=0.2", "datasets>=2.19"]
+deepeval = ["deepeval>=1.0"]      # lab 5's third metric backend (routed through mai_rag.llm)
 gemini = ["google-generativeai>=0.7"]
 rerank = ["cohere>=5.5", "voyageai>=0.2"]
 graph  = ["neo4j>=5.20"]

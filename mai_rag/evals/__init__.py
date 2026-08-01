@@ -42,9 +42,15 @@ DEFAULT_SUITE = [
 
 
 def _resolve(name: str, backend: str):
+    # Three implementations of the same four RAG metrics — same EvalInput in, same Score
+    # out, so the golden set / viz / gate never care which one ran. Diffing them is the
+    # lesson: a metric you've never compared to a second implementation is faith, not data.
     if backend == "ragas" and name in RAGAS_NAMES:
         from . import ragas_backend
         return lambda e: ragas_backend.score(name, e)
+    if backend == "deepeval" and name in RAGAS_NAMES:
+        from . import deepeval_backend
+        return lambda e: deepeval_backend.score(name, e)
     return REGISTRY[name]
 
 

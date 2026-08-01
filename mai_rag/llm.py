@@ -142,7 +142,12 @@ def complete(prompt: str, tier: str = "small", temperature: float = 0.0,
 
 def complete_json(prompt: str, tier: str = "small", **kw) -> dict:
     """Completion that must return a JSON object. Robust to ```json fences and
-    leading prose — structural parsing only (allowed), never classification."""
+    leading prose — structural parsing only (allowed), never classification.
+
+    Note the token budget: JSON replies (claim lists, per-chunk verdicts) run far longer
+    than prose answers, and a reply truncated mid-object is invalid JSON. Default higher
+    than complete()'s, and say so plainly when a reply still gets cut off."""
+    kw.setdefault("max_tokens", 2500)
     raw = complete(prompt + "\n\nRespond with a single JSON object and nothing else.",
                    tier=tier, **kw)
     # Provider-filtered prompt (see complete): there is no output to judge. Report it as a
@@ -153,4 +158,11 @@ def complete_json(prompt: str, tier: str = "small", **kw) -> dict:
     m = re.search(r"\{.*\}", raw, re.DOTALL)
     if not m:
         raise ValueError(f"No JSON object found in model output: {raw[:200]}")
-    return json.loads(m.group(0))
+    try:
+        return json.loads(m.group(0))
+    except json.JSONDecodeError as e:
+        # Almost always a truncated reply (the model hit max_tokens mid-object).
+        raise ValueError(
+            f"model returned invalid/truncated JSON ({e.msg}). Raise max_tokens for this "
+            f"call, or ask for fewer items. Tail: …{raw[-120:]!r}"
+        ) from None
