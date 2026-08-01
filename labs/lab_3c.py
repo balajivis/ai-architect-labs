@@ -477,6 +477,20 @@ def s6_showdown():
          "multi-hop the loops earn their calls. No shape wins everywhere — which is why production "
          "systems ROUTE between architectures instead of crowning one. Architecture is a dial.")
 
+def _pick_int(prompt, options, default, lo=1, hi=20):
+    """choice() where the student can ALSO type a custom whole-number value (a real dial, not just
+    presets). Returns an int. Out-of-range / non-numeric falls back to the default with a note."""
+    pick = choice(prompt, {**options, "custom": "type my own…"}, default)
+    if pick == "custom":
+        try:
+            raw = input(f"  {yellow('value ›')} ").strip()
+        except (EOFError, KeyboardInterrupt):
+            return int(default)
+        if raw.isdigit() and lo <= int(raw) <= hi:
+            return int(raw)
+        note(f"using {default} — need a whole number {lo}–{hi}.")
+    return int(pick)
+
 def s7_workbench():
     cases = golden_slice()
     if not sys.stdin.isatty():
@@ -492,21 +506,21 @@ def s7_workbench():
         arch = choice("architecture?", {k: f"{k} — {v[0]}" for k, v in ARCHITECTURES.items()}, "react")
         if arch == "react":
             tools = choice("toolbox?", {"both": "search_corpus + calc", "corpus": "search_corpus only"}, "both")
-            cap = choice("hop cap?", {"2": "2 — tight budget", "4": "4 — default", "6": "6 — generous"}, "4")
+            cap = _pick_int("hop cap?", {"2": "2 — tight budget", "4": "4 — default", "6": "6 — generous"}, "4")
             app, topo = build_react(tools=("search_corpus", "calc") if tools == "both" else ("search_corpus",),
-                                    cap=int(cap))
+                                    cap=cap)
             label = f"you: react·{tools}·cap{cap}"
         elif arch == "reflect":
-            rounds = choice("max revisions?", {"1": "1", "2": "2", "3": "3"}, "2")
-            app, topo = build_reflect(rounds=int(rounds))
+            rounds = _pick_int("max revisions?", {"1": "1", "2": "2", "3": "3"}, "2")
+            app, topo = build_reflect(rounds=rounds)
             label = f"you: reflect·r{rounds}"
         elif arch == "plan":
-            steps = choice("max plan steps?", {"2": "2", "3": "3", "4": "4"}, "3")
-            app, topo = build_plan(max_steps=int(steps))
+            steps = _pick_int("max plan steps?", {"2": "2", "3": "3", "4": "4"}, "3")
+            app, topo = build_plan(max_steps=steps)
             label = f"you: plan·s{steps}"
         else:
-            cap = choice("handoff cap?", {"3": "3", "6": "6", "9": "9"}, "6")
-            app, topo = build_supervisor(cap=int(cap))
+            cap = _pick_int("handoff cap?", {"3": "3", "6": "6", "9": "9"}, "6")
+            app, topo = build_supervisor(cap=cap)
             label = f"you: supervisor·cap{cap}"
         print(f"  topology: {bold(topo)}")
         mode = choice("run it on…", {"score": "the golden slice (scored → leaderboard)",
