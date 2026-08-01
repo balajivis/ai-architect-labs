@@ -13,6 +13,14 @@ class EvalInput:
     contexts: list[str]
     expected: str = ""
     criteria: list[str] = field(default_factory=list)
+    # ── retrieval evidence (optional) — what the retriever RETURNED vs what the golden
+    # case says SHOULD have been found. Both are doc ids/sources in rank order; supply
+    # them and the keyless retrieval engines (recall_at_k / mrr / hit_at_1) light up.
+    retrieved: list[str] = field(default_factory=list)
+    supporting: list[str] = field(default_factory=list)
+    # ── run telemetry (optional) — {"ms": float, "tokens": int, "calls": int}. Lets cost
+    # and latency be scored as first-class eval dimensions, not a footnote.
+    meta: dict = field(default_factory=dict)
 
 
 @dataclass

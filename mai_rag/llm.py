@@ -71,6 +71,46 @@ _RATE_HINT = (
 PLATFORM_BLOCK = "[BLOCKED by the platform content filter]"
 
 
+class _Meter:
+    """Counts LLM calls + tokens through this chokepoint, so cost/latency can be SCORED
+    (mai_rag.evals.perf) instead of guessed. Usage comes from the provider's own `usage`
+    block when it ships one; otherwise tokens are estimated at ~4 chars/token so the
+    number is never silently zero. Reset it around a run, snapshot it after."""
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.calls = 0
+        self.prompt_tokens = 0
+        self.completion_tokens = 0
+        self.estimated = False
+
+    def record(self, resp=None, prompt: str = "", output: str = ""):
+        self.calls += 1
+        usage = getattr(resp, "usage", None)
+        pt = getattr(usage, "prompt_tokens", None) if usage else None
+        ct = getattr(usage, "completion_tokens", None) if usage else None
+        if pt is None and ct is None:
+            pt, ct = len(prompt) // 4, len(output) // 4
+            self.estimated = True
+        self.prompt_tokens += int(pt or 0)
+        self.completion_tokens += int(ct or 0)
+
+    @property
+    def tokens(self) -> int:
+        return self.prompt_tokens + self.completion_tokens
+
+    def snapshot(self) -> dict:
+        return {"calls": self.calls, "tokens": self.tokens,
+                "prompt_tokens": self.prompt_tokens,
+                "completion_tokens": self.completion_tokens,
+                "estimated": self.estimated}
+
+
+METER = _Meter()
+
+
 def complete(prompt: str, tier: str = "small", temperature: float = 0.0,
              max_tokens: int = 800, system: str | None = None, retries: int = 6) -> str:
     """Single-prompt completion. Returns text.
@@ -108,7 +148,9 @@ def complete(prompt: str, tier: str = "small", temperature: float = 0.0,
                       if provider == "groq" else OpenAI(api_key=os.environ["OPENAI_API_KEY"]))
             resp = client.chat.completions.create(model=model, messages=messages,
                                                   temperature=temperature, max_tokens=max_tokens)
-        return resp.choices[0].message.content or ""
+        out = resp.choices[0].message.content or ""
+        METER.record(resp, prompt=prompt, output=out)
+        return out
 
     for attempt in range(retries):
         try:

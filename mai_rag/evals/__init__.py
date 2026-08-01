@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 
 from ..store import Store
 from .base import EvalInput, Score
-from . import native, safety
+from . import native, safety, retrieval, perf
 
 # name → native callable
 REGISTRY = {
@@ -29,7 +29,23 @@ REGISTRY = {
     "pii_exposure": safety.pii_exposure,
     "harmful_intent": safety.harmful_intent,
     "relevancy": safety.relevancy,
+    # Retrieval engines — KEYLESS, deterministic. They score the RETRIEVER against the
+    # supporting docs the golden set labels, so a regressed retriever can't hide behind a
+    # plausible answer. Need EvalInput.retrieved + .supporting (see evals/retrieval.py).
+    "recall_at_k": retrieval.recall_at_k,
+    "mrr": retrieval.mrr,
+    "hit_at_1": retrieval.hit_at_1,
+    # Cost/latency engines — keyless. Need EvalInput.meta {"ms","tokens","calls"} from a
+    # metered run (llm.METER). Quality-only scorecards make every technique look free.
+    "latency_budget": perf.latency_budget,
+    "token_budget": perf.token_budget,
+    "call_budget": perf.call_budget,
 }
+
+# Engines that need no LLM at all — safe to run everywhere, free, deterministic.
+KEYLESS_NAMES = {"contains", "exact_match", "semantic_similarity",
+                 "recall_at_k", "mrr", "hit_at_1",
+                 "latency_budget", "token_budget", "call_budget"}
 
 RAGAS_NAMES = {"faithfulness", "answer_relevancy", "context_precision", "context_recall"}
 
