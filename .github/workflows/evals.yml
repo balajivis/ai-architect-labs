@@ -1,0 +1,50 @@
+# The eval gate, in CI. Lab 5's last stage, running on every pull request.
+#
+#   no un-evaluated change reaches production
+#
+# What happens on a PR:
+#   · with no LLM secret  → the keyless test runs (registry + deterministic
+#     engines), the gated test SKIPS, the job is GREEN. Forks and Dependabot PRs
+#     stay green — a skip is honest ("we didn't measure"), a red is a claim.
+#   · with an LLM secret  → the real gate runs: baseline vs candidate on the
+#     golden set. Headline metric must rise, nothing may regress. Red = merge
+#     blocked.
+name: evals
+
+on:
+  pull_request:
+  workflow_dispatch:      # run it by hand from the Actions tab
+
+jobs:
+  eval-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30   # the corpus embeds locally on first use; models get downloaded
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        # Base install only, on purpose. `.[evals]` pulls RAGAS + datasets — a
+        # heavy tree we don't need here, because the gate scores with the native
+        # backend. Add it if your gate switches to backend="ragas":
+        #     pip install -e ".[evals]"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest
+
+      - name: Run the eval gate
+        env:
+          # Pass the key through IF the repo has the secret. On a fork this is
+          # empty, mai_rag.llm can't resolve a provider, and the gated test skips.
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # The class LLM proxy. Drop this line if you use your own OpenAI key.
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          # Keep a CI run to a handful of model calls. Raise it for a release gate.
+          EVAL_GATE_CASES: "4"
+        run: pytest tests/ -v
