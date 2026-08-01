@@ -356,6 +356,28 @@ def s6_topk():
         else:
             print(f"    {yellow('no clean gap on this pair')}: the unanswerable query scored ≥ the answerable one "
                   f"— a single cosine cutoff would misfire here (why a threshold needs calibrating, not guessing)")
+    # ── YOUR TURN: dial top-k and watch recall climb against the token bill (headless/CI skips it).
+    from mai_rag.tutor import TTY_IN
+    if TTY_IN:
+        print(f"\n  {bold('your turn')} — dial top-k and watch recall vs the token budget:")
+        while True:
+            pick = choice("top-k to try?",
+                          {"1": "1 — cheapest, precise-or-bust", "3": "3", "5": "5",
+                           "8": "8", "12": "12 — recall-max but noisy", "custom": "type my own…",
+                           "done": "done — on to the next dial"}, "done")
+            if pick == "done":
+                break
+            if pick == "custom":
+                raw = input("    k › ").strip()
+                if not (raw.isdigit() and int(raw) >= 1):
+                    note("give a whole number ≥ 1, e.g. 4."); continue
+                pick = raw
+            k = int(pick)
+            with Spinner(f"score @ k={k}"):
+                r = score_config(f"sentence@180·k={k}", "sentence", 180, 0.0, k=k, quiet=True)
+            print(f"  k={k:<3} {sparkbar(r['recall'])} recall={r['recall']:.2f}  MRR={r['MRR']:.3f}   "
+                  f"{dim(f'≈{k * 180} prompt tokens of context')}")
+
     note("recall rises with k, but every extra chunk costs prompt tokens and adds noise the model "
          "must ignore. And a score THRESHOLD is the cheapest guardrail you'll ever ship: below it, "
          "don't answer.")
