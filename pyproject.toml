@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mai_rag"
-version = "0.1.8"
+version = "0.1.9"
 description = "Modern AI Pro — AI Architect course lab kit. A glass-box facade over the RAG ecosystem with a ready-to-go SQL + vector data layer."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,6 +32,7 @@ evals  = ["ragas>=0.2", "datasets>=2.19"]
 gemini = ["google-generativeai>=0.7"]
 rerank = ["cohere>=5.5", "voyageai>=0.2"]
 graph  = ["neo4j>=5.20"]
+agents = ["langgraph>=0.2"]     # lab 3c — agent architectures as glass-box graphs
 memory = ["mem0ai>=0.1"]
 viz    = ["umap-learn>=0.5", "scikit-learn>=1.4"]
 

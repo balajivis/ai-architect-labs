@@ -35,20 +35,24 @@ Run in order; each builds on the prior scorecard. *(interactive = guided CLI tut
 | 2c | **GraphRAG, Routed** — LLM triple extraction (168 shipped), build + traverse your own graph (class Cosmos service or local networkx, same API), chunks-vs-chunks+graph duel, and the case where graph LOSES — the routing verdict | `labs/lab_2c.py` | yes · interactive |
 | 3 | **Agentic RAG: The Five Decisions** — router, HyDE/multi-query, decomposition, sufficiency + CRAG web fallback, budget caps | `labs/lab_3.py` | yes · interactive |
 | 3b | **Route Smart, Not Slow: Adaptive RAG** — LLM complexity router (with its own eval), the direct/naive/agentic cost ladder, a live LLM-call meter, and the naive-vs-adaptive-vs-agentic showdown | `labs/lab_3b.py` | yes · interactive |
+| 3c | **Agent Architectures: The Authoring Workbench** — the four shapes under every framework (ReAct, reflection, plan-execute, supervisor) each built as a ~30-line glass-box LangGraph graph, raced on the golden slice with the call meter, then a free-play workbench to compose your own (needs `pip install -e ".[agents]"`) | `labs/lab_3c.py` | yes · interactive |
 | 4 | **Memory & Personalization** — rolling window, summarization, user profile, user-scoped retrieval, decay | `labs/lab_4.py` | yes |
 | 4b | **The Memory Stack** — the four layers on disk (short-term · working.yaml · episodic .md · durable profile.yaml), recall/isolation evals, memory × RAG | `labs/lab_4b.py` | yes · interactive |
 | 5 | **The Calibrated Judge & the Eval Gate** — RAGAS triad, judge vs human labels (Cohen's κ + bias probes), CI gate | `labs/lab_5.py` | yes |
 | 6 | **Guardrails & Security** *(WIP)* — 4-gate gauntlet, tenant ACLs, EU AI Act mapping | `labs/lab_6.py` | yes |
 | 7 | **Human-in-the-Loop** *(WIP)* — risk-tagged tools, pause/resume, the eval→HITL bridge | `labs/lab_7.py` | yes |
-| 8 | **MCP: Build a Server, Then Harden It** *(WIP · TypeScript/Node 22+)* — OAuth/audience binding, tool-poisoning guard, resilience | `labs/mcp_server/` (`npm run lab`) | yes · interactive |
+| 8 | **MCP: Build a Server, Then Harden It** *(WIP · TypeScript/Node 22+)* — build + consume (incl. third-party open & authed servers), OAuth/audience binding, tool-poisoning guard, resilience | `labs/mcp_server/` (`npm run lab`) | yes · interactive |
 
 ## Install (Colab)
 ```python
 !pip install -q "mai_rag[evals] @ git+https://github.com/balajivis/ai-architect-labs.git"
 ```
 Retrieval is **keyless** (embeddings run locally via MiniLM). Only generation and
-the LLM-judge evaluators need a key — set one of `GROQ_API_KEY` /
-`OPENAI_API_KEY` / `AZURE_OPENAI_API_KEY` / `GEMINI_API_KEY`.
+the LLM-judge evaluators need a key. **In-class default: paste the CLASS TOKEN
+into `OPENAI_API_KEY`** (`.env.example` presets `OPENAI_BASE_URL` to the class
+proxy; leave `GROQ_API_KEY` unset — it takes precedence if set). Or bring your
+own: one of `GROQ_API_KEY` / `OPENAI_API_KEY` / `AZURE_OPENAI_API_KEY` /
+`GEMINI_API_KEY`.
 
 ## Run locally (recommended — clone + editable install)
 The labs in [`labs/`](./labs/) are Python files you can run in VS Code (or plain
@@ -58,8 +62,9 @@ updates **both** the labs and the `mai_rag` package at once:
 git clone https://github.com/balajivis/ai-architect-labs.git
 cd ai-architect-labs
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[evals,viz]"
-cp .env.example .env        # then put your GROQ key in .env (Groq has a free tier)
+pip install -e ".[evals,viz,agents]"
+cp .env.example .env        # then paste your CLASS TOKEN into OPENAI_API_KEY (base URL is preset)
+                            # — or bring your own key instead (e.g. GROQ_API_KEY; Groq has a free tier)
 python labs/lab_1.py        # or step through it in VS Code's interactive window
 ```
 
@@ -117,5 +122,6 @@ policy), acronyms, and paraphrase. Ships with 72 candidate golden cases.
   faithfulness, baseline the naive RAG.
 
 ## Status
-Pre-release (`v0.1.8`). Module 1 complete; Modules 2–5 (retrieval, agentic,
-routing, memory) build on the same `store` + `golden` + `viz` spine.
+Pre-release. Labs 1–5 (plus 1b, 2c, 3b, 4b) are complete and share the same
+`store` + `golden` + `viz` spine; Labs 6–8 are WIP — shipped move-by-move with
+`WIP:` stubs filled in over the course via `git pull`.
