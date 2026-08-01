@@ -31,6 +31,7 @@ for _cand in (pathlib.Path(".env"), _here.parent / ".env", _here / ".env"):
         break
 
 import json
+import re
 
 import numpy as np
 
@@ -51,14 +52,21 @@ def ask(prompt, temperature=0.0):
     return llm.complete(prompt, tier="small", temperature=temperature)
 
 def _json(raw):
-    return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
+    """Structural JSON extraction (parsing, not classification). Clear ValueError on non-JSON."""
+    m = re.search(r"\{.*\}", raw or "", re.DOTALL)
+    if not m:
+        raise ValueError(f"model did not return JSON: {(raw or '')[:120]!r}")
+    return json.loads(m.group(0))
 
 def grade(q, answer, expected):
     p = ("Grade the ANSWER against EXPECTED. 1.0 fully correct, 0.5 partial, 0.0 wrong/missing. "
          "An honest 'not enough information' is correct when EXPECTED says so.\n"
          'Reply JSON only: {"reason":"<short>","score":<1.0|0.5|0.0>}.\n\n'
          f"QUESTION: {q}\nEXPECTED: {expected}\nANSWER: {answer}")
-    return _json(ask(p, temperature=0))["score"]
+    try:
+        return float(_json(ask(p, temperature=0))["score"])
+    except (ValueError, KeyError, TypeError):     # one prose/keyless judge reply must not abort the duel
+        return 0.0
 
 def chunks_context(q, k=4):
     hits = store.search(q, k=k)
@@ -134,7 +142,9 @@ def s3_build():
     ENTITIES[:] = sorted({t["s"].lower() for t in TRIPLES} | {t["o"].lower() for t in TRIPLES})
     demo = "security team" if "security team" in ENTITIES else ENTITIES[0]
     panel(f"neighbors('{demo}') — one hop of the graph, interactively",
-          "\n".join(f"{a} —{r}→ {b}" for a, r, b in (G.neighbors(demo) or [])[:10]) or "(none)")
+          "\n".join(f"{a} —{r}→ {b}" for a, r, b in
+                    [t for t in (G.neighbors(demo) or [])[:10] if isinstance(t, (list, tuple)) and len(t) == 3])
+          or "(none)")
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -176,7 +186,10 @@ def s4_duel():
          "column actually earns its keep — this corpus is small enough that chunks often suffice.")
 
 def s5_where_it_loses():
-    c = next(c for c in GOLDEN if c["tag"] == "precision")
+    c = next((c for c in GOLDEN if c["tag"] == "precision"), None)
+    if c is None:                    # empty/oddly-tagged golden set → honest skip, not a raw StopIteration
+        note("no 'precision' case in the golden set (did it load? check load_golden_hard) — skipping this demo.")
+        return
     with Spinner("precision question: triples-only vs chunks-only"):
         gctx = graph_context(c["q"]) or "(no linked entities)"
         a_graph = answer_with(c["q"], "ENTITY RELATIONS:\n" + gctx)
