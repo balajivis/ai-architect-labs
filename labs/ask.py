@@ -324,15 +324,29 @@ def call(messages: list) -> str:
         d = json.loads(r.read().decode("utf-8"))
         return (d.get("choices") or [{}])[0].get("message", {}).get("content") or "(no answer returned)"
 
+# Both ways a student can get a working key — shown whenever auth fails.
+_KEY_HELP = (
+    "\n\n  Set up a key one of two ways in your .env (at the repo root), then re-run:\n"
+    "    1) Class proxy — ask your instructor for TODAY'S class token:\n"
+    "         CLASS_LLM_TOKENS=<the token from class>\n"
+    "    2) Your own OpenAI key (no class token needed):\n"
+    "         OPENAI_API_KEY=sk-...\n"
+    "         OPENAI_BASE_URL=https://api.openai.com/v1\n"
+    "  (Retrieval in the labs is keyless — only this TA / generation needs a key.)")
+
 def _explain_http(code: int, body: str) -> str:
     if code == 503:
-        return "The class proxy isn't turned on right now (the class token is set day-of)."
+        return ("The class proxy isn't turned on right now (the class token is set day-of), "
+                "so the TA can't reach a model." + _KEY_HELP)
     if code == 401:
-        return "Bad/expired class token — check CLASS_LLM_TOKENS (or OPENAI_API_KEY) in your .env against today's token."
+        return ("That class token isn't working — it's likely wrong, expired, or was rotated "
+                "for a new day." + _KEY_HELP)
     if code == 429:
         return "Rate-limited right now — wait a few seconds and try again."
     if code == 403:
-        return "Blocked at the edge (403). If this persists, tell the instructor."
+        return ("Blocked (403). If you're on the class proxy this is usually an edge block — tell the "
+                "instructor; if you set your OWN key, double-check OPENAI_BASE_URL points at your provider."
+                + _KEY_HELP)
     return f"[HTTP {code}] {body[:300]}"
 
 def _spin(on: bool) -> None:
