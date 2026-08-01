@@ -11,6 +11,12 @@ Your installed `mai_rag` package is stale — older than your lab file. Reinstal
 ## ModuleNotFoundError: No module named 'langchain_groq' (or rank_bm25, tavily, ragas)
 A stale install missing deps. Reinstall the package (these are in its dependencies now): `pip install -e ".[evals,viz]"`. As a one-off you can also `pip install langchain-groq rank-bm25 tavily-python`.
 
+## ModuleNotFoundError: No module named 'langgraph' or 'google.adk' — installing for Lab 3c / Lab 3d
+The agent-framework labs use optional extras so the core install stays light. Lab 3c (LangGraph) needs `pip install -e ".[agents]"`; Lab 3d (Google ADK) needs `pip install -e ".[adk]"`. Install both at once with `pip install -e ".[evals,viz,agents,adk]"` — it's idempotent, run it in your activated venv from the repo root. Both labs also print this exact hint themselves if the import is missing. The ADK install is the heavier one (it bundles the LiteLLM adapter); give it a minute.
+
+## Lab 3d: the agent SAYS it will search but never calls the tool / no "tool call →" lines in the trace
+Your LLM endpoint isn't forwarding native function calling. The class proxy supports tools passthrough since 2026-07-31 — if you see Lab 3d's stage-1 warning about it, your proxy target is outdated or you're on a different base URL: check `OPENAI_BASE_URL=https://learn.modernaipro.com/api/llm/v1` in `.env`, or use your own `GROQ_API_KEY` / `GEMINI_API_KEY` for this lab (comment out `OPENAI_API_KEY` so the resolver picks it). Lab 3c is unaffected — it does its tool loop via JSON prompting, not native function calling.
+
 ## No LLM key found / how do I set an API key
 Two options. (a) Groq free tier: put `GROQ_API_KEY=gsk_...` in your `.env`. (b) The class proxy (no key of your own): put `OPENAI_API_KEY=<class token>` and `OPENAI_BASE_URL=https://learn.modernaipro.com/api/llm/v1` in `.env`, and UNSET `GROQ_API_KEY` so `mai_rag` picks the OpenAI-compatible provider. Retrieval is keyless — only generation/judges need a key.
 
@@ -72,7 +78,7 @@ Copy `tests/test_eval_gate.py` into your repo and change two functions — `base
 That's Lab 3e (`python labs/lab_3e.py`). Two agents can return the same answer having taken 1 step or 9 — identical answer score, wildly different cost and reliability. It traces each run into a trajectory and scores it: deterministic counters (step_count, wall_ms, redundant_steps, tool_error_rate, loop_detected), tool-call accuracy (does the path SHAPE match what the query needs — direct for arithmetic, decompose for multi-hop, web for depth), routed vs always-agentic on score-per-step, and an LLM judge that reads the trajectory instead of the answer.
 
 ## Are all the packages installed / how do I check my environment
-Your machine snapshot (attached to this question) already lists every lab package in your repo `.venv` with its version, and flags any that are MISSING. To check yourself: `.venv/bin/pip list` (or `pip list` with the venv active). If anything's missing or you're unsure, just reinstall the full set — it's idempotent: `pip install -e ".[evals,viz]"`. That installs core (mai_rag, openai, sentence-transformers, numpy, pandas, sqlite-vec) plus the eval (ragas, datasets) and viz (umap-learn, scikit-learn) extras.
+Your machine snapshot (attached to this question) already lists every lab package in your repo `.venv` with its version, and flags any that are MISSING. To check yourself: `.venv/bin/pip list` (or `pip list` with the venv active). If anything's missing or you're unsure, just reinstall the full set — it's idempotent: `pip install -e ".[evals,viz,agents,adk]"`. That installs core (mai_rag, openai, sentence-transformers, numpy, pandas, sqlite-vec) plus the eval (ragas, datasets), viz (umap-learn, scikit-learn), and agent-framework extras (langgraph for Lab 3c, google-adk for Lab 3d). `langgraph`/`google-adk` showing MISSING only matters if you're on Lab 3c/3d.
 
 ## The lab asks for a key during retrieval — is that right
 No. Retrieval is keyless (local MiniLM embeddings). If something asks for a key before generation, something's wrong — check you didn't accidentally route retrieval through an LLM.

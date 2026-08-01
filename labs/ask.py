@@ -96,6 +96,15 @@ LAB_INDEX = """LAB MAP (Modern AI Pro · AI Architect — four pillars, taught e
   DECOMPOSITION (multi-hop), sufficiency + CRAG web fallback, budget caps. Go here for agentic/multi-hop/query-rewriting RAG.
 - Lab 3b (lab_3b.py) · Pillar I · Adaptive RAG: a complexity router sends each query to direct/naive/agentic;
   every call metered; quality×cost race. Go here for routing/cost-vs-quality tradeoffs.
+- Lab 3c (lab_3c.py) · Pillar I · Agent Architectures "The Authoring Workbench" (LANGGRAPH — needs the agents
+  extra: pip install -e ".[agents]"): the four shapes under every framework, hand-built as ~30-line glass-box
+  graphs — ReAct tool loop, reflection (generate→critique→revise), plan-and-execute, supervisor+workers — then a
+  judged+metered showdown and a compose-your-own workbench. Go here for LangGraph, building agents, ReAct,
+  reflection, multi-agent supervisor, "which agent architecture".
+- Lab 3d (lab_3d.py) · Pillar I · The Enterprise Stack: GOOGLE ADK (needs the adk extra: pip install -e ".[adk]"):
+  the same shapes as framework classes — tools=[...], SequentialAgent, LoopAgent with escalate-exit, sub_agents
+  transfer — plus the event stream, session state, callbacks-as-meter, and a DUEL vs the student's own 3c
+  LangGraph supervisor. Go here for ADK, Agent Development Kit, enterprise agent frameworks, framework-vs-handrolled.
 - Lab 4  (lab_4.py) · Pillar I · Memory: working + long-term memory, user-scoped retrieval, personalization.
 - Lab 4b (lab_4b.py) · Pillar I · The Memory Stack: L1 short-term · L2 working · L3 episodic (REM-flush) · L4 durable
   profile; recall + ISOLATION evals; memory × RAG composed. Go here for memory layers / per-user isolation.
@@ -134,6 +143,9 @@ def _git(*args: str) -> str:
 LAB_PKGS = ["mai_rag", "openai", "langchain-groq", "rank-bm25", "tavily-python",
             "sentence-transformers", "sqlite-vec", "numpy", "pandas", "matplotlib",
             "ragas", "datasets", "umap-learn", "scikit-learn", "torch", "transformers"]
+# Per-lab optional extras: absence only matters for that lab — report with the right fix.
+OPT_PKGS = {"langgraph": 'lab 3c only -> pip install -e ".[agents]"',
+            "google-adk": 'lab 3d only -> pip install -e ".[adk]"'}
 
 def _find_venv_python():
     for venv in (_repo / ".venv", _repo / "venv", pathlib.Path(".venv"), pathlib.Path("venv")):
@@ -150,7 +162,7 @@ def _venv_probe() -> str:
     if not py:
         return "no repo .venv found — create: python3 -m venv .venv && .venv/bin/pip install -e '.[evals,viz]'"
     code = ("import importlib.metadata as m\n"
-            "for p in " + repr(LAB_PKGS) + ":\n"
+            "for p in " + repr(LAB_PKGS + list(OPT_PKGS)) + ":\n"
             "    try: print(p + '=' + m.version(p))\n"
             "    except Exception: print(p + '=MISSING')")
     try:
@@ -160,9 +172,15 @@ def _venv_probe() -> str:
             return f"{venv.name} found ({py}) but couldn't read installed packages"
         present = [l for l in lines if not l.endswith("=MISSING")]
         missing = [l.split("=")[0] for l in lines if l.endswith("=MISSING")]
+        core_missing = [p for p in missing if p not in OPT_PKGS]
+        opt_missing = [p for p in missing if p in OPT_PKGS]
         summary = f"{venv.name} ({py})\n  installed: " + ", ".join(present)
-        summary += ("\n  MISSING: " + ", ".join(missing) + " -> run `pip install -e \".[evals,viz]\"` in this venv"
-                    if missing else "\n  all core + [evals] + [viz] packages present")
+        if core_missing:
+            summary += "\n  MISSING: " + ", ".join(core_missing) + " -> run `pip install -e \".[evals,viz]\"` in this venv"
+        if opt_missing:
+            summary += "\n  missing OPTIONAL extras: " + "; ".join(f"{p} ({OPT_PKGS[p]})" for p in opt_missing)
+        if not missing:
+            summary += "\n  all core + [evals] + [viz] + agent-framework packages present"
         return summary
     except Exception as e:
         return f"{venv.name} found but probe failed: {type(e).__name__}"
