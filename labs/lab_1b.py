@@ -319,6 +319,28 @@ def s4_overlap():
             base_chunks = r["chunks"]
         growth = (r["chunks"] / base_chunks - 1) * 100
         print(f"  overlap {int(ov*100):>2}%  {sparkbar(r['MRR'])} MRR={r['MRR']:.3f}  recall={r['recall']:.2f}   {dim(f'index size {growth:+.0f}%')}")
+    # ── YOUR TURN: dial the overlap and watch recall vs the index-size cost (headless/CI skips it).
+    from mai_rag.tutor import TTY_IN
+    if TTY_IN:
+        print(f"\n  {bold('your turn')} — dial overlap and watch the index grow:")
+        while True:
+            pick = choice("overlap %?",
+                          {"0": "0% — none", "10": "10%", "20": "20%", "30": "30%",
+                           "45": "45% — heavy", "custom": "type my own…", "done": "done — on to the next dial"}, "done")
+            if pick == "done":
+                break
+            if pick == "custom":
+                raw = input("    overlap % (0-90) › ").strip()
+                if not (raw.isdigit() and 0 <= int(raw) <= 90):
+                    note("give a whole percent 0–90, e.g. 25."); continue
+                pick = raw
+            ov = int(pick) / 100.0
+            with Spinner(f"score @ overlap {pick}%"):
+                r = score_config(f"fixed@120+ov{pick}", "fixed", 120, ov, quiet=True)
+            growth = (r["chunks"] / base_chunks - 1) * 100 if base_chunks else 0.0
+            print(f"  overlap {pick:>2}%  {sparkbar(r['MRR'])} MRR={r['MRR']:.3f}  recall={r['recall']:.2f}   "
+                  f"{dim(f'index size {growth:+.0f}%')}")
+
     note("overlap is insurance against boundary cuts — paid for in index size and embed cost. If "
          "sentence-aware chunking already avoids the cuts, overlap buys much less. Compare stage 3.")
 
