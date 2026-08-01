@@ -11,11 +11,21 @@ dist/
 *.egg-info/
 .ipynb_checkpoints/
 
-# Local secrets
+# Local secrets — the glob matters: `.env` alone would leave `.env.tmp`,
+# `.env.local`, `.env.bak` tracked and one `git add -A` from being published.
 .env
+.env.*
+!.env.example
+
+# Lab 8 audit trail — each student's audit log is theirs; it also carries
+# subject identifiers (token `sub`) and must never be committed.
+labs/mcp_server/audit/
 
 # Lab 4b memory stack — each student's agent memory is theirs, never committed
 .memory/
 labs/__pycache__/
 node_modules/
 /labs/mcp_server/package-lock.json
+
+# ask.py persisted thread memory (per-student, local)
+.ask_history.json

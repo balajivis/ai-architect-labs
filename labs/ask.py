@@ -373,6 +373,39 @@ def send(messages: list):
         print(RED + f"Something went wrong: {type(e).__name__}: {e}" + RESET)
     return None
 
+# ── persisted thread memory — Lab 4's short-term window, but SAVED so a thread continues ─────
+# Lab 4 teaches exactly this: keep a bounded transcript as the model's memory. Here we persist it
+# to disk so a student can quit ask.py and pick the SAME conversation back up next run. Only clean
+# Q/A turns are stored — never the system snapshot, never a key — and it's bounded to the last few
+# exchanges (Lab 4's rolling window). `reset` clears it.
+_HISTORY = _repo / ".ask_history.json"
+_HISTORY_KEEP = 8                      # last ~4 exchanges — matches the in-REPL bound
+
+def _load_history() -> list:
+    try:
+        data = json.loads(_HISTORY.read_text())
+        return [{"role": m["role"], "content": m["content"]} for m in data
+                if isinstance(m, dict) and m.get("role") in ("user", "assistant") and m.get("content")][-_HISTORY_KEEP:]
+    except Exception:
+        return []
+
+def _save_history(convo: list) -> None:
+    try:
+        turns = [{"role": m["role"], "content": m["content"]} for m in convo
+                 if m.get("role") in ("user", "assistant")][-_HISTORY_KEEP:]
+        _HISTORY.write_text(json.dumps(turns))
+    except Exception:
+        pass                            # persistence is a nicety — never break the REPL over it
+
+def _clear_history() -> None:
+    try:
+        _HISTORY.unlink()
+    except FileNotFoundError:
+        pass
+    except Exception:
+        pass
+
+
 def main() -> None:
     if not TOKEN:
         print(YEL + "No class token found. Put today's token in your .env:\n"
@@ -404,9 +437,12 @@ def main() -> None:
             print()
         return
 
-    # interactive REPL — with memory
-    print(f"{BOLD}AI Architect TA{RESET} {DIM}· gpt-5.4 · your env attached · remembers this chat · q to quit{RESET}")
-    convo = [system_msg]
+    # interactive REPL — with memory that PERSISTS across runs (Lab 4's pattern, saved to disk)
+    prior = _load_history()
+    convo = [system_msg] + prior
+    resumed = (f" · resumed {len(prior) // 2 + len(prior) % 2} earlier turn(s), 'reset' to start fresh"
+               if prior else "")
+    print(f"{BOLD}AI Architect TA{RESET} {DIM}· gpt-5.4 · your env attached · remembers this chat{resumed} · q to quit{RESET}")
     while True:
         try:
             q = input(f"{GRN}TA ›{RESET} ").strip()
@@ -415,6 +451,10 @@ def main() -> None:
             break
         if q.lower() in ("q", "quit", "exit"):
             break
+        if q.lower() in ("reset", "forget", "clear"):
+            convo = [system_msg]; _clear_history()
+            print(DIM + "↳ memory cleared — fresh thread." + RESET)
+            continue
         if not q:
             continue
         convo.append({"role": "user", "content": q})   # clean question — this is the memory
@@ -437,6 +477,7 @@ def main() -> None:
         convo.append({"role": "assistant", "content": ans})
         if len(convo) > 9:         # keep the system msg + last ~4 exchanges
             convo = [convo[0]] + convo[-8:]
+        _save_history(convo)       # persist the thread so `q` then re-launch continues where you left off
         print()
         render(ans)
         print()
