@@ -140,7 +140,7 @@ const reuse = async (req: express.Request, res: express.Response) => {
 app.get("/mcp", reuse);
 app.delete("/mcp", reuse);
 
-app.listen(SERVER_PORT, () => {
+app.listen(SERVER_PORT, "127.0.0.1", () => {   // bind loopback ONLY — match the URL we advertise, don't expose /mcp to the LAN
   console.log(`lab8 MCP server (Streamable HTTP) on http://127.0.0.1:${SERVER_PORT}/mcp`);
   console.log(`  -> bridging to keyless Python corpus at ${BRIDGE}`);
   console.log(`  -> auth ${AUTH_ENABLED ? "ENABLED (Move 5+)" : "disabled (Moves 3–4)"}`);

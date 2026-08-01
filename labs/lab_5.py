@@ -239,12 +239,23 @@ for c in GRADABLE[:3]:
     labeled.append({"q": c["q"], "answer": "I'm not sure, but it's probably "  # plausible-sounding, wrong
                                            "covered in the advanced enterprise tier somewhere.", "human": 0})
 
+def _as_bool(v):
+    """Coerce a JSON boolean field (a real bool, or a small model's string form like
+    'false'/'no') to a Python bool. Structural parsing of a known field, NOT content
+    classification — so a stringy '{\"good\":\"false\"}' no longer scores as PASS and
+    silently corrupts the κ calibration."""
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, (int, float)):
+        return v != 0
+    return str(v).strip().lower() in ("true", "yes", "1", "good", "pass", "correct")
+
 def judge_binary(q, a):
     """LLM judge → 1 if it would PASS the answer, else 0."""
     r = complete_json(
         "Is the ANSWER a correct, grounded response to the QUESTION? "
         f"QUESTION: {q}\nANSWER: {a}\nKeys: good (true/false), reasoning.")
-    return 1 if r.get("good") else 0
+    return 1 if _as_bool(r.get("good")) else 0
 
 for row in labeled:
     row["judge"] = judge_binary(row["q"], row["answer"])
@@ -274,10 +285,18 @@ print("  → score should NOT rise.", "⚠️ rewards length" if padded_s > base
 
 # ── 4c · Position bias — pairwise judging, swap the order ──────────────────────
 good, bad = GRADABLE[0]["expected"], "It's handled automatically; no details needed."
+def _winner(v):
+    """Normalize a judge's 'winner' field to 'A'/'B'. The choice letter comes last in replies
+    like 'Answer A', so take the last A/B char — structural parsing, not classification. Stops
+    the position-bias probe from false-flagging bias on mere formatting ('Answer A' vs 'A')."""
+    for ch in reversed(str(v or "").upper()):
+        if ch in ("A", "B"):
+            return ch
+    return "?"
 def pairwise(q, A, B):
     r = complete_json(f"Which answer is better for the QUESTION? QUESTION: {q}\n"
                       f"ANSWER A: {A}\nANSWER B: {B}\nKeys: winner ('A' or 'B').")
-    return r.get("winner")
+    return _winner(r.get("winner"))
 w1 = pairwise(GRADABLE[0]["q"], good, bad)   # good in slot A
 w2 = pairwise(GRADABLE[0]["q"], bad, good)   # good in slot B
 consistent = (w1 == "A" and w2 == "B")       # picked the good answer BOTH times
@@ -326,7 +345,7 @@ We have a perfect failure on hand: a **`needs-web`** case — a question the sha
 """
 
 # A real production-style failure: a question the catalog can't answer (needs-web).
-fail_case = next(c for c in golden if c["tag"] == "needs-web")
+fail_case = next((c for c in golden if c["tag"] == "needs-web"), golden[0])
 out = naive_rag(store, fail_case["q"], k=4)
 print("USER ASKED:", fail_case["q"])
 print("NAIVE RAG :", out["answer"][:240], "…\n")
@@ -344,8 +363,9 @@ new_golden = {
     "support": fail_case["support"],
     "tag": "production",
 }
-golden.append(new_golden)
-GRADABLE.append(new_golden)
+if not any(c["q"] == new_golden["q"] and c.get("tag") == "production" for c in golden):
+    golden.append(new_golden)          # idempotent — re-running the cell must not double-weight this case
+    GRADABLE.append(new_golden)
 print(f"✓ promoted to golden set (now {len(golden)} cases, "
       f"{sum(1 for c in golden if c['tag']=='production')} production-tier).")
 print("From now on, any build that hallucinates here FAILS the gate — Move 7.")
@@ -408,6 +428,7 @@ for m in GATE_METRICS:
 print("\n" + ("🟢 GATE PASS — candidate ships." if passed
               else "🔴 GATE FAIL — merge blocked. Beat the baseline first."))
 
-assert passed, "Eval gate failed: candidate did not beat the baseline without regression."
-print("\nThat assert IS your CI gate. Wire it into the test suite and no un-evaluated "
+print("\nThis gate IS your CI check. Wire it into the test suite and no un-evaluated "
       "change reaches production. ← the whole point of Pillar II.")
+if not passed:                 # a failed gate BLOCKS the build — a clean non-zero exit (like a CI
+    raise SystemExit(1)        # step), NOT an AssertionError traceback dumped over the verdict above.

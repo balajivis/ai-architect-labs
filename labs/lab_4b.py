@@ -25,7 +25,7 @@ modelling error in this space.
 """
 
 # --- repo local-run shim: load .env, work with or without __file__ ----------
-import os, pathlib, sys, textwrap, json, shutil, datetime
+import os, pathlib, sys, textwrap, json, shutil, datetime, re
 
 _here = pathlib.Path(__file__).resolve().parent if "__file__" in globals() else pathlib.Path.cwd()
 for _cand in (pathlib.Path(".env"), _here.parent / ".env", _here / ".env"):
@@ -74,6 +74,8 @@ def prompt_next():
         a = input(f"  {C['y']}▶ Enter{C['x']} run  ·  {C['y']}s{C['x']} skip  ·  {C['y']}q{C['x']} quit  › ").strip().lower()
     except EOFError:
         return "run"
+    except KeyboardInterrupt:
+        print("\n  Memory persisted to .memory/ — inspect it. 👋\n"); sys.exit(0)
     if a in ("q", "quit", "exit"):
         print("\n  Memory persisted to .memory/ — inspect it. 👋\n"); sys.exit(0)
     return "skip" if a in ("s", "skip") else "run"
@@ -85,7 +87,11 @@ def ask(prompt, temperature=0.0):
     return llm.complete(prompt, tier="small", temperature=temperature)
 
 def _json(raw):
-    return json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
+    """Structural JSON extraction (parsing, not classification). Clear ValueError on non-JSON."""
+    m = re.search(r"\{.*\}", raw or "", re.DOTALL)
+    if not m:
+        raise ValueError(f"model did not return JSON: {(raw or '')[:120]!r}")
+    return json.loads(m.group(0))
 
 # ── the four-layer memory stack (file-backed, glass-box) ─────────────────────
 MEM_ROOT = pathlib.Path(".memory")
@@ -360,9 +366,14 @@ def main():
             note("skipped."); continue
         try:
             run()
-        except RuntimeError as e:                 # clean one-liner (key/rate) — no traceback
+        except RuntimeError as e:                 # key/rate — fatal, clean one-liner (no traceback)
             print(f"\n  {C['y']}⚠  {e}{C['x']}\n")
             sys.exit(1)
+        except ValueError as e:                   # one malformed model reply → skip this move, keep the lab alive
+            print(f"\n  {C['y']}⚠  step hiccup ({e}) — skipping, your memory so far is intact.{C['x']}\n")
+            continue
+        except KeyboardInterrupt:
+            print("\n  interrupted — memory so far is in .memory/ 👋\n"); sys.exit(0)
     print(f"\n{C['g']}  ✔ Lab 4b complete.{C['x']} Your agent's whole mind is sitting in .memory/priya/ — open it.")
     print("    Working is a paragraph, episodes are summaries, the profile is distilled truth:")
     print("    layers ARE compaction. Next: Lab 5 turns judges like ours into a calibrated suite.\n")

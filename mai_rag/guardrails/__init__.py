@@ -42,6 +42,20 @@ def _result(gate: str, action: str, reason: str) -> dict:
     return {"gate": gate, "action": action, "reason": reason}
 
 
+def _verdict(v, *, default: bool) -> bool:
+    """Coerce a judge's boolean verdict field. A missing/None field → `default`, which for a
+    guardrail is fail-CLOSED (block) — an ambiguous or key-omitting judge reply must not
+    silently ALLOW an attack through. Also handles a small model's string form ('true'/'false').
+    Structural parsing of a known field, not content classification."""
+    if v is None:
+        return default
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, (int, float)):
+        return v != 0
+    return str(v).strip().lower() in ("true", "yes", "1")
+
+
 # ── Gate 1 · PII ─────────────────────────────────────────────────────────────
 def check_pii(text: str, *, redact_action: str = REDACT) -> dict:
     """Classify whether `text` exposes PII. When Azure Content Safety is
@@ -100,7 +114,8 @@ def _native_injection(text: str) -> dict:
         f"TEXT:\n{text}\n"
         'Keys: injection (true/false), reasoning.'
     )
-    return {"injection": bool(r.get("injection")), "reasoning": str(r.get("reasoning", ""))}
+    return {"injection": _verdict(r.get("injection"), default=True),  # fail closed on an ambiguous verdict
+            "reasoning": str(r.get("reasoning", ""))}
 
 
 # ── Gate 3 · Off-policy ──────────────────────────────────────────────────────
@@ -119,7 +134,7 @@ def check_offpolicy(text: str) -> dict:
         f"TEXT:\n{text}\n"
         'Keys: off_policy (true/false), reasoning.'
     )
-    if bool(r.get("off_policy")):
+    if _verdict(r.get("off_policy"), default=True):     # fail closed: ambiguous verdict escalates, not allows
         return _result("offpolicy", ESCALATE, f"off-policy content: {r.get('reasoning', '')}")
     return _result("offpolicy", ALLOW, "on-policy")
 
