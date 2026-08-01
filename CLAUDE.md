@@ -103,6 +103,22 @@ If the student wants to run the labs on **their own domain** instead of our ship
 
 ---
 
+## The eval suite (what you can score, and what's free)
+
+`mai_rag.evals` ships **17 engines**; **9 are keyless** (no model call, deterministic — safe to run anywhere):
+
+| Group | Engines | Needs a key? |
+|---|---|---|
+| native | `llm_judge` · `faithfulness` · `answer_relevancy` · `context_precision` · `context_recall` | yes |
+| native (free) | `semantic_similarity` · `contains` · `exact_match` | no |
+| safety | `pii_exposure` · `harmful_intent` · `relevancy` | yes |
+| retrieval | `recall_at_k` · `mrr` · `hit_at_1` — score the RETRIEVER against the golden `support` docs (build via `evals.retrieval.from_golden`) | no |
+| perf | `latency_budget` · `token_budget` · `call_budget` — read `EvalInput.meta` from a metered run (`llm.METER`) | no |
+
+Backends for the four RAG metrics: `native` (default) · `ragas` (`[evals]`) · `deepeval` (`[deepeval]`, routed through `mai_rag.llm` so it needs no key of its own). Lab 5 diffs all three — the disagreement is the lesson.
+
+**The gate is executable**: `tests/test_eval_gate.py` + `.github/workflows/evals.yml`. `pytest tests/` skips cleanly with no key (the keyless test still runs), caps cost with `EVAL_GATE_CASES`, and is written for students to copy — change `baseline_system` / `candidate_system` and point it at their own app.
+
 ## Hard rules (the course teaches these — honor them in any code you write)
 
 - **No regex for classification.** PII, safety, jailbreak, relevance, sentiment — all of it is LLM/ML-judged, never a pattern like `\d{3}-\d{2}-\d{4}` or a keyword list. The labs demonstrate _why_ regex fails here. (Regex is fine for structural parsing — URLs, file paths, a known ID format.)

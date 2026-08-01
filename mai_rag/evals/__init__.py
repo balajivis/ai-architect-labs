@@ -1,15 +1,24 @@
 """
-mai_rag.evals — the eleven-engine evaluator suite (8 native + 3 safety) plus
-the golden-set runner that persists every run into the data layer.
+mai_rag.evals — the seventeen-engine evaluator suite plus the golden-set runner
+that persists every run into the data layer.
 
-Pluggable RAGAS backend: the four RAG metrics can run as `native` (the
-from-scratch code in native.py) or `ragas` (the real library) — same Score
-shape either way. This is the foil/reference spine made literal: concept you
-build → RAGAS the library → Kapi's native TS in production.
+  8 native (llm_judge, the RAG triad, semantic_similarity, contains, exact_match)
+  3 safety (pii_exposure, harmful_intent, relevancy)
+  3 retrieval (recall_at_k, mrr, hit_at_1) — KEYLESS; score the retriever itself,
+    so a regressed retriever can't hide behind a plausible answer
+  3 perf (latency_budget, token_budget, call_budget) — KEYLESS; cost and latency
+    as eval dimensions, because a quality-only scorecard makes everything look free
+
+Pluggable backends: the four RAG metrics can run as `native` (the from-scratch
+code in native.py), `ragas`, or `deepeval` — same Score shape either way, so the
+golden set / viz / gate never care which ran. That is the foil/reference spine
+made literal: concept you build → the libraries → production. Diffing them is the
+lesson — a metric you've never compared to a second implementation is faith.
 """
 from __future__ import annotations
 
 import json
+import sys
 from datetime import datetime, timezone
 
 from ..store import Store
@@ -67,13 +76,25 @@ def _resolve(name: str, backend: str):
     if backend == "deepeval" and name in RAGAS_NAMES:
         from . import deepeval_backend
         return lambda e: deepeval_backend.score(name, e)
-    return REGISTRY[name]
+    try:
+        return REGISTRY[name]
+    except KeyError:
+        raise KeyError(f"unknown evaluator {name!r}. Available: "
+                       f"{', '.join(sorted(REGISTRY))}") from None
 
 
-def evaluate(e: EvalInput, evaluators=DEFAULT_SUITE, backend: str = "native") -> list[Score]:
+def evaluate(e: EvalInput, evaluators=None, backend: str = "native") -> list[Score]:
     out: list[Score] = []
-    for name in evaluators:
-        sc = _resolve(name, backend)(e)
+    for name in (evaluators or DEFAULT_SUITE):
+        # One flaky judge call (malformed JSON, 429, timeout) must not cost the
+        # student the other metrics — score it 0 and say so, loudly, in the reasoning.
+        try:
+            sc = _resolve(name, backend)(e)
+        except Exception as ex:
+            print(f"[mai_rag.evals] evaluator {name!r} failed "
+                  f"({type(ex).__name__}: {str(ex)[:120]}) — scored 0.0, run continues",
+                  file=sys.stderr)
+            sc = Score(name, 0.0, False, f"evaluator error: {type(ex).__name__}")
         if sc is not None:
             out.append(sc)
     return out
@@ -102,10 +123,25 @@ def run_suite(store: Store, golden_set, rag_fn, label: str,
     run_id = int(cur.lastrowid)
 
     results: list[dict] = []
+    skipped: list = []
+    golden_set = list(golden_set)   # may be a generator; we report a count below
     for case in golden_set:
-        out = rag_fn(store, case.question)
-        e = EvalInput(question=case.question, answer=out["answer"],
-                      contexts=out.get("contexts", []), expected=case.expected,
+        # Isolate the case: a RAG failure on one question (timeout, 429, a bad
+        # answer shape) must not throw away the cases already scored. We commit
+        # per-case below so a crash mid-suite still leaves a readable run.
+        try:
+            out = rag_fn(store, case.question)
+            answer = out.get("answer", "") if isinstance(out, dict) else str(out)
+            contexts = out.get("contexts", []) if isinstance(out, dict) else []
+        except Exception as ex:
+            print(f"[mai_rag.evals] case {case.id!r} failed "
+                  f"({type(ex).__name__}: {str(ex)[:120]}) — skipped, run continues",
+                  file=sys.stderr)
+            skipped.append(case.id)
+            store.commit()
+            continue
+        e = EvalInput(question=case.question, answer=answer,
+                      contexts=contexts, expected=case.expected,
                       criteria=case.criteria)
         for sc in evaluate(e, evaluators=evaluators, backend=backend):
             store.conn.execute(
@@ -115,5 +151,10 @@ def run_suite(store: Store, golden_set, rag_fn, label: str,
             )
             results.append({"case_id": case.id, "evaluator": sc.evaluator,
                             "score": sc.score, "passed": sc.passed, "reasoning": sc.reasoning})
-    store.commit()
-    return {"run_id": run_id, "label": label, "results": results, "summary": aggregate(results)}
+        store.commit()   # per-case, so a crash mid-suite keeps what's scored so far
+    if skipped:
+        print(f"[mai_rag.evals] {len(skipped)}/{len(golden_set)} case(s) skipped: "
+              f"{', '.join(str(s) for s in skipped)} — the scorecard below covers the rest",
+              file=sys.stderr)
+    return {"run_id": run_id, "label": label, "results": results,
+            "skipped": skipped, "summary": aggregate(results)}

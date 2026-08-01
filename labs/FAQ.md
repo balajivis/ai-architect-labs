@@ -36,7 +36,10 @@ You installed into one environment and are running another. Activate the venv fi
 RAGAS is heavy. Use a clean venv, or just run the native eval backend (`backend="native"`), which needs no extra install and mirrors the same metrics.
 
 ## Which corpus is this / what is Northwind
-A fictional company ("Northwind Technologies"): ~131 policy docs engineered to break naive RAG — recency conflicts (an active policy plus its superseded twin), multi-hop questions that span two docs, precise thresholds, and an unanswerable one the model must decline. It ships with candidate golden cases.
+A fictional company ("Northwind Technologies"): ~131 policy docs engineered to break naive RAG — recency conflicts (an active policy plus its superseded twin), multi-hop questions that span two docs, precise thresholds, and an unanswerable one the model must decline. It ships with candidate golden cases. Northwind is NOT real and did not build this course — the course and the mai_rag kit are built by Modern AI Pro (see "Who built this course").
+
+## Who built this course / which company made this / who is the instructor
+The course, labs, and mai_rag kit are built by Modern AI Pro (modernaipro.com), the AI education company — the class platform and proxy run at learn.modernaipro.com. Founder & lead instructor: Dr. Balaji Viswanathan (CEO & Lead Instructor; two decades in AI/robotics, former CEO of Mitra Robot, PhD in human-robot interaction, earlier at Microsoft and Black Duck/Synopsys). Modern AI Pro is the LEARN arm of a three-product family with Kapi (BUILD — enterprise AI agent platform, app.getkapi.com) and Brahmasumm (DEPLOY — air-gapped enterprise knowledge discovery). Not to be confused with Northwind Technologies, the fictional company in the lab corpus.
 
 ## How do I add my own golden test case
 Append to the `golden` list in the lab (or the golden set), same dict shape: `{"q": ..., "expected": ..., "support": "<doc-id>", "tag": "blueprint"}`. Multi-hop support is two doc ids joined with " + ". Re-ground your `expected` in the real doc using the read_doc/search helpers.
@@ -54,7 +57,19 @@ You edited `labs/*.py` in place. Copy the lab before editing (`cp labs/lab_2.py 
 I · Advanced RAG (retrieval that's measured, agentic RAG, memory) · II · Evals & Benchmarks (RAGAS, calibrated LLM-judge, the release gate) · III · MCP Engineering (build a server, OAuth, ship it) · IV · Trust & Production (guardrails, access control, HITL, compliance). Taught eval-first: Lab 1 is the instrument, the pillars are the deep dives.
 
 ## How do I know retrieval is actually working / recall
-Score it, don't eyeball it. For each golden case, check whether the retrieved chunks' source ids include the `support` doc(s): recall@k = fraction of wanted docs retrieved, hit@1 = top result is a wanted doc. Low recall means the right chunk never made it into the window — no prompt will save you; fix the retriever (that's Lab 2).
+Score it, don't eyeball it — and you no longer have to hand-roll it. The suite ships three KEYLESS retrieval engines: `recall_at_k` (fraction of the needed docs retrieved — the floor), `mrr` (1/rank of the first supporting doc — rank-sensitive, so a reranker shows up) and `hit_at_1`. Build the input with `from mai_rag.evals.retrieval import from_golden` → `from_golden(q, answer, contexts, hits, case["support"])`, then `evals.evaluate(e, evaluators=["recall_at_k","mrr","hit_at_1"])`. Low recall means the right chunk never made it into the window — no prompt will save you; fix the retriever (that's Lab 2).
+
+## How do I measure cost and latency / is my agent too expensive
+They're eval dimensions like any other. `mai_rag.llm.METER` counts calls + tokens through the chokepoint (real provider usage when available): `llm.METER.reset()`, run your system, then `meta={"ms": elapsed_ms, **llm.METER.snapshot()}` on the `EvalInput`. The keyless `latency_budget` / `token_budget` / `call_budget` engines score it against a budget (1.0 inside, decaying to 0 at 2x). Without these, every technique looks free and the ladder always argues for more.
+
+## RAGAS vs DeepEval vs native — which metric backend should I use
+All three compute the same four RAG metrics and return the same `Score`, so nothing downstream changes: `evals.evaluate(e, evaluators=[...], backend="native"|"ragas"|"deepeval")`. Class default is `native` (no extra install). Install the others with `pip install -e ".[evals]"` (RAGAS) or `".[deepeval]"`. DeepEval is routed through `mai_rag.llm`, so it uses the key you already have instead of demanding an OpenAI one. Lab 5 runs all three side by side — the DISAGREEMENT is the point: a metric you've never diffed against a second implementation is faith, not data.
+
+## How do I wire the eval gate into CI
+Copy `tests/test_eval_gate.py` into your repo and change two functions — `baseline_system` and `candidate_system` — to point at your app. Run it with `pytest tests/`. It asserts the gate rule (headline metric rises beyond EPS, nothing regresses), skips cleanly when no LLM key is configured (so a fork with no secrets is green, not red), and caps cost via `EVAL_GATE_CASES` (default 4). `.github/workflows/evals.yml` is the matching GitHub Action. A red gate blocks the merge — that rule, not a dashboard, is eval-driven development.
+
+## How do I evaluate the agent's PATH, not just its answer
+That's Lab 3e (`python labs/lab_3e.py`). Two agents can return the same answer having taken 1 step or 9 — identical answer score, wildly different cost and reliability. It traces each run into a trajectory and scores it: deterministic counters (step_count, wall_ms, redundant_steps, tool_error_rate, loop_detected), tool-call accuracy (does the path SHAPE match what the query needs — direct for arithmetic, decompose for multi-hop, web for depth), routed vs always-agentic on score-per-step, and an LLM judge that reads the trajectory instead of the answer.
 
 ## Are all the packages installed / how do I check my environment
 Your machine snapshot (attached to this question) already lists every lab package in your repo `.venv` with its version, and flags any that are MISSING. To check yourself: `.venv/bin/pip list` (or `pip list` with the venv active). If anything's missing or you're unsure, just reinstall the full set — it's idempotent: `pip install -e ".[evals,viz]"`. That installs core (mai_rag, openai, sentence-transformers, numpy, pandas, sqlite-vec) plus the eval (ragas, datasets) and viz (umap-learn, scikit-learn) extras.

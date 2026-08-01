@@ -107,7 +107,7 @@ is a query, not a re-run.
 | `corpus` | load + chunk + embed the bundled enterprise-policy corpus |
 | `store` | SQL + vector data layer (sqlite-vec; pgvector-shaped) |
 | `baseline` | `naive_rag()` — the thing every module beats |
-| `evals` | 11 evaluator engines (8 native + 3 safety; mirrors Kapi) + pluggable RAGAS backend |
+| `evals` | 17 evaluator engines — 8 native + 3 safety + 3 retrieval (recall@k/MRR/hit@1) + 3 perf (latency/token/call budgets); 9 are keyless. Pluggable `native` / `ragas` / `deepeval` backends |
 | `golden` | `GoldenSet` — the through-line test fixture |
 | `viz` | editorial-styled scorecard / compare / heatmap / UMAP |
 | `llm` | one tiered LLM chokepoint (Groq/OpenAI/Azure/Gemini) |
