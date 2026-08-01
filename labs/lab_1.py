@@ -41,35 +41,14 @@ import mai_rag
 from mai_rag import corpus, llm
 import pandas as pd
 
-# ── interactive helpers ──────────────────────────────────────────────────────
-INTERACTIVE = sys.stdin.isatty()
+# ── the shared tutor kit — same Tutor/Stage/Spinner/menu the other labs use, so the
+#    intro screen, stage map, forgiving menu, and failure-recovery are uniform ──────────────
+from mai_rag.tutor import Tutor, Stage, note, COLOR
+
+# The move bodies below still use inline `C[...]` color spans; gate the dict on the kit's COLOR
+# flag so it honors NO_COLOR / non-tty exactly like the kit's own green()/bold() helpers.
 C = {"b": "\033[1m", "d": "\033[2m", "y": "\033[33m", "g": "\033[32m", "c": "\033[36m", "x": "\033[0m"} \
-    if sys.stdout.isatty() else {k: "" for k in "bdygcx"}
-
-def banner(n, total, title):
-    print(f"\n{C['c']}{'═'*74}{C['x']}")
-    print(f"{C['b']}  MOVE {n}/{total} · {title}{C['x']}")
-    print(f"{C['c']}{'═'*74}{C['x']}")
-
-def say(text):
-    for para in textwrap.dedent(text).strip("\n").split("\n\n"):
-        print(textwrap.indent(textwrap.fill(" ".join(para.split()), 84), "  "))
-        print()
-
-def note(text):
-    print(f"  {C['d']}↳ {text}{C['x']}")
-
-def prompt_next():
-    if not INTERACTIVE:
-        print(f"  {C['d']}… auto-run{C['x']}")
-        return "run"
-    try:
-        a = input(f"  {C['y']}▶ Enter{C['x']} run  ·  {C['y']}s{C['x']} skip  ·  {C['y']}q{C['x']} quit  › ").strip().lower()
-    except EOFError:
-        return "run"
-    if a in ("q", "quit", "exit"):
-        print("\n  See you Friday. 👋\n"); sys.exit(0)
-    return "skip" if a in ("s", "skip") else "run"
+    if COLOR else {k: "" for k in "bdygcx"}
 
 # ── Lab-1 primitives (the actual logic — importable + pokeable) ───────────────
 store = None                      # set in Move 1
@@ -338,25 +317,41 @@ STEPS = [
      "built on guesses. Browse the corpus, read the real policy, re-ground each case.", m7_read_docs),
 ]
 
+# rough LLM-call estimate per step, shown on the stage map (13 golden cases → ~26 for a 2-judge pass)
+_CALLS = ["0", "~1", "0", "~26", "~26", "~13", "~1"]
+
+TUTOR = Tutor(
+    title="Lab 1 — Evaluation First: The Number to Beat",
+    tagline="Modern AI Pro · AI Architect · Pillar II · Evals & Benchmarks",
+    mission="""
+    Eval-first means defining 'good' as NUMBERS before you tune anything. You load a corpus
+    engineered to break naive RAG (Northwind — superseded-vs-active twins, multi-hop facts, an
+    unanswerable), build the simplest retrieve→stuff→answer baseline, author a golden set, and
+    score it. Then you turn the instrument on itself — a holistic judge rubber-stamps ~1.0, so
+    you rebuild it claim-by-claim — and split retrieval-vs-generation blame. The scorecard you
+    leave with is the number every later lab (hybrid, rerank, agentic) has to beat.
+    """,
+    stages=[Stage(title, teach, run, calls)
+            for (title, teach, run), calls in zip(STEPS, _CALLS)],
+    outro="""
+    That baseline is the number to beat — Lab 2 adds hybrid search + reranking, and the only
+    thing that counts as success is moving these exact numbers. "We tested it" is a vibe; the
+    eval suite is the documentation.
+    """,
+)
+
+
 def main():
-    print(__doc__.split("\n\n", 1)[1] if "\n\n" in __doc__ else __doc__)
-    print(f"  {C['d']}mai_rag {mai_rag.__version__} · provider: ", end="")
+    provider = "provider "
     try:
-        print(f"{llm._provider()}{C['x']}")
+        provider += llm._provider()
     except Exception:
-        print(f"NONE — set OPENAI_API_KEY (class token) in .env{C['x']}")
-    for i, (title, teach, run) in enumerate(STEPS, 1):
-        banner(i, len(STEPS), title)
-        say(teach)
-        if prompt_next() == "skip":
-            note("skipped."); continue
-        try:
-            run()
-        except (RuntimeError, ValueError) as e:   # clean one-liner (key/rate/parse) — no traceback
-            print(f"\n  {C['y']}⚠  {e}{C['x']}\n")
-            sys.exit(1)
-    print(f"\n{C['g']}  ✔ Lab 1 complete.{C['x']} That baseline is the number to beat — Lab 2 adds hybrid search + reranking,")
-    print("    and the only thing that counts as success is moving these exact numbers.\n")
+        provider += "NONE — set OPENAI_API_KEY (class token) in .env"
+    TUTOR.run(provider_line=f"mai_rag {mai_rag.__version__} · {provider} · eval-first: the number to beat")
+
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()
