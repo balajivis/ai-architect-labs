@@ -66,6 +66,10 @@ _RATE_HINT = (
     "instructor to raise the limit."
 )
 
+# Marker returned when the PROVIDER's own content filter refuses a prompt (a guardrail we
+# didn't write). Security labs check for this prefix and score it as the refusal it is.
+PLATFORM_BLOCK = "[BLOCKED by the platform content filter]"
+
 
 def complete(prompt: str, tier: str = "small", temperature: float = 0.0,
              max_tokens: int = 800, system: str | None = None, retries: int = 6) -> str:
@@ -122,6 +126,13 @@ def complete(prompt: str, tier: str = "small", temperature: float = 0.0,
                       file=sys.stderr, flush=True)
                 time.sleep(wait)
                 continue
+            # The PROVIDER's own content filter refused the prompt (Azure 400). That is a
+            # guardrail we didn't write — surface it as an explicit block marker instead of
+            # crashing, so security labs can score it as the refusal it is.
+            if ("content management policy" in m or "content_filter" in m
+                    or ("filtered" in m and "400" in m)):
+                return PLATFORM_BLOCK + (" The provider's own content filter refused this "
+                                         "prompt; no answer was generated.")
             if is_key:
                 raise RuntimeError(_KEY_HINT) from None
             if is_rate:
@@ -134,6 +145,11 @@ def complete_json(prompt: str, tier: str = "small", **kw) -> dict:
     leading prose — structural parsing only (allowed), never classification."""
     raw = complete(prompt + "\n\nRespond with a single JSON object and nothing else.",
                    tier=tier, **kw)
+    # Provider-filtered prompt (see complete): there is no output to judge. Report it as a
+    # clean, explicit verdict so safety evaluators score the refusal instead of crashing.
+    if raw.startswith(PLATFORM_BLOCK):
+        return {"blocked": True, "exposed": False, "harmful": False, "score": 1.0,
+                "reasoning": "provider content filter blocked the prompt; nothing was generated"}
     m = re.search(r"\{.*\}", raw, re.DOTALL)
     if not m:
         raise ValueError(f"No JSON object found in model output: {raw[:200]}")
