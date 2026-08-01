@@ -9,16 +9,19 @@ safe and the lab uses its own fresh in-memory store anyway).
 
 State machine mirrors Kapi lib/hitl/resume.ts:
     PENDING → APPROVED (run the original action as-is)
-            → RESOLVED (run a PM-edited response)
+            → RESOLVED (deliver a human-EDITED response; the original tool never fires)
 
 Kapi has NO explicit REJECTED resume branch — reject is modelled as
 'resume-without-executing'. This lab adds a LAB-LOCAL REJECTED status purely to
 make the 'side effect never fires' assertion legible (it is a teaching
 simplification, NOT Kapi's model — flagged here and in the lab markdown).
 
-WIP: the RESOLVED (edited-response) path and Kapi's dedup/advisory-lock are
-stubbed TODO for a later pull; APPROVED re-execution and the lab-local REJECTED
-no-execute path ship fully wired.
+All three resume paths ship fully wired: APPROVED re-executes the original action,
+REJECTED resumes WITHOUT executing, and RESOLVED delivers the human's edited text
+(persisted on the row) while provably NOT firing the original tool. Dedup is
+handled where it belongs — the eval→HITL bridge de-dupes on golden_case_id (see
+bridge.py); Kapi's Postgres advisory-lock is deployment concurrency control, out
+of scope for this single-writer in-memory SQLite teaching store.
 """
 from __future__ import annotations
 
@@ -43,6 +46,18 @@ class QueueRow:
     tenant_id: str
     created_at: str
     expires_at: str
+    edited_response: str | None = None   # the human's replacement text, set on a RESOLVED resume
+
+
+def _ensure_edited_col(store: Store) -> None:
+    """Additively add the `edited_response` column the RESOLVED path persists. SQLite has no
+    ADD COLUMN IF NOT EXISTS, so we try and swallow the 'duplicate column' error — safe on the
+    prebuilt policy.db (additive) and idempotent across the lab's fresh in-memory stores."""
+    try:
+        store.conn.execute("ALTER TABLE hitl_queue ADD COLUMN edited_response TEXT")
+        store.conn.commit()
+    except Exception:
+        pass   # column already present
 
 
 def _now() -> str:
@@ -59,6 +74,7 @@ def enqueue(store: Store, query: str, original_response: str = "", reason: str =
     """Insert one PENDING hitl_queue row. Returns its id. Pair this with pausing
     the run inside the SAME transaction (see pause_and_queue) so the two are
     atomic — no orphan run, no orphan row."""
+    _ensure_edited_col(store)
     cur = store.conn.execute(
         "INSERT INTO hitl_queue (status, query, original_response, reason, "
         "golden_case_id, eval_run_id, tenant_id, created_at, expires_at) "
@@ -76,7 +92,8 @@ class AgentRun:
     The `executed` spy counter is what Move 5 asserts stays 0 after a reject."""
     status: str = "running"          # running | paused | done
     queue_id: int | None = None
-    executed: int = 0                # how many times the held side-effect ran
+    executed: int = 0                # how many times the ORIGINAL held side-effect ran
+    resolved: int = 0                # how many times a human-EDITED response was delivered instead
 
 
 def pause_and_queue(store: Store, run: AgentRun, query: str, original_response: str = "",
@@ -116,16 +133,18 @@ def pending(store: Store) -> list[QueueRow]:
 
 
 def resume(store: Store, run: AgentRun, queue_id: int, decision: str,
-           execute_fn=None, edited_response: str | None = None) -> dict:
+           execute_fn=None, edited_response: str | None = None, resolve_fn=None) -> dict:
     """Drive a held run to a terminal state.
 
       APPROVED → run the original action as-is (calls execute_fn) and resume.
       REJECTED → (lab-local) resume WITHOUT executing — the side effect provably
                  never fires; assert run.executed stays 0.
-      RESOLVED → run a PM-edited response (WIP stub: marks resolved, does not
-                 re-run the tool).
+      RESOLVED → deliver a human-EDITED response: the ORIGINAL destructive tool is
+                 REPLACED, not run (run.executed stays 0), and `edited_response` is
+                 delivered via `resolve_fn` and persisted on the row.
 
-    Returns {status, executed} so the lab can assert the call-count."""
+    Returns {status, executed, resolved_response} so the lab can assert both the
+    original-tool call-count AND what actually got delivered."""
     row = get(store, queue_id)
     if row is None:
         raise ValueError(f"no queue row {queue_id}")
@@ -141,25 +160,38 @@ def resume(store: Store, run: AgentRun, queue_id: int, decision: str,
         _set_status(store, queue_id, REJECTED)
         run.status = "done"
     elif decision == RESOLVED:
-        # WIP: run an edited response. Stubbed — marks resolved, does not re-run
-        # the original tool. The full RESOLVED path lands via a later git pull.
-        _set_status(store, queue_id, RESOLVED)
+        # A human edited the response. The original tool is REPLACED, never run — the
+        # destructive side effect provably never fires (run.executed stays 0). What ships
+        # instead is the human's text, delivered via resolve_fn and stored on the row.
+        if not edited_response:
+            raise ValueError("RESOLVED requires edited_response — the human's replacement text")
+        if resolve_fn is not None:
+            resolve_fn(edited_response)
+        run.resolved += 1
+        _set_status(store, queue_id, RESOLVED, edited_response=edited_response)
         run.status = "done"
     else:
         raise ValueError(f"unknown resume decision {decision!r} "
                          f"(expected {APPROVED}|{REJECTED}|{RESOLVED})")
-    return {"status": decision, "executed": run.executed}
+    return {"status": decision, "executed": run.executed,
+            "resolved_response": edited_response if decision == RESOLVED else None}
 
 
-def _set_status(store: Store, queue_id: int, status: str) -> None:
-    store.conn.execute("UPDATE hitl_queue SET status = ? WHERE id = ?", (status, queue_id))
+def _set_status(store: Store, queue_id: int, status: str, edited_response: str | None = None) -> None:
+    if edited_response is not None:
+        _ensure_edited_col(store)
+        store.conn.execute("UPDATE hitl_queue SET status = ?, edited_response = ? WHERE id = ?",
+                           (status, edited_response, queue_id))
+    else:
+        store.conn.execute("UPDATE hitl_queue SET status = ? WHERE id = ?", (status, queue_id))
     store.conn.commit()
 
 
 def expire_stale(store: Store) -> int:
-    """WIP: 7-day auto-expire sweep. Marks PENDING rows past expires_at as
-    RESOLVED so they don't linger. The batch sweep is a follow-up pull; this is
-    the minimal helper. Returns the number expired."""
+    """On-demand 7-day expiry sweep: marks PENDING rows past their expires_at as RESOLVED so
+    they don't linger. Call it before reading the queue (or on a schedule). Returns the number
+    expired. A background/cron sweep is deployment infrastructure, out of scope for the lab —
+    this helper is the whole mechanism it would invoke."""
     now = _now()
     cur = store.conn.execute(
         "UPDATE hitl_queue SET status = ? WHERE status = ? AND expires_at < ?",

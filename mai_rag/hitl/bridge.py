@@ -11,10 +11,10 @@ row referencing its golden case — no double-queue, no silent drop. Glass-box p
 of Kapi lib/evals/hitl-bridge.ts (createHITLFromEvalFailure /
 promoteEvalFailuresToHITL: goldenCaseId + evalRunId + 7-day expiry, non-throwing).
 
-WIP: create_hitl_from_eval_failure ships the single-case path fully wired;
-promote_eval_failures_to_hitl ships the batch path. The 7-day auto-expire SWEEP
-lives in queue.expire_stale (minimal helper); the full background sweep is a
-follow-up pull.
+Both paths ship fully wired: create_hitl_from_eval_failure promotes one failed case,
+promote_eval_failures_to_hitl batches it over a scored run, each idempotent on
+golden_case_id + eval_run_id. The 7-day auto-expire is queue.expire_stale, called
+on demand; a scheduled background sweep is deployment infrastructure, not lab code.
 """
 from __future__ import annotations
 

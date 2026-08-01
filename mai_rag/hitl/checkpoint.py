@@ -25,10 +25,11 @@ It composes three layers, cheapest first:
      mode: PII → modify(redact), harm/jailbreak → block. These can never be
      configured to zero recall (asserted in Move 4).
 
-WIP: Move 1 ships `checkpoint()` as a PASS-THROUGH STUB (returns proceed for all)
-so the autonomy ledger can be drawn first; the risk-tag gate, trigger gate, and
-safety gate fill in across Moves 2-4. The flags below let each move turn its
-layer on without rewriting the function.
+The `use_*` flags let each Move enable its layer incrementally: Move 1 draws the
+autonomy ledger with all layers OFF (pure pass-through), then Moves 2-4 turn on the
+structural, trigger, and safety gates in turn — no rewrite of the function.
+`use_guardrails=True` swaps the Move-4 safety layer for the full 4-gate
+mai_rag.guardrails pipeline (PII · injection · off-policy · output).
 """
 from __future__ import annotations
 
@@ -84,11 +85,30 @@ def _triggers(action: Action, *, confidence_floor: float = CONFIDENCE_FLOOR,
     return None
 
 
-def _safety(action: Action, *, safety_floor: float = SAFETY_FLOOR) -> Decision | None:
-    """Move 4 — non-optional safety gates, LLM-judged (mai_rag.evals.safety),
-    firing EVEN in autonomous mode. PII → modify(redact), harm/jailbreak → block.
-    No regex floor (I-25). Only runs when there is drafted `text` to screen."""
+# The full 4-gate guardrails pipeline speaks its own action vocabulary; map it onto the
+# checkpoint's four actions so a guardrail verdict routes a held run the same way.
+_GUARDRAIL_TO_CHECKPOINT = {"block": BLOCK, "redact": MODIFY, "escalate": QUEUE, "allow": None}
+
+
+def _safety(action: Action, *, safety_floor: float = SAFETY_FLOOR,
+            use_guardrails: bool = False) -> Decision | None:
+    """Move 4 — non-optional safety gates, LLM-judged, firing EVEN in autonomous mode.
+    PII → modify(redact), harm/jailbreak → block. No regex floor (I-25). Only runs when
+    there is drafted `text` to screen.
+
+    Two engines, same discipline:
+      · default            → mai_rag.evals.safety (pii_exposure + harmful_intent), self-contained.
+      · use_guardrails=True → the full 4-gate mai_rag.guardrails pipeline (PII · injection ·
+        off-policy · output). Richer coverage — an off-policy draft now ESCALATES(queue), an
+        injection/jailbreak draft BLOCKS — while PII still redacts and clean text proceeds."""
     if not action.text:
+        return None
+    if use_guardrails:
+        from ..guardrails import check as guardrail_check
+        v = guardrail_check(action.text)                 # screen the drafted text through every gate
+        mapped = _GUARDRAIL_TO_CHECKPOINT.get(v["action"])
+        if mapped is not None:
+            return Decision(mapped, f"safety[{v.get('gate')}]: {str(v.get('reason'))[:60]}", "safety")
         return None
     from ..evals import safety as _safety_engine
     from ..evals.base import EvalInput
@@ -103,7 +123,7 @@ def _safety(action: Action, *, safety_floor: float = SAFETY_FLOOR) -> Decision |
 
 
 def checkpoint(action: Action, *, use_structural: bool = True, use_triggers: bool = True,
-               use_safety: bool = True, eval_score: float | None = None,
+               use_safety: bool = True, use_guardrails: bool = False, eval_score: float | None = None,
                confidence_floor: float = CONFIDENCE_FLOOR, eval_floor: float = EVAL_FLOOR,
                safety_floor: float = SAFETY_FLOOR) -> Decision:
     """The single chokepoint every tool call passes through before execution.
@@ -113,15 +133,15 @@ def checkpoint(action: Action, *, use_structural: bool = True, use_triggers: boo
     even in autonomous mode. Each `use_*` flag lets a move enable its layer
     incrementally (Move 1 calls with all three False → pure pass-through stub).
 
-    WIP: with all use_* flags False this is the Move-1 pass-through stub
-    (returns proceed for everything). Moves 2-4 flip them on."""
+    With all use_* flags False this is the Move-1 pass-through (returns proceed for
+    everything); Moves 2-4 flip them on."""
     # Evaluate every enabled layer and return the MOST-RESTRICTIVE decision, so a
     # destructive structural BLOCK always wins over a safety MODIFY (redact) when
     # both fire — the invariant this gate must guarantee (was: safety-first early
     # return, which let a destructive action with PII downgrade to redact-and-proceed).
     decisions: list[Decision] = []
     if use_safety:
-        d = _safety(action, safety_floor=safety_floor)
+        d = _safety(action, safety_floor=safety_floor, use_guardrails=use_guardrails)
         if d is not None:
             decisions.append(d)
     if use_structural:
