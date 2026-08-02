@@ -28,7 +28,10 @@ dependencies = [
 
 [project.optional-dependencies]
 # Each module's notebook installs only what it needs — keeps Colab installs fast.
-evals  = ["ragas>=0.2", "datasets>=2.19"]
+# RAGAS pulls an OLD langchain that CONFLICTS with the labs' langgraph (Lab 3c) and current
+# ragas imports a langchain-community path newer versions removed — so these are pinned and MUST
+# go in a SEPARATE venv on Python 3.11 (see FAQ "RAGAS install"). Don't add this to the labs venv.
+evals  = ["ragas==0.2.14", "langchain==0.3.27", "langchain-community==0.3.27", "datasets>=2.19"]
 deepeval = ["deepeval>=1.0"]      # lab 5's third metric backend (routed through mai_rag.llm)
 gemini = ["google-generativeai>=0.7"]
 rerank = ["cohere>=5.5", "voyageai>=0.2"]

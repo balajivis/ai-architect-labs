@@ -38,8 +38,20 @@ On first use, retrieval downloads the local MiniLM embedding model (~90 MB) from
 ## pip and python disagree / it says not installed but I installed it
 You installed into one environment and are running another. Activate the venv first (`source .venv/bin/activate`) and install there, then run labs with the SAME python: `.venv/bin/python labs/lab_1.py`. Check with `.venv/bin/python -c "import mai_rag; print(mai_rag.__version__)"`.
 
-## RAGAS install is slow or conflicts
-RAGAS is heavy. Use a clean venv, or just run the native eval backend (`backend="native"`), which needs no extra install and mirrors the same metrics.
+## RAGAS install is slow or conflicts (ModuleNotFoundError langchain_community.chat_models.vertexai, or ragas won't import)
+RAGAS is heavy AND its langchain dependencies clash two ways: (1) they conflict with the labs' own langchain/langgraph stack (Lab 3c), and (2) current ragas imports `langchain_community.chat_models.vertexai`, a path newer langchain-community removed — so a plain `pip install ragas` fails with `ModuleNotFoundError: No module named 'langchain_community.chat_models.vertexai'`, on any Python version. Two fixes:
+
+**1. Easiest — skip it.** Run the native backend: `backend="native"`. It needs NO extra install and mirrors the SAME four metrics; the Lab 5 bake-off just becomes native + DeepEval, and the "triangulate / a metric you never diffed" lesson still lands.
+
+**2. Want the real RAGAS third opinion — install it in a SEPARATE venv on Python 3.11** (not 3.13/3.14), with pinned versions, and run Lab 5 from THAT interpreter:
+```bash
+python3.11 -m venv .venv-evals
+.venv-evals/bin/pip install -e ".[evals,deepeval]"     # pins ragas 0.2.14 + langchain 0.3.27 (see pyproject)
+# if ragas still won't import, force the pins:
+.venv-evals/bin/pip install 'ragas==0.2.14' 'langchain==0.3.27' 'langchain-community==0.3.27'
+.venv-evals/bin/python labs/lab_5.py                   # the 3-way bake-off runs from here
+```
+Keep your MAIN `.venv` for every other lab — do NOT install ragas there: it downgrades langchain and breaks Lab 3c's agents. That's why it's a separate venv.
 
 ## Which corpus is this / what is Northwind
 A fictional company ("Northwind Technologies"): ~131 policy docs engineered to break naive RAG — recency conflicts (an active policy plus its superseded twin), multi-hop questions that span two docs, precise thresholds, and an unanswerable one the model must decline. It ships with candidate golden cases. Northwind is NOT real and did not build this course — the course and the mai_rag kit are built by Modern AI Pro (see "Who built this course").

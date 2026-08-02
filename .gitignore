@@ -29,3 +29,6 @@ node_modules/
 
 # ask.py persisted thread memory (per-student, local)
 .ask_history.json
+
+# dedicated eval venv (ragas needs an old langchain — kept out of the labs venv)
+.venv-evals/
