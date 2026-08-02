@@ -25,18 +25,105 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
 import { z } from "zod";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { oauthResourceServer } from "./auth.ts";
+import { appendAudit, logJson, newCorrelationId, safeArgs, tokenId, traceHeaders } from "./audit.ts";
 
 const BRIDGE_PORT = process.env.MCP_BRIDGE_PORT || "8765";
 const SERVER_PORT = Number(process.env.MCP_SERVER_PORT || "9000");
 const BRIDGE = `http://127.0.0.1:${BRIDGE_PORT}`;
 const AUTH_ENABLED = process.env.AUTH_ENABLED === "1"; // OFF for Moves 3–4, ON at Move 5
+const SERVER_ID = `lab8-policy-mcp@0.1.0/${process.pid}`;
 
 /** A well-formed MCP text content block. Mirrors server.mjs's `textBlock`. */
 const textBlock = (text: string) => ({ content: [{ type: "text" as const, text }] });
+
+// ── Move 6b: the audited tool path ───────────────────────────────────────────
+// EVERY tool call goes through here. The wrapper owns the four things a tool
+// handler must never be trusted to remember: mint a correlation id, ask the
+// guard, time the call, and write exactly one audit record — including when the
+// call FAILS or is REFUSED (those are the records an auditor actually reads).
+type ToolCtx = { cid: string; resourceIds: string[]; bytes: number; count: number };
+
+function auditedTool(
+  tool: string,
+  opts: { freeText?: string[]; risk: "read" | "write" },
+  handler: (args: Record<string, any>, ctx: ToolCtx) => Promise<ReturnType<typeof textBlock>>,
+) {
+  return async (args: Record<string, any>, extra: any) => {
+    const cid = newCorrelationId();               // one id per tools/call — not per HTTP request
+    const t0 = Date.now();
+    const ctx: ToolCtx = { cid, resourceIds: [], bytes: 0, count: 0 };
+    const auth = extra?.authInfo;                 // set by auth.ts middleware → req.auth
+    let decision = "allow";
+    let reason = "ok";
+    let guard: Record<string, unknown> = { verdict: "unavailable", reason_code: null, engine: null };
+
+    try {
+      // ── Move 6 (WIP: TODO) — ask the guard BEFORE executing ───────────────
+      // WIP: TODO — POST the tool's name + description + args to the bridge's
+      //   `/guard` endpoint (Move 6 probed it from the outside; now ENFORCE it
+      //   from the inside), and refuse the call when the judge blocks it:
+      //
+      //     const g = await fetch(`${BRIDGE}/guard`, {
+      //       method: "POST",
+      //       headers: { "content-type": "application/json", ...traceHeaders(cid) },
+      //       body: JSON.stringify({ tool_name: tool, description: TOOL_DESCRIPTIONS[tool], args }),
+      //     }).then((r) => r.json());
+      //     guard = { verdict: g.blocked === null ? "unavailable" : g.blocked ? "blocked" : "clean",
+      //               reason_code: g.blocked ? "guard_blocked" : null, engine: "mai_rag.mcp_guard" };
+      //     if (g.blocked) { decision = "deny_guard"; reason = "guard_blocked";
+      //                      return textBlock("refused: this tool call was blocked by the poisoning guard"); }
+      //
+      //   Note the posture: `blocked === null` (no LLM key / judge error) is
+      //   "unavailable", NOT "clean" — never let a fail-open be recorded as a pass.
+      //   Until you wire this, the audit record says guard.verdict "unavailable"
+      //   on every call, and the Move-6b tutor stage tells you so.
+
+      const out = await handler(args, ctx);
+      return out;
+    } catch (e) {
+      decision = "error_upstream";
+      reason = (e as Error).message.slice(0, 60);
+      throw e;
+    } finally {
+      // ONE record per call, written on every path — success, refusal, throw.
+      appendAudit({
+        event: "mcp.tool.call",
+        correlation_id: cid,
+        session_id: extra?.sessionId ?? null,
+        server: SERVER_ID,
+        auth: AUTH_ENABLED ? "oauth2.1" : "disabled",   // the honesty field
+        actor: {
+          sub: auth?.extra?.sub ?? null,
+          aud: auth?.extra?.aud ?? null,                // RFC 8707 evidence, after the fact
+          client_id: auth?.clientId ?? null,
+          token_id: tokenId(auth?.token, auth?.extra?.jti as string | undefined),
+        },
+        tool,
+        risk: opts.risk,
+        args_safe: safeArgs(args, opts.freeText),      // references, never payloads
+        resource_ids: ctx.resourceIds,                 // WHICH documents this subject touched
+        result: { count: ctx.count, bytes: ctx.bytes },// volume, not content — exfiltration shows up here
+        decision,
+        decision_reason: reason,                       // stable code, not prose
+        guard,
+        duration_ms: Date.now() - t0,
+      });
+      logJson({ stream: "ops", correlation_id: cid, tool, decision, ms: Date.now() - t0 });
+    }
+  };
+}
+
+// A tool's DESCRIPTION is part of the model's context — which is exactly why
+// Move 6's guard judges it. Keeping them in one table means the server can hand
+// the same text to the guard that it advertises in `tools/list`.
+const TOOL_DESCRIPTIONS: Record<string, string> = {
+  policy_search: "Semantic search over the enterprise-policy corpus. Returns the top-k ranked policy citations (source, title, score, snippet).",
+  policy_get: "Return one full enterprise-policy document by its source id.",
+};
 
 // ── Build the server + register tools ────────────────────────────────────────
 function buildServer(): McpServer {
@@ -50,15 +137,18 @@ function buildServer(): McpServer {
     "policy_search",
     {
       title: "Search the enterprise policy corpus",
-      description: "Semantic search over the enterprise-policy corpus. Returns the top-k ranked policy citations (source, title, score, snippet).",
+      description: TOOL_DESCRIPTIONS.policy_search,
       inputSchema: {
         query: z.string().describe("natural-language policy question"),
         k: z.number().int().min(1).max(20).default(5).describe("how many citations to return"),
       },
     },
-    async ({ query, k }) => {
+    // Move 6b: wrapped. `query` is declared FREE TEXT — the tool author decides
+    // what is sensitive, not a detector — so the audit log stores its digest,
+    // never the user's actual question.
+    auditedTool("policy_search", { freeText: ["query"], risk: "read" }, async ({ query, k }, ctx) => {
       const url = `${BRIDGE}/search?q=${encodeURIComponent(query)}&k=${k}`;
-      const resp = await fetch(url);
+      const resp = await fetch(url, { headers: traceHeaders(ctx.cid) });  // stitch Node → Python
       if (!resp.ok) {
         // -32000: server-side execution error (bridge unreachable / non-200).
         throw new Error(`bridge /search failed: ${resp.status}`);
@@ -67,8 +157,12 @@ function buildServer(): McpServer {
       const lines = data.hits.map(
         (h, i) => `${i + 1}. [${h.source}] ${h.title} (score ${h.score})\n   ${h.content.slice(0, 240)}`,
       );
-      return textBlock(lines.length ? lines.join("\n") : "no matching policy found");
-    },
+      const text = lines.length ? lines.join("\n") : "no matching policy found";
+      ctx.resourceIds = [...new Set(data.hits.map((h) => h.source))];   // WHICH docs were served
+      ctx.count = data.hits.length;
+      ctx.bytes = text.length;
+      return textBlock(text);
+    }),
   );
 
   // ── TOOL 2 (TODO — you finish this in Move 2): policy_get ──────────────────
@@ -84,6 +178,104 @@ function buildServer(): McpServer {
   //   failing assertion is the signal you still have this TODO to finish.
   //
   //   server.registerTool("policy_get", { ...inputSchema... }, async ({ source }) => { ... });
+  //
+  //   Move 6b adds one more requirement to this same tool: wrap your handler in
+  //   auditedTool("policy_get", { risk: "read" }, ...) — see the LIVE
+  //   policy_search above — so that EVERY tool call lands in the audit trail.
+
+  // ══ MOVE 2b · THE OTHER TWO PRIMITIVES ══════════════════════════════════════
+  // A server is not just tools. MCP has three primitives, and the difference
+  // between them is WHO IS IN CONTROL:
+  //
+  //   TOOLS      — MODEL-controlled.       The model decides to call it. Side effects live here.
+  //   RESOURCES  — APPLICATION-controlled. The client app decides what to attach as context. Like GET: no side effects.
+  //   PROMPTS    — USER-controlled.        The human picks it (a slash command, a menu item).
+  //
+  // Get this wrong and the model does the app's job: exposing "read the corpus
+  // index" as a TOOL invites the model to burn a turn deciding to call it, when
+  // the app should simply have attached it.
+
+  // ── RESOURCE 1 (WORKED EXAMPLE): a STATIC resource ────────────────────────
+  // The corpus index — stable, cheap, no query needed. Exactly the kind of
+  // reference data an application attaches without asking the model first.
+  server.registerResource(
+    "policy-catalog",
+    "policy://catalog",
+    {
+      title: "Policy corpus catalog",
+      description: "The index of every policy document: source id + title.",
+      mimeType: "application/json",
+    },
+    async (uri) => {                                  // uri is a WHATWG URL, not a string
+      const resp = await fetch(`${BRIDGE}/docs`);
+      if (!resp.ok) throw new Error(`bridge /docs failed: ${resp.status}`);
+      const data = (await resp.json()) as { docs: Array<{ source: string; title: string }> };
+      return {
+        contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(data.docs, null, 2) }],
+      };
+    },
+  );
+
+  // ── RESOURCE 2 (TODO — you finish this in Move 2b): a TEMPLATED resource ──
+  // WIP: TODO — register a TEMPLATED resource `policy://doc/{source}` that
+  //   returns ONE full policy document. Mirror the static resource above:
+  //     • first arg:  "policy-doc"
+  //     • second arg: new ResourceTemplate("policy://doc/{source}", { list: undefined })
+  //         - the `list` key is MANDATORY in this SDK, even when you pass
+  //           `undefined` (that means "this template does not enumerate").
+  //           Enumerating is the catalog resource's job, above.
+  //     • third arg:  { title, description, mimeType: "text/markdown" }
+  //     • callback:   async (uri, variables) => { ... }
+  //         - `variables.source` is the matched {source} (a string | string[] —
+  //           wrap it: String(variables.source))
+  //         - fetch `${BRIDGE}/doc/${encodeURIComponent(source)}`
+  //         - return { contents: [{ uri: uri.href, mimeType: "text/markdown",
+  //                                 text: `# ${data.title}\n\n${data.content}` }] }
+  //         - on 404 return a contents block saying no policy was found —
+  //           a resource read is a GET, so "missing" is data, not an exception
+  //
+  //   Until you register it, `resources/templates/list` comes back EMPTY and the
+  //   Move-2b stage fails with a pointer at this TODO.
+  //
+  //   ResourceTemplate is already imported at the top of this file.
+  //
+  //   server.registerResource("policy-doc", new ResourceTemplate(...), { ... }, async (uri, variables) => { ... });
+
+
+  // ── PROMPT (WORKED EXAMPLE): a USER-controlled template ───────────────────
+  // This is what appears as a slash command in a client. Note what it is NOT:
+  // it does not call the corpus, it does not answer anything. A prompt returns
+  // MESSAGES — a starting position for the conversation, with the house style
+  // already baked in so every analyst gets the same rigour.
+  server.registerPrompt(
+    "policy_briefing",
+    {
+      title: "Policy briefing",
+      description: "Draft a cited briefing on a policy topic for a given audience.",
+      argsSchema: {
+        // MCP prompt arguments are Record<string,string> ON THE WIRE — every
+        // argument must be a string schema. Take a string, coerce inside.
+        topic: z.string().describe("the policy topic, e.g. parental leave"),
+        audience: z.string().optional().describe("who the briefing is for, e.g. new managers"),
+      },
+    },
+    async ({ topic, audience }) => ({
+      description: `Policy briefing on ${topic}`,
+      messages: [
+        {
+          role: "user" as const,
+          content: {
+            type: "text" as const,
+            text:
+              `Write a briefing on "${topic}" for ${audience ?? "the whole company"}.\n\n` +
+              `Rules: use policy_search to gather citations first. Cite every claim as [source-id]. ` +
+              `If the corpus does not cover something, say so plainly instead of filling the gap. ` +
+              `Where two policies conflict, name both and flag which is active.`,
+          },
+        },
+      ],
+    }),
+  );
 
   return server;
 }

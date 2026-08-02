@@ -42,7 +42,7 @@ Run in order; each builds on the prior scorecard. *(interactive = guided CLI tut
 | 5 | **The Calibrated Judge & the Eval Gate** — RAGAS triad, judge vs human labels (Cohen's κ + bias probes), CI gate | `labs/lab_5.py` | yes |
 | 6 | **Guardrails & Security** *(WIP)* — 4-gate gauntlet, tenant ACLs, EU AI Act mapping | `labs/lab_6.py` | yes |
 | 7 | **Human-in-the-Loop** *(WIP)* — risk-tagged tools, pause/resume, the eval→HITL bridge | `labs/lab_7.py` | yes |
-| 8 | **MCP: Build a Server, Then Harden It** *(WIP · TypeScript/Node 22+)* — build + consume (incl. third-party open & authed servers), OAuth/audience binding, tool-poisoning guard, resilience | `labs/mcp_server/` (`npm run lab`) | yes · interactive |
+| 8 | **MCP: Build a Server, Then Harden It** *(WIP · TypeScript/Node 22+)* — all three primitives (tools · resources · prompts), consume third-party servers (open, API-key, full OAuth dance), OAuth/audience binding, tool-poisoning guard, hash-chained audit trail, resilience | `labs/mcp_server/` (`npm run lab`) | yes · interactive |
 
 ## Install (Colab)
 ```python

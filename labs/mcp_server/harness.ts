@@ -17,6 +17,7 @@
 import assert from "node:assert/strict";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { AUDIT_DIR, latestAuditFile, readAudit, verifyChain } from "./audit.ts";
 
 const SERVER_PORT = process.env.MCP_SERVER_PORT || "9000";
 const BRIDGE_PORT = process.env.MCP_BRIDGE_PORT || "8765";
@@ -59,6 +60,31 @@ async function move4() {
     const text = (r.content as Array<{ text?: string }>).map((c) => c.text ?? "").join("");
     assert(text.length > 0 && !/^no matching/.test(text), "expected policy citations");
   });
+  // ── Move 2b · resources + prompts ──────────────────────────────────────────
+  await check("resources/list exposes the policy://catalog resource", async () => {
+    const { resources } = await client.listResources();
+    assert(resources.some((r) => r.uri === "policy://catalog"), "policy://catalog missing");
+  });
+  await check("resources/templates/list exposes policy://doc/{source}", async () => {
+    const { resourceTemplates } = await client.listResourceTemplates();
+    assert(
+      resourceTemplates.some((t) => t.uriTemplate === "policy://doc/{source}"),
+      "policy://doc/{source} missing — finish the Move-2b TODO in server.ts",
+    );
+  });
+  await check("resources/read returns the corpus catalog as JSON", async () => {
+    const r = await client.readResource({ uri: "policy://catalog" });
+    const text = (r.contents as Array<{ text?: string }>).map((c) => c.text ?? "").join("");
+    const docs = JSON.parse(text);
+    assert(Array.isArray(docs) && docs.length > 0, "expected a non-empty catalog array");
+  });
+  await check("prompts/get materialises policy_briefing into messages", async () => {
+    const g = await client.getPrompt({ name: "policy_briefing", arguments: { topic: "parental leave" } });
+    assert(g.messages.length > 0, "expected at least one message");
+    const c = g.messages[0].content as { type: string; text?: string };
+    assert(c.type === "text" && (c.text ?? "").includes("parental leave"), "the argument should reach the message");
+  });
+
   await check("policy_search rejects a schema-violating arg (k: \"four\")", async () => {
     // The SDK surfaces an inputSchema violation either as a thrown -32602 OR as a
     // result with isError:true — accept both as "rejected".
@@ -116,12 +142,46 @@ async function move6() {
   });
 }
 
+// ── Move 6b · the audit trail: every tool call, tamper-evident ────────────────
+async function move6b() {
+  console.log("\nMove 6b · audit trail");
+  const before = readAudit(latestAuditFile() ?? undefined).length;
+  let client: Client;
+  try { client = await connect(); }
+  catch (e) { console.log(`  ✗ could not connect — is \`npm start\` running?\n      ${(e as Error).message}`); failed++; return; }
+  await client.callTool({ name: "policy_search", arguments: { query: "parental leave", k: 2 } }).catch(() => {});
+  await client.callTool({ name: "policy_get", arguments: { source: "leave-time-off-policy" } }).catch(() => {});
+  await client.close();
+
+  const file = latestAuditFile();
+  const fresh = file ? readAudit(file).slice(before) : [];
+
+  await check("every tool call lands in the audit trail (policy_search AND policy_get)", async () => {
+    assert(fresh.length > 0, `no audit records written under ${AUDIT_DIR} — is server.ts importing ./audit.ts?`);
+    const tools = new Set(fresh.map((r) => r.tool));
+    assert(tools.has("policy_search"), "policy_search produced no audit record");
+    assert(tools.has("policy_get"), "policy_get is not audited — wrap it in auditedTool() (Move-6b TODO in server.ts)");
+  });
+  await check("audit records store references, never payloads", async () => {
+    const rec = fresh.find((r) => r.tool === "policy_search") as any;
+    assert(rec, "no policy_search record to inspect");
+    assert(typeof rec.args_safe?.query?.sha256 === "string", "the free-text `query` arg must be stored as a digest");
+    assert(!JSON.stringify(rec).includes("parental leave"), "the raw query text leaked into the audit record");
+    assert(Array.isArray(rec.resource_ids), "resource_ids must record WHICH documents were served");
+  });
+  await check("the hash chain is intact (tamper-evident, not just append-only)", async () => {
+    const v = verifyChain(file ?? undefined);
+    assert(v.ok, `chain broken at record ${v.brokenAt} of ${v.records}`);
+  });
+}
+
 (async () => {
   console.log(`Lab 8 harness → server ${MCP_URL}  ·  bridge ${BRIDGE}`);
   await move4();
   await move5();
   await move6();
+  await move6b();
   console.log(`\n${passed} passed, ${failed} failed${skipped ? `, ${skipped} skipped (no LLM key — not a pass)` : ""}`);
-  console.log("Move 7 (resilience: timeout/retry/tool-list cache) is a guided exercise — see README.");
+  console.log("Move 7 (resilience: timeout/retry/breaker/tool-list cache) is a guided exercise — see README.");
   process.exit(failed ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

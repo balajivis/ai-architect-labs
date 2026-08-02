@@ -6,6 +6,7 @@
   "description": "Lab 8 — Streamable-HTTP MCP server over the mai_rag policy corpus (the Python->Node seam). The same @modelcontextprotocol/sdk version Kapi's production client pins.",
   "scripts": {
     "start": "node --experimental-strip-types server.ts",
+    "lab": "node --experimental-strip-types lab_8.ts",
     "dev": "node --experimental-strip-types --watch server.ts",
     "test": "node --experimental-strip-types harness.ts",
     "inspector": "npx @modelcontextprotocol/inspector"

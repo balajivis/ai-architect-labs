@@ -50,17 +50,20 @@ function send401(req: Request, res: Response): void {
 /** Decode a bearer token's `aud` claim. The lab mints a synthetic HS256 fixture
  *  token (pyjwt, dev secret from .env) with a genuine `aud`, so this read is real.
  *  Structural base64url/JSON parse only — NOT classification, so no judge needed. */
-function decodeAud(token: string): string | string[] | undefined {
+function decodeClaims(token: string): Record<string, any> | undefined {
   const parts = token.split(".");
   if (parts.length !== 3) return undefined;
   try {
-    const payload = JSON.parse(
+    return JSON.parse(
       Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf-8"),
     );
-    return payload.aud;
   } catch {
     return undefined;
   }
+}
+
+function decodeAud(token: string): string | string[] | undefined {
+  return decodeClaims(token)?.aud;
 }
 
 /**
@@ -100,6 +103,19 @@ export function oauthResourceServer(req: Request, res: Response, next: NextFunct
       .json({ error: "forbidden", detail: `token audience does not bind this server (expected ${expected})` });
     return;
   }
+
+  // Move 6b: hand the verified caller downstream. The MCP transport forwards
+  // `req.auth` to every tool handler as `extra.authInfo`, which is how the
+  // audit record answers "WHO did this" (sub / aud / client_id) without any
+  // tool handler having to know about HTTP. The raw token travels here but is
+  // NEVER written to the audit log — audit.ts stores only a hash of it.
+  const claims = decodeClaims(token) ?? {};
+  (req as Request & { auth?: unknown }).auth = {
+    token,
+    clientId: claims.azp ?? claims.client_id ?? null,
+    scopes: typeof claims.scope === "string" ? claims.scope.split(" ") : (claims.scopes ?? []),
+    extra: { sub: claims.sub ?? null, iss: claims.iss ?? null, aud: claims.aud ?? null, jti: claims.jti },
+  };
 
   next();
 }

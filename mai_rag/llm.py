@@ -25,7 +25,10 @@ from typing import Any
 # Per-provider tier → model maps. Edit here, not in notebooks.
 _TIER_MODELS = {
     "groq":   {"small": "llama-3.1-8b-instant", "medium": "llama-3.3-70b-versatile", "large": "llama-3.3-70b-versatile"},
-    "openai": {"small": "gpt-4o-mini",          "medium": "gpt-4o-mini",             "large": "gpt-4o"},
+    "openai": {"small": "gpt-4.1-mini",         "medium": "gpt-4.1-mini",            "large": "gpt-4.1"},
+    # The class proxy (OPENAI_BASE_URL) is OpenAI-compatible but serves its OWN
+    # deployments — the openai.com model names above 502 there. Keyed separately.
+    "proxy":  {"small": "gpt-5.4",              "medium": "gpt-5.4",                 "large": "gpt-5.5"},
     "azure":  {"small": "gpt-5.4",              "medium": "gpt-5.4",                 "large": "gpt-5.5"},
     "gemini": {"small": "gemini-2.0-flash",     "medium": "gemini-2.0-flash",        "large": "gemini-2.5-flash"},
 }
@@ -51,7 +54,21 @@ def _provider() -> str:
 
 def model_for(tier: str = "small", provider: str | None = None) -> str:
     provider = provider or _provider()
+    # A student on the CLASS TOKEN is provider="openai" but pointed at our proxy, which
+    # serves gpt-5.x, not openai.com's catalogue. Route those to the "proxy" map so the
+    # judge/guard don't 502. An explicit MAI_LLM_MODEL_<TIER> always wins.
+    if provider == "openai" and _is_class_proxy():
+        provider = "proxy"
+    override = os.getenv(f"MAI_LLM_MODEL_{tier.upper()}")
+    if override:
+        return override
     return _TIER_MODELS[provider].get(tier, _TIER_MODELS[provider]["small"])
+
+
+def _is_class_proxy() -> bool:
+    """True when OPENAI_BASE_URL points somewhere other than openai.com."""
+    base = (os.getenv("OPENAI_BASE_URL") or "").strip()
+    return bool(base) and "api.openai.com" not in base
 
 
 # The two failures a student actually hits — turned into a clear next step instead of a

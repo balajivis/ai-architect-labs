@@ -137,9 +137,14 @@ def serve_corpus(store: Store, port: int = 8765) -> ThreadingHTTPServer:
                 self._trace("/guard", tool=payload.get("tool_name", ""),
                             blocked=verdict.get("blocked"), judged=verdict.get("judged"))
                 self._send(200, verdict)
-            except Exception as e:  # no LLM key / judge error → report, don't crash
-                self._send(200, {"blocked": None,
-                                 "reason": f"guard unavailable: {type(e).__name__}",
+            except Exception as e:  # no LLM key / judge error → FAIL CLOSED, don't crash
+                # `blocked: None` here was a fail-OPEN at the process boundary: it
+                # threw away mcp_guard's fail-closed contract the moment the judge
+                # was unreachable — exactly when you least want to execute. A guard
+                # that can't judge must refuse. (`judged: false` keeps it honest:
+                # this is a refusal for lack of a verdict, not a verdict.)
+                self._send(200, {"blocked": True, "judged": False,
+                                 "reason": f"fail-closed: guard unavailable: {type(e).__name__}",
                                  "detail": str(e)[:200]})
 
         def _trace(self, route: str, **fields) -> None:

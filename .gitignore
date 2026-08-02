@@ -32,3 +32,13 @@ node_modules/
 
 # dedicated eval venv (ragas needs an old langchain — kept out of the labs venv)
 .venv-evals/
+
+# Lab-generated plots (each run overwrites them; they're student output, not source)
+/lab1b_size_sweep.png
+/lab2_umap.png
+/lab2c_graph.png
+/lab6_gauntlet.png
+/lab6_safety_gate.png
+
+# deepeval's local telemetry cache
+.deepeval/
