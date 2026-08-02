@@ -105,7 +105,18 @@ def score(metric: str, e: EvalInput) -> Score | None:
         expected_output=e.expected or None,
         retrieval_context=list(e.contexts or []),
     )
-    metric_obj.measure(tc)
+    # DeepEval prints a progress indicator + result to stdout on every measure — suppress it (and
+    # tqdm/telemetry) so it doesn't shred the tutor's spinner. Redirect stdout only; the spinner is
+    # on stderr, so it keeps animating.
+    import os, io, contextlib
+    os.environ.setdefault("TQDM_DISABLE", "1")
+    os.environ.setdefault("DEEPEVAL_TELEMETRY_OPT_OUT", "YES")
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            metric_obj.measure(tc, _show_indicator=False)
+    except TypeError:                                     # older deepeval without _show_indicator
+        with contextlib.redirect_stdout(io.StringIO()):
+            metric_obj.measure(tc)
     val = clamp01(metric_obj.score)
     reason = getattr(metric_obj, "reason", None) or "deepeval"
     return Score(metric, val, val >= 0.6, f"deepeval · {str(reason)[:160]}")

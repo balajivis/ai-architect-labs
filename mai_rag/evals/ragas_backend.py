@@ -40,6 +40,14 @@ def score(metric: str, e: EvalInput) -> Score | None:
     if metric in ("context_recall",) and not e.expected:
         return None
 
+    # RAGAS prints a tqdm "Evaluating:" bar PER call — 12+ of them fight the tutor's spinner into a
+    # scrolling waterfall. Silence tqdm + its logger + telemetry so the lab's own spinner reads clean.
+    import os, logging
+    os.environ.setdefault("TQDM_DISABLE", "1")
+    os.environ.setdefault("RAGAS_DO_NOT_TRACK", "true")
+    for _n in ("ragas", "datasets"):
+        logging.getLogger(_n).setLevel(logging.ERROR)
+
     from datasets import Dataset
     from ragas import evaluate
     from ragas import metrics as M
@@ -57,6 +65,9 @@ def score(metric: str, e: EvalInput) -> Score | None:
         "contexts": [e.contexts],
         "ground_truth": [e.expected or ""],
     })
-    result = evaluate(ds, metrics=[metric_obj])
+    try:
+        result = evaluate(ds, metrics=[metric_obj], show_progress=False)
+    except TypeError:                                     # older/newer ragas without the kwarg
+        result = evaluate(ds, metrics=[metric_obj])
     val = clamp01(list(result.scores[0].values())[0])
     return Score(metric, val, val >= 0.6, "ragas")
