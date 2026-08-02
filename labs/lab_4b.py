@@ -130,9 +130,26 @@ class MemoryStack:
             self.working_path.unlink()
         return path
 
-    def recall_episodes(self, n: int = 3) -> str:
-        files = sorted((self.root / "episodic").glob("*.md"))[-n:]
-        return "\n\n".join(f.read_text() for f in files)
+    def recall_episodes(self, query: str | None = None, k: int = 1) -> str:
+        """AGENTIC recall — load the episode(s) RELEVANT to the current cue, not the most recent.
+        This is the whole reason episodic memory is a structured, RETRIEVABLE index and not a flat
+        log: a production agent doesn't replay every past session into context, it retrieves the ONE
+        that matches what's happening now. Recall is itself a retrieval (keyless, local embeddings) —
+        episodic memory is RAG over your own past. With no cue we fall back to the most recent."""
+        files = sorted((self.root / "episodic").glob("*.md"))
+        if not files:
+            return ""
+        texts = [f.read_text() for f in files]
+        if query is None or len(files) <= k:
+            chosen = texts[-k:]                              # no cue (or it all fits) → most recent
+        else:
+            import numpy as np
+            from mai_rag.store import embed
+            qv = embed([query])[0]
+            ev = embed(texts)
+            sims = (ev @ qv) / (np.linalg.norm(ev, axis=1) * np.linalg.norm(qv) + 1e-9)
+            chosen = [texts[i] for i in np.argsort(sims)[::-1][:k]]   # the relevant episode(s), not recent
+        return "\n\n".join(chosen)
 
     # L4 — durable/semantic: distill atomic facts (the 4-category taxonomy production
     # systems use) out of an episode, MERGE into profile.yaml. One sentence per fact.
@@ -159,14 +176,16 @@ class MemoryStack:
     # Assembly — retrieval-INTO-context. Stable prefix (durable + episodic) first,
     # volatile tail (working + transcript) last: the ordering is what makes the prefix
     # prompt-cacheable in production.
-    def assemble(self, layers=("durable", "episodic", "working", "short")) -> dict:
+    def assemble(self, layers=("durable", "episodic", "working", "short"), query: str | None = None) -> dict:
         parts, budget = [], {}
         if "durable" in layers and self.read_semantic():
             s = "## Who this user is (durable memory)\n" + self.read_semantic()
             parts.append(s); budget["L4 durable"] = est_tokens(s)
-        if "episodic" in layers and self.recall_episodes():
-            s = "## Past sessions (episodic memory)\n" + self.recall_episodes()
-            parts.append(s); budget["L3 episodic"] = est_tokens(s)
+        if "episodic" in layers:
+            ep = self.recall_episodes(query)                 # AGENTIC: the RELEVANT episode for this cue
+            if ep:
+                s = "## Relevant past session (episodic memory)\n" + ep
+                parts.append(s); budget["L3 episodic"] = est_tokens(s)
         if "working" in layers and self.read_working():
             s = "## This session right now (working memory)\n" + self.read_working()
             parts.append(s); budget["L2 working"] = est_tokens(s)
@@ -176,7 +195,7 @@ class MemoryStack:
         return {"context": "\n\n".join(parts), "budget": budget}
 
     def chat(self, user_msg: str, layers=("durable", "episodic", "working", "short")) -> str:
-        asm = self.assemble(layers)
+        asm = self.assemble(layers, query=user_msg)     # the user's turn is the cue for agentic episodic recall
         system = ("You are a helpful assistant. Use the MEMORY below when relevant; "
                   "if it doesn't contain something, say you don't know — never invent memory.\n\n"
                   + (asm["context"] or "(no memory)"))
@@ -246,10 +265,15 @@ def m4_episodic():
     print(f"  {C['b']}Priya:{C['x']} What did we discuss last time?")
     print(f"  {C['d']}bot  : {textwrap.shorten(a, 84)}{C['x']}")
     note("we called the flush a REM-flush on purpose: raw experience → consolidated summary. The "
-         "transcript is GONE; the episode survives. Append-only + dated = an auditable history.")
+         "transcript is GONE; the episode survives. But here's the point most stacks miss: episodes "
+         "are STORED append-only + dated (an auditable history), yet RECALLED SELECTIVELY — "
+         "recall_episodes(cue) retrieves the episode RELEVANT to what's happening now (keyless "
+         "embedding retrieval), NOT the most recent. Episodic memory is a retrievable INDEX, not a "
+         "log you replay into context. That agentic 'load the right episode when needed' is the "
+         "whole reason to give episodes a structure at all — otherwise it's just a growing transcript.")
 
 def m5_durable():
-    profile = mem.distill_semantic(mem.recall_episodes(1))
+    profile = mem.distill_semantic(mem.recall_episodes(k=1))   # distill the session just flushed (most recent)
     show_file(mem.profile_path, "semantic/profile.yaml — L4, distilled facts, merged (fact/preference/decision/action_item)")
     print(f"\n  {C['b']}— ANOTHER NEW SESSION —{C['x']}")
     a = mem.chat("Hi again! Anything I should pick back up?", layers=("durable",))
