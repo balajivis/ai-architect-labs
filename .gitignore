@@ -42,3 +42,7 @@ node_modules/
 
 # deepeval's local telemetry cache
 .deepeval/
+
+# Lab 0 console output — the student's own architecture decision record
+/my_architecture.json
+/my_architecture.md
