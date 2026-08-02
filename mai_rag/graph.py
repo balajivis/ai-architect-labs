@@ -106,7 +106,7 @@ class RemoteGraph:
         self.backend = f"remote class graph ({self.url.split('/')[2]}) · partition stu-{user}"
 
     def _call(self, op: str, **kw):
-        r = self._rq.post(self.url, timeout=25,
+        r = self._rq.post(self.url, timeout=float(os.getenv("MAI_GRAPH_TIMEOUT", "25")),
                           headers={"authorization": f"Bearer {self.token}", "content-type": "application/json"},
                           json={"op": op, "user": self.user, **kw})
         if r.status_code != 200:
@@ -118,22 +118,118 @@ class RemoteGraph:
         return r.json()
 
     def add_triples(self, triples: Iterable) -> dict:
-        return self._call("add", triples=_norm(triples))
+        # Ingestion is the ONE bulk write, and a whole class shares the service — sending
+        # 168 triples as a single request is what pushes past the timeout. Chunk it, so
+        # each request is small and a slow service costs latency, not the stage.
+        ts = _norm(triples)
+        size = max(1, int(os.getenv("MAI_GRAPH_BATCH", "40")))
+        added = 0
+        for i in range(0, len(ts), size):
+            added += int(self._call("add", triples=ts[i:i + size]).get("added", 0))
+        return {"added": added}
+
+    @staticmethod
+    def _as_triples(entity: str, rows) -> list[Triple]:
+        """The proxy answers a traversal as {"e": relation, "v": target}; LocalGraph
+        answers (s, r, o). Same data, different shape — and callers that expect a triple
+        (the labs do) would silently show NOTHING against the remote backend. Normalise
+        here so "identical primitives either way" is true rather than aspirational.
+        """
+        out: list[Triple] = []
+        for row in rows or []:
+            if isinstance(row, dict):
+                s = row.get("s") or row.get("from") or entity
+                r = row.get("r") or row.get("e") or row.get("label") or "?"
+                o = row.get("o") or row.get("v") or row.get("to") or ""
+            elif isinstance(row, (list, tuple)) and len(row) == 3:
+                s, r, o = row
+            else:
+                continue
+            if o:
+                out.append((str(s).lower(), str(r).lower(), str(o).lower()))
+        return list(dict.fromkeys(out))
 
     def neighbors(self, entity: str, depth: int = 1):
-        return self._call("neighbors", entity=entity, depth=depth).get("results", [])
+        return self._as_triples(entity, self._call("neighbors", entity=entity, depth=depth).get("results", []))
 
     def path(self, a: str, b: str):
         return self._call("path", **{"from": a, "to": b}).get("paths", [])
 
     def subgraph(self, entity: str, hops: int = 2):
-        return self._call("subgraph", entity=entity, hops=hops).get("paths", [])
+        return self._as_triples(entity, self._call("subgraph", entity=entity, hops=hops).get("paths", []))
 
     def clear(self) -> dict:
         return self._call("clear")
 
     def stats(self) -> dict:
         return self._call("stats")
+
+
+class ResilientGraph:
+    """Remote-first with an operation-time rescue — the honest version of "the hosted
+    path going down must never kill the lab".
+
+    `connect()`'s reachability probe only proves the service was up at connect time. The
+    failure students actually hit is a service that answers the cheap probe and then
+    times out on a real operation. So: remember every triple we've written, and on the
+    first operation failure, degrade to networkx, REPLAY what was already loaded, and
+    carry on with the same API. Degrading is announced, never silent — a fallback you
+    can't see is how you ship a demo that was secretly never using the thing you were
+    demoing.
+    """
+
+    def __init__(self, remote):
+        self._g = remote
+        self._added: list[dict] = []
+        self.degraded = False
+
+    @property
+    def backend(self) -> str:
+        return self._g.backend
+
+    def _rescue(self, op: str, exc: Exception):
+        if self.degraded:
+            raise exc                     # already local — a local failure is a real bug
+        print(f"[mai_rag.graph] class graph failed on {op}() ({type(exc).__name__}: "
+              f"{str(exc)[:70]}) — degrading to local networkx and replaying "
+              f"{len(self._added)} triples")
+        local = LocalGraph()
+        if self._added:
+            local.add_triples(self._added)
+        self._g, self.degraded = local, True
+
+    def add_triples(self, triples: Iterable) -> dict:
+        ts = _norm(triples)
+        try:
+            res = self._g.add_triples(ts)
+        except Exception as e:
+            self._rescue("add_triples", e)      # replays self._added into the fresh local
+            res = self._g.add_triples(ts)
+        self._added.extend(ts)
+        return res
+
+    def _read(self, op: str, *a, **kw):
+        try:
+            return getattr(self._g, op)(*a, **kw)
+        except Exception as e:
+            self._rescue(op, e)
+            return getattr(self._g, op)(*a, **kw)
+
+    def neighbors(self, entity: str, depth: int = 1):
+        return self._read("neighbors", entity, depth)
+
+    def path(self, a: str, b: str):
+        return self._read("path", a, b)
+
+    def subgraph(self, entity: str, hops: int = 2):
+        return self._read("subgraph", entity, hops)
+
+    def stats(self) -> dict:
+        return self._read("stats")
+
+    def clear(self) -> dict:
+        self._added.clear()
+        return self._read("clear")
 
 
 def connect(user: str = "student", prefer: str = "auto"):
@@ -150,7 +246,7 @@ def connect(user: str = "student", prefer: str = "auto"):
         try:
             g = RemoteGraph(user)
             g.stats()                                    # one cheap reachability probe
-            return g
+            return ResilientGraph(g)                     # …and a rescue for every op after it
         except Exception as e:
             if prefer == "remote":
                 raise
