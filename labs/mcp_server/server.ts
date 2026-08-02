@@ -62,25 +62,43 @@ function auditedTool(
     let guard: Record<string, unknown> = { verdict: "unavailable", reason_code: null, engine: null };
 
     try {
-      // ── Move 6 (WIP: TODO) — ask the guard BEFORE executing ───────────────
-      // WIP: TODO — POST the tool's name + description + args to the bridge's
-      //   `/guard` endpoint (Move 6 probed it from the outside; now ENFORCE it
-      //   from the inside), and refuse the call when the judge blocks it:
-      //
-      //     const g = await fetch(`${BRIDGE}/guard`, {
-      //       method: "POST",
-      //       headers: { "content-type": "application/json", ...traceHeaders(cid) },
-      //       body: JSON.stringify({ tool_name: tool, description: TOOL_DESCRIPTIONS[tool], args }),
-      //     }).then((r) => r.json());
-      //     guard = { verdict: g.blocked === null ? "unavailable" : g.blocked ? "blocked" : "clean",
-      //               reason_code: g.blocked ? "guard_blocked" : null, engine: "mai_rag.mcp_guard" };
-      //     if (g.blocked) { decision = "deny_guard"; reason = "guard_blocked";
-      //                      return textBlock("refused: this tool call was blocked by the poisoning guard"); }
-      //
-      //   Note the posture: `blocked === null` (no LLM key / judge error) is
-      //   "unavailable", NOT "clean" — never let a fail-open be recorded as a pass.
-      //   Until you wire this, the audit record says guard.verdict "unavailable"
-      //   on every call, and the Move-6b tutor stage tells you so.
+      // ── Move 6 — ask the guard BEFORE executing ───────────────────────────
+      // Move 6 probed POST /guard from the OUTSIDE; this is the same judge
+      // ENFORCED from the inside, on the path every tool call has to take.
+      // Both surfaces the attacker controls go over: the tool's advertised
+      // description AND the caller's args.
+      let g: { blocked?: boolean; judged?: boolean; reason?: string };
+      try {
+        const resp = await fetch(`${BRIDGE}/guard`, {
+          method: "POST",
+          headers: { "content-type": "application/json", ...traceHeaders(cid) },
+          body: JSON.stringify({ tool_name: tool, description: TOOL_DESCRIPTIONS[tool] ?? "", args }),
+        });
+        if (!resp.ok) throw new Error(`bridge /guard failed: ${resp.status}`);
+        g = (await resp.json()) as typeof g;
+      } catch (e) {
+        // The guard being unreachable is not permission to run. A control that
+        // disappears when the network hiccups is not a control.
+        g = { blocked: true, judged: false, reason: `fail-closed: guard unreachable: ${(e as Error).message.slice(0, 80)}` };
+      }
+
+      // Three states, never two. `judged: false` means we never got a verdict —
+      // recording that as "clean" would be logging a fail-open as a pass.
+      const verdict = g.judged === false ? "fail_closed" : g.blocked ? "blocked" : "clean";
+      guard = {
+        verdict,
+        reason_code: g.blocked ? (g.judged === false ? "guard_unavailable" : "guard_blocked") : null,
+        engine: "mai_rag.mcp_guard",
+      };
+      if (g.blocked) {
+        decision = g.judged === false ? "deny_guard_unavailable" : "deny_guard";
+        reason = String(guard.reason_code);
+        return textBlock(
+          g.judged === false
+            ? `refused: the poisoning guard could not judge this call, so it refused it (${g.reason ?? "no verdict"})`
+            : "refused: this tool call was blocked by the poisoning guard",
+        );
+      }
 
       const out = await handler(args, ctx);
       return out;
@@ -165,23 +183,37 @@ function buildServer(): McpServer {
     }),
   );
 
-  // ── TOOL 2 (TODO — you finish this in Move 2): policy_get ──────────────────
-  // WIP: TODO — register a `policy_get` tool that returns ONE full policy doc.
-  //   It should mirror policy_search above:
-  //     • inputSchema: { source: z.string().describe("the policy doc id, e.g. hr-parental-leave-active") }
-  //     • handler: fetch `${BRIDGE}/doc/${encodeURIComponent(source)}`, and
-  //         - on 200  -> return textBlock(`# ${data.title}\n\n${data.content}`)
-  //         - on 404  -> return textBlock(`no policy found for "${source}"`)
-  //         - on other non-ok -> throw new Error(...) (surfaces as a -32000)
-  //   Until you register it, `tools/list` returns only 1 tool and the Move-2
-  //   harness assertion `names == {'policy_search','policy_get'}` FAILS — that
-  //   failing assertion is the signal you still have this TODO to finish.
-  //
-  //   server.registerTool("policy_get", { ...inputSchema... }, async ({ source }) => { ... });
-  //
-  //   Move 6b adds one more requirement to this same tool: wrap your handler in
-  //   auditedTool("policy_get", { risk: "read" }, ...) — see the LIVE
-  //   policy_search above — so that EVERY tool call lands in the audit trail.
+  // ── TOOL 2: policy_get ─────────────────────────────────────────────────────
+  // Mirrors policy_search: one bridge hop, one text block, audited by the same
+  // wrapper. `source` is a document ID, not free text — so it is logged in the
+  // clear (that is the WHICH-doc evidence an auditor needs), unlike `query`.
+  server.registerTool(
+    "policy_get",
+    {
+      title: "Fetch one policy document",
+      description: TOOL_DESCRIPTIONS.policy_get,
+      inputSchema: {
+        source: z.string().describe("the policy doc id, e.g. hr-parental-leave-active"),
+      },
+    },
+    auditedTool("policy_get", { risk: "read" }, async ({ source }, ctx) => {
+      const resp = await fetch(`${BRIDGE}/doc/${encodeURIComponent(source)}`, { headers: traceHeaders(ctx.cid) });
+      if (resp.status === 404) {
+        // A missing doc is an ANSWER, not a server fault — don't spend a -32000
+        // on it, and don't let the model read a transport error as "no policy".
+        const text = `no policy found for "${source}"`;
+        ctx.bytes = text.length;
+        return textBlock(text);
+      }
+      if (!resp.ok) throw new Error(`bridge /doc failed: ${resp.status}`);   // -32000: execution error
+      const data = (await resp.json()) as { source: string; title: string; content: string };
+      const text = `# ${data.title}\n\n${data.content}`;
+      ctx.resourceIds = [data.source];
+      ctx.count = 1;
+      ctx.bytes = text.length;
+      return textBlock(text);
+    }),
+  );
 
   // ══ MOVE 2b · THE OTHER TWO PRIMITIVES ══════════════════════════════════════
   // A server is not just tools. MCP has three primitives, and the difference
@@ -216,30 +248,37 @@ function buildServer(): McpServer {
     },
   );
 
-  // ── RESOURCE 2 (TODO — you finish this in Move 2b): a TEMPLATED resource ──
-  // WIP: TODO — register a TEMPLATED resource `policy://doc/{source}` that
-  //   returns ONE full policy document. Mirror the static resource above:
-  //     • first arg:  "policy-doc"
-  //     • second arg: new ResourceTemplate("policy://doc/{source}", { list: undefined })
-  //         - the `list` key is MANDATORY in this SDK, even when you pass
-  //           `undefined` (that means "this template does not enumerate").
-  //           Enumerating is the catalog resource's job, above.
-  //     • third arg:  { title, description, mimeType: "text/markdown" }
-  //     • callback:   async (uri, variables) => { ... }
-  //         - `variables.source` is the matched {source} (a string | string[] —
-  //           wrap it: String(variables.source))
-  //         - fetch `${BRIDGE}/doc/${encodeURIComponent(source)}`
-  //         - return { contents: [{ uri: uri.href, mimeType: "text/markdown",
-  //                                 text: `# ${data.title}\n\n${data.content}` }] }
-  //         - on 404 return a contents block saying no policy was found —
-  //           a resource read is a GET, so "missing" is data, not an exception
-  //
-  //   Until you register it, `resources/templates/list` comes back EMPTY and the
-  //   Move-2b stage fails with a pointer at this TODO.
-  //
-  //   ResourceTemplate is already imported at the top of this file.
-  //
-  //   server.registerResource("policy-doc", new ResourceTemplate(...), { ... }, async (uri, variables) => { ... });
+  // ── RESOURCE 2: a TEMPLATED resource ──────────────────────────────────────
+  // Same document as policy_get, reached the other way round. That duplication
+  // is the POINT of Move 2b: when the app already knows which doc it wants, it
+  // ATTACHES this — no model turn spent deciding to call a tool. The tool exists
+  // for when the MODEL has to make that choice.
+  server.registerResource(
+    "policy-doc",
+    // `list: undefined` = this template does not enumerate. Enumerating is the
+    // catalog resource's job above. The key is mandatory even when undefined.
+    new ResourceTemplate("policy://doc/{source}", { list: undefined }),
+    {
+      title: "One policy document",
+      description: "Read a single enterprise-policy document by its source id.",
+      mimeType: "text/markdown",
+    },
+    async (uri, variables) => {
+      const source = String(variables.source);           // string | string[] on the wire
+      const resp = await fetch(`${BRIDGE}/doc/${encodeURIComponent(source)}`);
+      if (resp.status === 404) {
+        // A read is a GET: "missing" is data the app can render, not an exception.
+        return {
+          contents: [{ uri: uri.href, mimeType: "text/markdown", text: `no policy found for "${source}"` }],
+        };
+      }
+      if (!resp.ok) throw new Error(`bridge /doc failed: ${resp.status}`);
+      const data = (await resp.json()) as { source: string; title: string; content: string };
+      return {
+        contents: [{ uri: uri.href, mimeType: "text/markdown", text: `# ${data.title}\n\n${data.content}` }],
+      };
+    },
+  );
 
 
   // ── PROMPT (WORKED EXAMPLE): a USER-controlled template ───────────────────

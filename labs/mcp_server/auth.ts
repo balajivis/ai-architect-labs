@@ -88,19 +88,22 @@ export function oauthResourceServer(req: Request, res: Response, next: NextFunct
 
   // (2) RFC 8707 audience binding. Reject a token minted for a DIFFERENT server.
   //
-  // WIP: TODO (Move 5) — replace `false` with the real audience comparison so a
-  //      token whose `aud` is NOT this server's expected audience is rejected.
-  //      `aud` may be a string OR a string[] per the JWT spec; handle both.
-  //      Hint: const audOk = Array.isArray(aud) ? aud.includes(expected) : aud === expected;
-  //            then reject when `!audOk`.
-  //      Until you complete this, EVERY token (even a cross-server one) is
-  //      accepted — so the Move-5 wrong-audience assertion FAILS until you fix it.
-  const audMismatch = false; // <-- WIP: TODO replace with `!audOk` (see hint above)
+  // The comparison is deliberately boring: `aud` may be a string OR a string[]
+  // per the JWT spec, and anything else — an opaque token with no claims, a JWT
+  // with no `aud` at all — is a MISMATCH, not a pass. "I couldn't find an
+  // audience" is the single most common way audience binding gets skipped in
+  // production; undefined must fall on the reject side of the branch.
+  const audOk = expected !== "" && (Array.isArray(aud) ? aud.includes(expected) : aud === expected);
+  const audMismatch = !audOk;
 
   if (audMismatch) {
-    res
-      .status(403)
-      .json({ error: "forbidden", detail: `token audience does not bind this server (expected ${expected})` });
+    // A server that doesn't KNOW its own audience cannot bind one, so it refuses
+    // rather than waving traffic through — the same fail-closed posture as the
+    // Move-6 guard. Start it with MCP_EXPECTED_AUD set (see the Move 5 stage).
+    const detail = expected === ""
+      ? "server misconfigured: MCP_EXPECTED_AUD is unset, so no token can be audience-bound (RFC 8707) — refusing"
+      : `token audience does not bind this server (expected ${expected}, got ${JSON.stringify(aud) ?? "none"})`;
+    res.status(403).json({ error: "forbidden", detail });
     return;
   }
 
