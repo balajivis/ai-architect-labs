@@ -105,7 +105,9 @@ LAB_INDEX = """LAB MAP (Modern AI Pro · AI Architect — four pillars, taught e
   the same shapes as framework classes — tools=[...], SequentialAgent, LoopAgent with escalate-exit, sub_agents
   transfer — plus the event stream, session state, callbacks-as-meter, and a DUEL vs the student's own 3c
   LangGraph supervisor. Go here for ADK, Agent Development Kit, enterprise agent frameworks, framework-vs-handrolled.
-- Lab 4  (lab_4.py) · Pillar I · Memory: working + long-term memory, user-scoped retrieval, personalization.
+- Lab 4  (lab_4.py) · Pillar I · Memory, Live: a live chat with the memory STACK forming beside it —
+  L1 window · L2 working.yaml · L4 profile.yaml (durable identity) accreting as you talk, plus /flush for an
+  L3 episode. Tangible (files on disk), not a claim. Go here to SEE memory form; lab_4b is the build-it deep dive.
 - Lab 4b (lab_4b.py) · Pillar I · The Memory Stack: L1 short-term · L2 working · L3 episodic (REM-flush) · L4 durable
   profile; recall + ISOLATION evals; memory × RAG composed. Go here for memory layers / per-user isolation.
 - Lab 5  (lab_5.py) · Pillar II · Evals & Benchmarks: the RAGAS triad, an LLM-judge CALIBRATED to human labels
