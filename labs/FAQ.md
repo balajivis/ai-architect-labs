@@ -26,6 +26,21 @@ The shared class token hit its per-minute cap. Wait ~10–30 seconds and re-run 
 ## How do I run a lab?
 From the repo root, in your venv: `python labs/lab_1.py` (each move explains itself; Enter to run, s to skip, q to quit). If you're not set up yet: `python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[evals,viz]"`, add your key to `.env`, then run.
 
+## How do I run Lab 8 / the MCP lab / labs/mcp_server — npm run lab, node, TypeScript
+Lab 8 is the one **non-Python** lab and needs **three terminals** — the server holds no corpus, so skipping the Python bridge makes every tool call fail. Needs Node 22+ (`node -v`; else `nvm install 22`).
+1. **Bridge** (repo root, venv active): `python -m mai_rag.bridge` — keyless, port 8765, leave running.
+2. **Your server**: `cd labs/mcp_server && npm install && npm start` — port 9000, leave running, **restart it after every edit**.
+3. **The lab**: `npm run lab` (guided tutor: Enter run · `s` skip · `r` retry · `q` quit), and `npm test` for the same contract headless.
+`npm run dev` is only the auto-restarting server — it is **not** the lab. Three stages are red on purpose at the start (Move 2 `policy_get`, Move 2b `policy://doc/{source}`, Move 6b auditing `policy_get`): a red stage names the `// WIP: TODO` you haven't written yet. Finish it → restart terminal 2 → press `r`. Move 5 needs the server restarted as `AUTH_ENABLED=1 MCP_EXPECTED_AUD=http://127.0.0.1:9000/mcp npm start`.
+
+## Lab 2c stage 3 hangs or fails with ReadTimeout / HTTPSConnectionPool learn.modernaipro.com / read timeout=25 — the class graph service
+Force the local backend: `export MAI_GRAPH_BACKEND=local` then re-run `python labs/lab_2c.py` (or press `r` to retry the stage). You get networkx in-process — identical API, all 168 triples load instantly, and stages 3–5 teach exactly the same lesson.
+Why it happens: `connect()` probes the class service with a cheap `stats()` call that succeeds, then the bulk write of 168 triples exceeds the 25s timeout — so the automatic fallback (which only covers an *unreachable* service) doesn't trigger. A full class writing into the same partition makes slow the normal case. Note the default partition is `stu-student` for everyone; set `MAI_GRAPH_USER=<your name>` in `.env` if you want your own graph.
+
+## 502 from the class proxy / InternalServerError / the lab hangs ~60s then errors on a judge or guard call
+**`git pull` first** — this was a bug in the lab kit, fixed. The `openai` tier map used to request `gpt-4o-mini`/`gpt-4o`, which the class proxy doesn't serve; every judge/guard call 502'd after ~60s of retry backoff, which looks like a hang. After pulling, class-token users route to `gpt-5.4`/`gpt-5.5` automatically. If you installed with the Colab git-URL instead of `pip install -e`, also run `pip install -U "mai_rag[evals,viz] @ git+https://github.com/balajivis/ai-architect-labs.git"`.
+Still 502ing after the pull? Then the upstream really is failing: use a Groq key for that run (`export GROQ_API_KEY=...`), or override the model with `MAI_LLM_MODEL_SMALL=<deployment>`.
+
 ## How does Lab 1 work / what is it doing
 Lab 1 is "Evaluation First." It loads the fictional Northwind policy corpus, builds a naive single-shot RAG (retrieve top-k → stuff context → answer), writes a golden test set, and scores the naive RAG on it. That baseline scorecard is the number every later lab (hybrid retrieval, reranking, agentic RAG…) has to beat. You define "good" before you tune anything.
 

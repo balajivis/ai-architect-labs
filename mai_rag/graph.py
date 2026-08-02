@@ -138,7 +138,14 @@ class RemoteGraph:
 
 def connect(user: str = "student", prefer: str = "auto"):
     """auto → remote class graph when reachable, LocalGraph otherwise (stated out loud —
-    the hosted path going down must never kill the lab)."""
+    the hosted path going down must never kill the lab).
+
+    MAI_GRAPH_BACKEND=local forces networkx without touching the network — the escape
+    hatch for a class service that is *reachable but slow* (a full room writing into one
+    partition), where the reachability probe below passes and a later bulk write is the
+    thing that times out.
+    """
+    prefer = (os.getenv("MAI_GRAPH_BACKEND") or prefer).strip().lower()
     if prefer in ("auto", "remote"):
         try:
             g = RemoteGraph(user)
